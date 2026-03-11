@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, Text, Flex, Button, Table } from '@radix-ui/themes'
-import { ChevronDownIcon, CalendarIcon, ChevronUpIcon, OpenInNewWindowIcon } from '@radix-ui/react-icons'
+import { ChevronDownIcon, CalendarIcon, ChevronUpIcon, OpenInNewWindowIcon, PaperPlaneIcon, EnvelopeClosedIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
 import styles from './WorkflowSidebar.module.css'
 
@@ -154,6 +154,42 @@ export function WorkflowSidebar() {
             </Box>
           </Box>
         )}
+      </Box>
+
+      <Box className={`${styles.panel} ${styles.quickActionsPanel}`}>
+        <Flex align="center" justify="between" className={styles.panelHeader}>
+          <Text size="3" weight="bold" style={{ color: '#ffffff' }}>
+            Быстрые действия
+          </Text>
+        </Flex>
+        <Box className={styles.panelContent}>
+          <Flex direction="column" gap="3" align="center">
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://web.telegram.org', '_blank')} style={{ backgroundColor: '#0088cc' }} title="Telegram @username" role="button" tabIndex={0}>
+              <PaperPlaneIcon width={20} height={20} style={{ color: '#ffffff' }} />
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://web.telegram.org', '_blank')} style={{ backgroundColor: '#0088cc' }} title="Telegram @hr_manager" role="button" tabIndex={0}>
+              <PaperPlaneIcon width={20} height={20} style={{ color: '#ffffff' }} />
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://web.telegram.org', '_blank')} style={{ backgroundColor: '#0088cc' }} title="Telegram @recruiter" role="button" tabIndex={0}>
+              <PaperPlaneIcon width={20} height={20} style={{ color: '#ffffff' }} />
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://web.whatsapp.com', '_blank')} style={{ backgroundColor: '#25D366' }} title="WhatsApp +7 (999) 123-45-67" role="button" tabIndex={0}>
+              <Text size="4" weight="bold" style={{ color: '#ffffff' }}>W</Text>
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://web.whatsapp.com', '_blank')} style={{ backgroundColor: '#25D366' }} title="WhatsApp +7 (999) 987-65-43" role="button" tabIndex={0}>
+              <Text size="4" weight="bold" style={{ color: '#ffffff' }}>W</Text>
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://web.viber.com', '_blank')} style={{ backgroundColor: '#665CAC' }} title="Viber +7 (999) 123-45-67" role="button" tabIndex={0}>
+              <Text size="4" weight="bold" style={{ color: '#ffffff' }}>V</Text>
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('https://www.linkedin.com', '_blank')} style={{ backgroundColor: '#0077B5' }} title="LinkedIn" role="button" tabIndex={0}>
+              <Text size="4" weight="bold" style={{ color: '#ffffff' }}>in</Text>
+            </Box>
+            <Box className={styles.quickActionButton} onClick={() => window.open('mailto:', '_blank')} style={{ backgroundColor: '#EA4335' }} title="Email" role="button" tabIndex={0}>
+              <EnvelopeClosedIcon width={20} height={20} style={{ color: '#ffffff' }} />
+            </Box>
+          </Flex>
+        </Box>
       </Box>
     </Flex>
   )

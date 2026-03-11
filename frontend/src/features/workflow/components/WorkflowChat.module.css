@@ -6,12 +6,12 @@
   height: calc(100vh - 200px);
   min-height: 600px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
 }
 
 .chatHeader {
   background: var(--accent-9);
   padding: 8px 16px;
+  border-radius: 12px 12px 0 0;
 }
 
 .messagesWrapper {
@@ -29,14 +29,20 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
+}
+
+.scrollToBottomBtn {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .messageWrapper {
   width: 100%;
-  display: flex;
   align-items: flex-end;
-  gap: 10px;
 }
 
 .messageUser {
@@ -47,23 +53,75 @@
   justify-content: flex-start;
 }
 
+.userMessageContainer {
+  align-items: flex-end;
+  width: 100%;
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  margin-right: -32px;
+}
+
+.assistantMessageContainer {
+  align-items: flex-start;
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  margin-left: -32px;
+}
+
+.avatarUser,
+.avatarAssistant {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--gray-6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  align-self: flex-end;
+  margin-bottom: 5px;
+  margin-top: 5px;
+  position: relative;
+  z-index: 10;
+}
+
+.avatarUser {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.avatarAssistant {
+  background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.avatarIcon {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .messageBubble {
   padding: 12px 16px;
   border-radius: 12px;
   word-wrap: break-word;
-  max-width: 80%;
 }
 
 .messageBubbleUser {
   background-color: var(--accent-9);
   color: #ffffff;
   border-bottom-right-radius: 4px;
-}
-
-.messageBubbleAssistant {
-  background: var(--gray-3);
-  border: 1px solid var(--gray-6);
-  border-bottom-left-radius: 4px;
+  max-width: none;
+  width: fit-content;
+  margin-left: auto;
 }
 
 .messageTimestamp {
@@ -73,20 +131,232 @@
   white-space: nowrap;
 }
 
-.composer {
-  border-top: 1px solid var(--gray-6);
-  padding: 12px;
+.assistantMessageContainer .messageTimestamp {
+  align-self: flex-start;
+  margin-left: 16px;
+}
+
+.userMessageContainer .messageTimestamp {
+  margin-right: 16px;
+}
+
+.tagContainer {
+  margin-top: -12px;
+  margin-right: 10px;
+  align-self: flex-end;
+  position: relative;
+  z-index: 1;
+  margin-right: 26px;
+}
+
+.tag {
+  padding: 2px 4px;
+  border-radius: 12px;
+  display: inline-block;
+  border: 1px solid currentColor;
+}
+
+.inviteMessage,
+.screeningMessage {
   background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  padding: 0;
+  border-radius: 12px;
+  width: fit-content;
+  max-width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
-.composerRow {
+.candidateInfo {
+  margin-top: 0;
   display: flex;
-  gap: 8px;
-  align-items: flex-end;
+  flex-direction: column;
 }
 
-.composerTextarea {
+.tableWithButtons {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.candidateInfo :global(.rt-TableRoot) {
   flex: 1;
-  resize: none;
+  font-size: 11px;
+  border-collapse: collapse;
+  border: none !important;
+  overflow-x: auto;
+  display: block;
+  width: 100%;
 }
 
+.candidateInfo :global(.rt-TableRoot) :global(table) {
+  width: 100%;
+  min-width: 100%;
+}
+
+.candidateInfo :global(.rt-TableCell) {
+  padding: 0 6px;
+  border: none !important;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.candidateInfo :global(.rt-TableCell:first-child) {
+  padding-right: 12px;
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.candidateInfo :global(.rt-TableCell:last-child) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0;
+}
+
+.actionButtons {
+  flex-shrink: 0;
+  flex-direction: column;
+}
+
+@media (max-width: 767px) {
+  .tableWithButtons {
+    flex-direction: column;
+  }
+  .actionButtons {
+    margin-top: 12px !important;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-self: flex-end;
+  }
+}
+
+.statusBar {
+  background: #d1fae5;
+  padding: 8px 12px;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.rejectionPrompt {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+}
+
+.levelTag {
+  background: #3b82f6;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.inputContainer {
+  padding: 4px;
+  border-top: 1px solid var(--gray-6);
+  background: var(--gray-2);
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachedFilesContainer {
+  padding: 8px;
+  background: var(--gray-3);
+  border-radius: 8px;
+  border: 1px solid var(--gray-6);
+}
+
+.attachedFilesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.fileTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--gray-4);
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  flex-shrink: 0;
+  max-width: 200px;
+}
+
+.fileName {
+  font-size: 11px;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.fileSize {
+  font-size: 10px;
+  color: var(--gray-11);
+  font-style: italic;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.removeFileButton {
+  padding: 0 !important;
+  min-width: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.removeFileButton:hover {
+  background: var(--gray-6) !important;
+}
+
+.commandTag {
+  position: absolute;
+  top: -20px;
+  right: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.commandTagInner {
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.messagesContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messagesContainer::-webkit-scrollbar-track {
+  background: var(--gray-3);
+  border-radius: 4px;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb {
+  background: var(--gray-6);
+  border-radius: 4px;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-8);
+}

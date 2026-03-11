@@ -23,6 +23,11 @@ import { HiringPlanYearlyPage } from '@/features/reporting/HiringPlanYearlyPage'
 import { SpecializationsLayout } from '@/features/specializations/SpecializationsLayout'
 import { SpecializationsRootPage } from '@/features/specializations/pages/SpecializationsRootPage'
 import { SpecializationInfoPage } from '@/features/specializations/pages/SpecializationInfoPage'
+import { AIChatPage } from '@/features/ai/chat/AIChatPage'
+import { RecruiterChatPage } from '@/features/ai/recruiter-chat/RecruiterChatPage'
+import { RecrChatIndexPage } from '@/features/ai/recruiter-chat/RecrChatIndexPage'
+import { RecrChatCandidatePage } from '@/features/ai/recruiter-chat/RecrChatCandidatePage'
+import { TelegramPage } from '@/features/integrations/telegram/TelegramPage'
 import CalendarPage from './routes/CalendarPage'
 import CalendarSettingsPage from './routes/CalendarSettingsPage'
 import { CompanySettingsPage } from './routes/CompanySettingsPage'
@@ -168,7 +173,31 @@ const interviewersRoute = createRoute({
 const aichatRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/aichat',
-  component: () => layout(<PlaceholderPage title="ИИ чат" />),
+  component: () => layout(<AIChatPage />, 'AI ассистент'),
+})
+
+const aiRecruiterChatRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ai/recruiter-chat',
+  component: () => layout(<RecruiterChatPage />, 'AI Рекрутер'),
+})
+
+const recrChatIndexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recr-chat',
+  component: () => layout(<RecrChatIndexPage />, 'ATS | Talent Pool'),
+})
+
+const recrChatCandidateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId',
+  component: () => layout(<RecrChatCandidatePage />, 'ATS | Talent Pool'),
+})
+
+const integrationsTelegramRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/integrations/telegram',
+  component: () => layout(<TelegramPage />, 'Telegram'),
 })
 
 const wikiRoute = createRoute({
@@ -1059,6 +1088,10 @@ const routeTree = rootRoute.addChildren([
   recruitingHuntflowRoute,
   interviewersRoute,
   aichatRoute,
+  aiRecruiterChatRoute,
+  recrChatIndexRoute,
+  recrChatCandidateRoute,
+  integrationsTelegramRoute,
   wikiRoute,
   wikiCreateRoute,
   wikiPageDetailRoute,

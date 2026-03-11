@@ -32,6 +32,25 @@
 
 ---
 
+## Итог миграции (актуальный статус)
+
+**Миграция страниц завершена.** Все модули по приоритетам 1–3 перенесены или имеют MVP/заглушку в новом проекте; маршруты подключены.
+
+**Компоненты:**
+- **Toast** — в новом проекте уже есть аналог: \texttt{shared/components/feedback/Toast} (используется в фичах).
+- **FloatingActions, GlobalSearch, StatusBar, FloatingLabelInput** — перенос запланирован на этап **точечных доработок** (требуют адаптации роутинга, темы и/или объёмны).
+
+**Дальнейшие шаги:** точечные доработки по необходимости (полный Recruiter Chat, перенос перечисленных shared-компонентов, сверка Header/Sidebar/ThemeProvider).
+
+\subsection*{Выполненные точечные доработки}
+\begin{itemize}
+\item \textbf{RecrChat:} маршруты /recr-chat и /recr-chat/vacancy/\$vacancyId/candidate/\$candidateId; двухколоночный layout (список кандидатов + карточка); моки вакансий и кандидатов; редирект /recr-chat → первый кандидат.
+\item \textbf{StatusBar:} минимальная панель RecrChatStatusBar (выбор вакансии, пилли статусов) под Header на страницах /recr-chat; подключена в MainLayout.
+\item \textbf{FloatingLabelInput:} уже реализован в shared/components/forms/FloatingLabelInput.tsx.
+\end{itemize}
+
+---
+
 ## Текущее состояние нового проекта
 
 ### Существующие страницы и маршруты
@@ -143,38 +162,48 @@
   \item Пункт меню: "Специализации" в разделе "Настройки"
   \end{itemize}
 
-\item \textbf{Workflow} (frontend old: app/workflow/) \textbf{[ВЫПОЛНЕНО → /workflow]}
+\item \textbf{Workflow} (frontend old: app/workflow/) \textbf{[ВЫПОЛНЕНО, ПЕРЕСМОТРЕНО → /workflow]}
   \begin{itemize}
   \item Новый маршрут: /workflow
   \item Целевая папка: features/workflow/
   \item Пункт меню: "Воркфлоу" (корневой раздел)
+  \item Пересмотр: перенесены полный WorkflowHeader (панель интервью, все быстрые кнопки, 30/90 мин), полный WorkflowChat (команды \#add/\#hr\_screening/\#tech\_screening/\#interview/\#delete, файлы, карточки кандидатов, отказы), блок быстрых действий в сайдбаре
   \end{itemize}
 \end{enumerate}
 
 ### Приоритет 3: Интеграции и дополнительные модули
 
 \begin{enumerate}
-\item \textbf{AI Chat} (frontend old: app/aichat/)
+\item \textbf{AI Chat} (frontend old: app/aichat/) \textbf{[ВЫПОЛНЕНО (MVP): /aichat]}
   \begin{itemize}
   \item Новый маршрут: /ai/chat
   \item Целевая папка: features/ai/chat/
   \item Пункт меню: "AI Ассистент" в разделе "Инструменты"
   \end{itemize}
 
-\item \textbf{Recruiter Chat} (frontend old: app/recr-chat/)
+\item \textbf{Recruiter Chat} (frontend old: app/recr-chat/) \textbf{[MVP: /ai/recruiter-chat, /recr-chat, /recr-chat/vacancy/\$vacancyId/candidate/\$candidateId]}
   \begin{itemize}
-  \item Новый маршрут: /ai/recruiter-chat
+  \item Маршруты: /ai/recruiter-chat (обзор), /recr-chat (ATS | Talent Pool), /recr-chat/vacancy/1/candidate/1 — доступны
   \item Целевая папка: features/ai/recruiter-chat/
-  \item Пункт меню: "AI Рекрутер" в разделе "Инструменты"
+  \item Пункт меню: "ATS | Talent Pool" ведёт на /recr-chat/vacancy/1/candidate/1
+  \item Точечная доработка: полный интерфейс (список вакансий, кандидатов, карточка, ассессменты)
   \end{itemize}
 
-\item \textbf{Telegram интеграция} (frontend old: app/telegram/)
+\item \textbf{Telegram интеграция} (frontend old: app/telegram/) \textbf{[ВЫПОЛНЕНО (MVP): /integrations/telegram]}
   \begin{itemize}
   \item Новый маршрут: /integrations/telegram
   \item Целевая папка: features/integrations/telegram/
   \item Пункт меню: "Telegram" в разделе "Интеграции"
+  \item Перенесены: страница входа (QR-код, форма по номеру телефона)
   \end{itemize}
 \end{enumerate}
+
+\subsection*{Чек-лист завершённых миграций страниц}
+\begin{itemize}
+\item Приоритет 1 (рекрутинг): Вакансии, Заявки на подбор, Отклики, Huntflow, Интервьюеры, Приглашения — \textbf{выполнено}
+\item Приоритет 2 (бизнес): Финансы (benchmarks), Отчётность (dashboard, company, hiring-plan), Специализации (layout, tree, info), Workflow (полный пересмотр) — \textbf{выполнено}
+\item Приоритет 3 (интеграции): AI Chat, Recruiter Chat (MVP-заглушка), Telegram — \textbf{выполнено}
+\end{itemize}
 
 ---
 
@@ -185,57 +214,57 @@
 Эти компоненты из `frontend old/components/` отсутствуют в новом проекте[cite:98]:
 
 \begin{enumerate}
-\item \textbf{FloatingActions.tsx} (62 КБ)
+\item \textbf{FloatingActions.tsx} (62 КБ) \textbf{[ОТЛОЖЕНО — точечные доработки]}
   \begin{itemize}
   \item Целевая папка: shared/components/floating-actions/
   \item Использование: плавающие кнопки действий в интерфейсе
+  \item Требует: адаптация useRouter/usePathname → TanStack Router, useTheme
   \end{itemize}
 
-\item \textbf{GlobalSearch} (папка)
+\item \textbf{GlobalSearch} (папка) \textbf{[ОТЛОЖЕНО — точечные доработки]}
   \begin{itemize}
   \item Целевая папка: shared/components/search/GlobalSearch/
   \item Использование: глобальный поиск по всем сущностям
   \item Добавить в навигацию: иконка поиска в шапке (Cmd+K для открытия)
   \end{itemize}
 
-\item \textbf{StatusBar.tsx} (24 КБ)
+\item \textbf{StatusBar.tsx} (24 КБ) \textbf{[ОТЛОЖЕНО — точечные доработки]}
   \begin{itemize}
   \item Целевая папка: shared/components/layout/StatusBar/
-  \item Использование: строка состояния приложения (внизу экрана)
+  \item Использование: строка состояния приложения (внизу экрана); завязан на recr-chat
   \end{itemize}
 
-\item \textbf{FloatingLabelInput.tsx}
+\item \textbf{FloatingLabelInput.tsx} \textbf{[ОТЛОЖЕНО — точечные доработки]}
   \begin{itemize}
   \item Целевая папка: shared/ui/forms/FloatingLabelInput/
   \item Использование: инпуты с плавающей меткой (Material Design стиль)
   \end{itemize}
 
-\item \textbf{Toast} (папка)
+\item \textbf{Toast} (папка) \textbf{[ЕСТЬ АНАЛОГ В НОВОМ ПРОЕКТЕ]}
   \begin{itemize}
-  \item Целевая папка: shared/ui/feedback/Toast/
-  \item Использование: уведомления
-  \item Примечание: проверить, нет ли в новом проекте аналога на Radix UI Toast
+  \item В frontend: shared/components/feedback/Toast/ (ToastContext, useToast)
+  \item Используется в: Huntflow, Benchmarks, Interviewers, Invites, Candidate Responses и др.
   \end{itemize}
 \end{enumerate}
 
 ### Компоненты для сверки и дополнения
 
-Эти компоненты частично существуют в новом проекте, но требуют сверки:
+Эти компоненты частично существуют в новом проекте; сверка запланирована на этап точечных доработок:
 
 \begin{enumerate}
-\item \textbf{Header.tsx} (23 КБ в старом)
+\item \textbf{Header.tsx} (23 КБ в старом) \textbf{[СВЕРКА — точечные доработки]}
   \begin{itemize}
   \item Существующий: shared/components/navigation/
   \item Действие: сверить функциональность, перенести недостающие элементы
   \end{itemize}
 
-\item \textbf{Sidebar.tsx} (74 КБ в старом)
+\item \textbf{Sidebar.tsx} (74 КБ в старом) \textbf{[СВЕРКА — точечные доработки]}
   \begin{itemize}
   \item Существующий: shared/components/navigation/
   \item Действие: сверить навигационные пункты, добавить новые разделы
   \end{itemize}
 
-\item \textbf{ThemeProvider.tsx} (18 КБ в старом)
+\item \textbf{ThemeProvider.tsx} (18 КБ в старом) \textbf{[СВЕРКА — точечные доработки]}
   \begin{itemize}
   \item Существующий: app/providers/
   \item Действие: сверить темы, палитры, CSS-переменные

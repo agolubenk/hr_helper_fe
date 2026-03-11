@@ -5,6 +5,7 @@ import Header from '@/shared/components/navigation/Header/Header'
 import Sidebar from '@/shared/components/navigation/Sidebar/Sidebar'
 import { Footer } from '@/shared/components/navigation/Footer/Footer'
 import FloatingActions from '@/shared/components/navigation/FloatingActions/FloatingActions'
+import { RecrChatStatusBar } from '@/shared/components/layout/StatusBar/RecrChatStatusBar'
 import { useTheme } from '@/app/providers/ThemeProvider'
 import styles from './MainLayout.module.css'
 
@@ -126,6 +127,7 @@ export function MainLayout({
         onLogout={handleLogout}
         leftContent={leftHeaderContent}
       />
+      {isRecrChatPage && <RecrChatStatusBar />}
       <Sidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <FloatingActions />
 

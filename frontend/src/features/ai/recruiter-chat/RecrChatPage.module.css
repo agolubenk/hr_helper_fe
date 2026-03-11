@@ -1,0 +1,99 @@
+.container {
+  display: flex;
+  height: calc(100vh - 112px);
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--gray-2);
+  overflow: hidden;
+}
+
+.leftColumn {
+  flex: 1;
+  max-width: 650px;
+  min-width: 280px;
+  background-color: var(--color-surface, var(--gray-1));
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabSwitcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.tabButton {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.candidatesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.candidateItem {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--color-surface, var(--gray-1));
+}
+
+.candidateItem:hover {
+  background-color: rgba(33, 128, 160, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.candidateItem.selected {
+  background-color: rgba(33, 128, 160, 0.12);
+  border-left: 3px solid #2180a0;
+}
+
+.rightColumn {
+  flex: 2;
+  min-width: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.candidateCard {
+  padding: 24px;
+  background-color: var(--color-surface, var(--gray-1));
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cardSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 799px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .leftColumn {
+    max-width: 100%;
+  }
+
+  .rightColumn {
+    min-width: 100%;
+  }
+}

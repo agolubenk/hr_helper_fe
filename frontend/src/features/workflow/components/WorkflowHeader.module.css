@@ -250,3 +250,81 @@
   opacity: 0.7 !important;
 }
 
+/* Блок настроек интервью */
+.interviewOptionsPanel {
+  background: color-mix(in srgb, var(--gray-2) 50%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 4px;
+  border: 1px solid var(--gray-6);
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
+}
+
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .interviewOptionsPanel {
+    background: rgba(245, 245, 245, 0.5);
+  }
+}
+
+.formatButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-6);
+}
+
+.formatButton[data-selected="true"] {
+  background-color: var(--accent-9);
+  border-color: var(--accent-9);
+  color: #ffffff;
+}
+
+.formatButton:hover {
+  background-color: var(--gray-4);
+}
+
+.formatButton[data-selected="true"]:hover {
+  background-color: var(--accent-10);
+}
+
+.officeToggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.officeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-6);
+  min-height: 27px;
+}
+
+.officeButton[data-selected="true"] {
+  background-color: var(--accent-9);
+  border-color: var(--accent-9);
+  color: #ffffff;
+}
+
+.officeButton:hover {
+  background-color: var(--gray-4);
+}
+
+.officeButton[data-selected="true"]:hover {
+  background-color: var(--accent-10);
+}
+

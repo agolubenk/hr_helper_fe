@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Button, Flex, Text, TextArea, TextField } from '@radix-ui/themes'
+import { Box, Button, Flex, Text, TextArea } from '@radix-ui/themes'
 import { ChatBubbleIcon, PlusIcon } from '@radix-ui/react-icons'
 import { useMemo, useRef, useState } from 'react'
 import styles from './AIChatPage.module.css'
