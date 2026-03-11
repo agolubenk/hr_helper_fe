@@ -12,6 +12,9 @@ import { VacanciesPage } from '@/features/recruiting/vacancies/VacanciesPage'
 import { HiringRequestsPage } from '@/features/recruiting/hiring-requests/HiringRequestsPage'
 import { InvitesPage } from '@/features/recruiting/invites/InvitesPage'
 import { CandidateResponsesPage } from '@/features/recruiting/candidate-responses/CandidateResponsesPage'
+import { InterviewersPage } from '@/features/recruiting/interviewers/InterviewersPage'
+import { HuntflowPage } from '@/features/recruiting/huntflow/HuntflowPage'
+import { WorkflowPage } from '@/features/workflow/WorkflowPage'
 import CalendarPage from './routes/CalendarPage'
 import CalendarSettingsPage from './routes/CalendarSettingsPage'
 import { CompanySettingsPage } from './routes/CompanySettingsPage'
@@ -103,7 +106,7 @@ const accountProfileRoute = createRoute({
 const workflowRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/workflow',
-  component: () => layout(<PlaceholderPage title="Чат (Workflow)" />),
+  component: () => layout(<WorkflowPage />),
 })
 
 const vacanciesRoute = createRoute({
@@ -136,10 +139,22 @@ const financeBenchmarksRoute = createRoute({
   component: () => layout(<PlaceholderPage title="Бенчмарки" />),
 })
 
+const huntflowRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/huntflow',
+  component: () => layout(<HuntflowPage />, 'Huntflow'),
+})
+
+const recruitingHuntflowRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recruiting/huntflow',
+  component: () => layout(<HuntflowPage />, 'Huntflow'),
+})
+
 const interviewersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/interviewers',
-  component: () => layout(<PlaceholderPage title="Интервьюеры" />),
+  component: () => layout(<InterviewersPage />, 'Интервьюеры'),
 })
 
 const aichatRoute = createRoute({
@@ -996,6 +1011,8 @@ const routeTree = rootRoute.addChildren([
   hiringRequestsRoute,
   invitesRoute,
   financeBenchmarksRoute,
+  huntflowRoute,
+  recruitingHuntflowRoute,
   interviewersRoute,
   aichatRoute,
   wikiRoute,

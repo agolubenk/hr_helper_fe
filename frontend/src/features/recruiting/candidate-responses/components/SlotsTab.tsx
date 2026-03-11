@@ -128,17 +128,17 @@ export function SlotsTab() {
             <Callout.Icon>
               <InfoCircledIcon />
             </Callout.Icon>
-            <Callout.Text asChild>
-              <div>
-                <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
-                  Пример результата:
-                </Text>
-                <Box className={styles.exampleBox}>
-                  <Text size="2" style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
-                    {exampleResult}
-                  </Text>
-                </Box>
-              </div>
+            <Callout.Text>
+              <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
+                Пример результата:
+              </Text>
+              <Text
+                size="2"
+                className={styles.exampleBox}
+                style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', display: 'block' }}
+              >
+                {exampleResult}
+              </Text>
             </Callout.Text>
           </Callout.Root>
 
