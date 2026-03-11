@@ -15,6 +15,14 @@ import { CandidateResponsesPage } from '@/features/recruiting/candidate-response
 import { InterviewersPage } from '@/features/recruiting/interviewers/InterviewersPage'
 import { HuntflowPage } from '@/features/recruiting/huntflow/HuntflowPage'
 import { WorkflowPage } from '@/features/workflow/WorkflowPage'
+import { BenchmarksPage } from '@/features/finance/benchmarks/BenchmarksPage'
+import { ReportingDashboardPage } from '@/features/reporting/ReportingDashboardPage'
+import { CompanyReportPage } from '@/features/reporting/CompanyReportPage'
+import { HiringPlanPage } from '@/features/reporting/HiringPlanPage'
+import { HiringPlanYearlyPage } from '@/features/reporting/HiringPlanYearlyPage'
+import { SpecializationsLayout } from '@/features/specializations/SpecializationsLayout'
+import { SpecializationsRootPage } from '@/features/specializations/pages/SpecializationsRootPage'
+import { SpecializationInfoPage } from '@/features/specializations/pages/SpecializationInfoPage'
 import CalendarPage from './routes/CalendarPage'
 import CalendarSettingsPage from './routes/CalendarSettingsPage'
 import { CompanySettingsPage } from './routes/CompanySettingsPage'
@@ -136,7 +144,7 @@ const invitesRoute = createRoute({
 const financeBenchmarksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/finance/benchmarks',
-  component: () => layout(<PlaceholderPage title="Бенчмарки" />),
+  component: () => layout(<BenchmarksPage />, 'Бенчмарки'),
 })
 
 const huntflowRoute = createRoute({
@@ -214,7 +222,43 @@ const blogPostCreateRoute = createRoute({
 const reportingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/reporting',
-  component: () => layout(<PlaceholderPage title="Отчетность" />),
+  component: () => layout(<ReportingDashboardPage />, 'Отчетность'),
+})
+
+const reportingCompanyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reporting/company',
+  component: () => layout(<CompanyReportPage />, 'Отчет по компании'),
+})
+
+const reportingHiringPlanRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reporting/hiring-plan',
+  component: () => layout(<HiringPlanPage />, 'План найма'),
+})
+
+const reportingHiringPlanYearlyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reporting/hiring-plan/yearly',
+  component: () => layout(<HiringPlanYearlyPage />, 'План найма — годовая таблица'),
+})
+
+const specializationsLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/specializations',
+  component: () => layout(<SpecializationsLayout />, 'Специализации'),
+})
+
+const specializationsIndexRoute = createRoute({
+  getParentRoute: () => specializationsLayoutRoute,
+  path: '/',
+  component: () => <SpecializationsRootPage />,
+})
+
+const specializationInfoRoute = createRoute({
+  getParentRoute: () => specializationsLayoutRoute,
+  path: '$id/info',
+  component: () => <SpecializationInfoPage />,
 })
 
 const companySettingsRoute = createRoute({
@@ -1024,6 +1068,10 @@ const routeTree = rootRoute.addChildren([
   blogPostEditRoute,
   blogPostDetailRoute,
   reportingRoute,
+  reportingCompanyRoute,
+  reportingHiringPlanRoute,
+  reportingHiringPlanYearlyRoute,
+  specializationsLayoutRoute.addChildren([specializationsIndexRoute, specializationInfoRoute]),
   companySettingsRoute,
   companySettingsOrgStructureRoute,
   companySettingsGradesRoute,

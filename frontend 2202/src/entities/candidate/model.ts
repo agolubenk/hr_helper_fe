@@ -1,2 +1,0 @@
-// Candidate type
-export {}

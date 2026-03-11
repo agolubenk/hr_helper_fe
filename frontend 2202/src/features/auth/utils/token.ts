@@ -1,2 +1,0 @@
-// JWT utils
-export {}

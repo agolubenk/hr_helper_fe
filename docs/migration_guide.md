@@ -75,42 +75,42 @@
 Эти страницы отсутствуют в новом проекте и требуют переноса в первую очередь[cite:98]:
 
 \begin{enumerate}
-\item \textbf{Вакансии} (frontend old: app/vacancies/)
+\item \textbf{Вакансии} (frontend old: app/vacancies/) \textbf{[ВЫПОЛНЕНО → /vacancies]}
   \begin{itemize}
   \item Новый маршрут: /recruiting/vacancies
   \item Целевая папка: features/recruiting/vacancies/
   \item Пункт меню: "Вакансии" в разделе "Рекрутинг"
   \end{itemize}
 
-\item \textbf{Заявки на подбор} (frontend old: app/hiring-requests/)
+\item \textbf{Заявки на подбор} (frontend old: app/hiring-requests/) \textbf{[ВЫПОЛНЕНО → /hiring-requests]}
   \begin{itemize}
   \item Новый маршрут: /recruiting/hiring-requests
   \item Целевая папка: features/recruiting/hiring-requests/
   \item Пункт меню: "Заявки на подбор" в разделе "Рекрутинг"
   \end{itemize}
 
-\item \textbf{Отклики кандидатов} (frontend old: app/candidate-responses/)
+\item \textbf{Отклики кандидатов} (frontend old: app/candidate-responses/) \textbf{[ВЫПОЛНЕНО → /candidate-responses]}
   \begin{itemize}
   \item Новый маршрут: /recruiting/candidate-responses
   \item Целевая папка: features/recruiting/candidate-responses/
   \item Пункт меню: "Отклики" в разделе "Рекрутинг"
   \end{itemize}
 
-\item \textbf{Интеграция Huntflow} (frontend old: app/huntflow/)
+\item \textbf{Интеграция Huntflow} (frontend old: app/huntflow/) \textbf{[ВЫПОЛНЕНО → /huntflow, /recruiting/huntflow]}
   \begin{itemize}
   \item Новый маршрут: /recruiting/huntflow
   \item Целевая папка: features/recruiting/huntflow/
   \item Пункт меню: "Huntflow" в разделе "Интеграции"
   \end{itemize}
 
-\item \textbf{Управление интервьюерами} (frontend old: app/interviewers/)
+\item \textbf{Управление интервьюерами} (frontend old: app/interviewers/) \textbf{[ВЫПОЛНЕНО → /interviewers]}
   \begin{itemize}
   \item Новый маршрут: /recruiting/interviewers
   \item Целевая папка: features/recruiting/interviewers/
   \item Пункт меню: "Интервьюеры" в разделе "Рекрутинг"
   \end{itemize}
 
-\item \textbf{Приглашения} (frontend old: app/invites/)
+\item \textbf{Приглашения} (frontend old: app/invites/) \textbf{[ВЫПОЛНЕНО → /invites]}
   \begin{itemize}
   \item Новый маршрут: /recruiting/invites
   \item Целевая папка: features/recruiting/invites/
@@ -121,14 +121,14 @@
 ### Приоритет 2: Бизнес-критичные модули
 
 \begin{enumerate}
-\item \textbf{Финансы} (frontend old: app/finance/)
+\item \textbf{Финансы} (frontend old: app/finance/) \textbf{[ВЫПОЛНЕНО (частично): /finance/benchmarks]}
   \begin{itemize}
   \item Новый маршрут: /finance
   \item Целевая папка: features/finance/
   \item Пункт меню: "Финансы" (корневой раздел)
   \end{itemize}
 
-\item \textbf{Отчётность} (frontend old: app/reporting/)
+\item \textbf{Отчётность} (frontend old: app/reporting/) \textbf{[ВЫПОЛНЕНО (MVP): /reporting, /reporting/company, /reporting/hiring-plan*]}
   \begin{itemize}
   \item Новый маршрут: /reporting
   \item Целевая папка: features/reporting/
@@ -136,14 +136,14 @@
   \item Примечание: не путать с существующей /analytics — это разные модули
   \end{itemize}
 
-\item \textbf{Специализации} (frontend old: app/specializations/)
+\item \textbf{Специализации} (frontend old: app/specializations/) \textbf{[ВЫПОЛНЕНО (MVP): /specializations, /specializations/$id/info]}
   \begin{itemize}
   \item Новый маршрут: /settings/specializations
   \item Целевая папка: features/specializations/
   \item Пункт меню: "Специализации" в разделе "Настройки"
   \end{itemize}
 
-\item \textbf{Workflow} (frontend old: app/workflow/)
+\item \textbf{Workflow} (frontend old: app/workflow/) \textbf{[ВЫПОЛНЕНО → /workflow]}
   \begin{itemize}
   \item Новый маршрут: /workflow
   \item Целевая папка: features/workflow/

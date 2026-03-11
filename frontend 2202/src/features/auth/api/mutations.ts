@@ -1,2 +1,0 @@
-// useLogin, useLogout, useRegister
-export {}
