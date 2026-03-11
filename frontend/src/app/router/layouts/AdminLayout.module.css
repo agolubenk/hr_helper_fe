@@ -1,0 +1,32 @@
+.adminSidebar {
+  flex-shrink: 0;
+}
+
+.adminMenuItem {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.adminMenuItem:hover {
+  background-color: var(--gray-a4);
+}
+
+.adminMenuItemActive {
+  background-color: var(--accent-a4) !important;
+}
+
+.adminSubmenuItem {
+  cursor: pointer;
+  border-radius: 6px;
+  padding-left: 28px !important;
+  transition: background-color 0.15s ease;
+}
+
+.adminSubmenuItem:hover {
+  background-color: var(--gray-a4);
+}
+
+.adminSubmenuItemActive {
+  background-color: var(--accent-a4) !important;
+}

@@ -1,0 +1,124 @@
+.extensionSettings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.extensionStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background-color: var(--gray-a2);
+  border-radius: var(--radius-md);
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-medium);
+  color: var(--green-11);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--green-9);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tokenSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tokenHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tokenHeaderIcon,
+.tokenInputIcon {
+  color: var(--gray-11);
+  flex-shrink: 0;
+}
+
+.tokenDescription {
+  margin: 0;
+}
+
+.tokenInputGroup {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.tokenInput {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--gray-a2);
+  border: var(--panel-border);
+  border-radius: var(--radius-md);
+}
+
+.tokenField {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--gray-12);
+  outline: none;
+  min-width: 0;
+}
+
+.tokenInfo {
+  padding: var(--space-3);
+  background-color: var(--gray-a2);
+  border-radius: var(--radius-md);
+}
+
+.tokenInfo p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.tokenLink {
+  color: var(--accent-11);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.tokenLink:hover {
+  text-decoration: underline;
+}
+
+.wikiLinkSection {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--gray-a5);
+}
+
+.wikiLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--accent-11);
+  text-decoration: none;
+  font-weight: var(--font-medium);
+}
+
+.wikiLink:hover {
+  text-decoration: underline;
+}

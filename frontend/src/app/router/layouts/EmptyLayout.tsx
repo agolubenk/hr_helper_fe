@@ -1,0 +1,2 @@
+// Minimal layout
+export {}

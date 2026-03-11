@@ -1,0 +1,2 @@
+// Entity base types
+export {}

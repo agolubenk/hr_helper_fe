@@ -1,0 +1,17 @@
+/* Адаптивные стили для контента в MainLayout */
+
+.contentWrapper {
+  /* Контент растягивается по высоте, страница скроллится естественно */
+}
+
+.content {
+  /* Стили применяются через inline styles в компоненте */
+}
+
+@media (max-width: 767px) {
+  .content {
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    width: calc(100% - 24px) !important;
+  }
+}

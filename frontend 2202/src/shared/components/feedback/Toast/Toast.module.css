@@ -1,0 +1,182 @@
+.toastContainer {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: var(--z-toasts) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.toast {
+  position: relative;
+  min-width: 320px;
+  max-width: 420px;
+  pointer-events: auto;
+  animation: slideIn var(--duration-slow) var(--ease-out);
+  border-radius: var(--panel-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: var(--panel-border);
+  transition: all var(--duration-slow) var(--ease-out);
+}
+
+.toast:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.toastExiting {
+  animation: slideOut var(--duration-slow) var(--ease-out) forwards;
+}
+
+[data-theme="light"] .toast,
+.light-theme .toast {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .toast,
+.dark-theme .toast {
+  background: rgba(28, 28, 31, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.toastInfo { border-left: 4px solid var(--blue-9); }
+.toastWarning { border-left: 4px solid var(--yellow-9); }
+.toastError { border-left: 4px solid var(--red-9); }
+.toastSuccess { border-left: 4px solid var(--green-9); }
+.toastSystem { border-left: 4px solid var(--gray-9); }
+
+.toastHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-3) var(--space-5);
+  position: relative;
+}
+
+.toastIcon { flex-shrink: 0; width: 20px; height: 20px; }
+.toastIconInfo { color: var(--blue-9); }
+.toastIconWarning { color: var(--yellow-9); }
+.toastIconError { color: var(--red-9); }
+.toastIconSuccess { color: var(--green-9); }
+.toastIconSystem { color: var(--gray-9); }
+
+.toastTitle {
+  flex: 1;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+[data-theme="light"] .toastTitle,
+.light-theme .toastTitle { color: var(--gray-12); }
+[data-theme="dark"] .toastTitle,
+.dark-theme .toastTitle { color: var(--gray-12); }
+
+.toastCloseButton {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-normal) var(--ease-default);
+  color: var(--gray-9);
+}
+
+.toastCloseButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--gray-12);
+}
+
+[data-theme="dark"] .toastCloseButton:hover,
+.dark-theme .toastCloseButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toastProgressBar {
+  height: 3px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.toastProgressBarFill {
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: progress 3s linear forwards;
+}
+
+.toastProgressBarInfo { background: var(--blue-9); }
+.toastProgressBarWarning { background: var(--yellow-9); }
+.toastProgressBarError { background: var(--red-9); }
+.toastProgressBarSuccess { background: var(--green-9); }
+.toastProgressBarSystem { background: var(--gray-9); }
+
+.toastBody {
+  padding: var(--space-3) var(--space-5) var(--space-4) var(--space-5);
+}
+
+.toastMessage {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  margin: 0;
+}
+
+[data-theme="light"] .toastMessage,
+.light-theme .toastMessage { color: var(--gray-11); }
+[data-theme="dark"] .toastMessage,
+.dark-theme .toastMessage { color: var(--gray-11); }
+
+.toastActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--panel-border);
+}
+
+[data-theme="light"] .toastActions,
+.light-theme .toastActions { border-top-color: rgba(0, 0, 0, 0.08); }
+[data-theme="dark"] .toastActions,
+.dark-theme .toastActions { border-top-color: rgba(255, 255, 255, 0.08); }
+
+@keyframes slideIn {
+  from { transform: translateX(calc(100% + var(--space-6))); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(calc(100% + var(--space-6))); opacity: 0; }
+}
+
+@keyframes progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@media (max-width: 768px) {
+  .toastContainer {
+    bottom: var(--space-4);
+    right: var(--space-4);
+    left: var(--space-4);
+  }
+  .toast {
+    min-width: auto;
+    max-width: 100%;
+  }
+}
