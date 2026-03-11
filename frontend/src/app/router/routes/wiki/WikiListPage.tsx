@@ -131,7 +131,7 @@ export function WikiListPage() {
             </TextField.Slot>
           </TextField.Root>
           <Select.Root value={category || '_'} onValueChange={(v) => setCategory(v === '_' ? '' : v)}>
-            <Select.Trigger size="1" placeholder="Категория" className={styles.select} />
+            <Select.Trigger placeholder="Категория" className={styles.select} />
             <Select.Content>
               {WIKI_CATEGORIES.map((c) => (
                 <Select.Item key={c.value || '_'} value={c.value || '_'}>
@@ -141,7 +141,7 @@ export function WikiListPage() {
             </Select.Content>
           </Select.Root>
           <Select.Root value={tag || '_'} onValueChange={(v) => setTag(v === '_' ? '' : v)}>
-            <Select.Trigger size="1" placeholder="Тег" className={styles.select} />
+            <Select.Trigger placeholder="Тег" className={styles.select} />
             <Select.Content>
               <Select.Item value="_">Все теги</Select.Item>
               {tags.map((t) => (
@@ -152,7 +152,7 @@ export function WikiListPage() {
             </Select.Content>
           </Select.Root>
           <Select.Root value={app || '_'} onValueChange={(v) => setApp(v === '_' ? '' : v)}>
-            <Select.Trigger size="1" placeholder="Приложение" className={styles.select} />
+            <Select.Trigger placeholder="Приложение" className={styles.select} />
             <Select.Content>
               {RELATED_APP_CHOICES.map((a) => (
                 <Select.Item key={a.value || '_'} value={a.value || '_'}>

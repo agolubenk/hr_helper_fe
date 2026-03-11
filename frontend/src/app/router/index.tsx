@@ -8,6 +8,10 @@ import { MainLayout } from './layouts/MainLayout'
 import { HomePage } from './routes/home'
 import { ProfilePage } from './routes/ProfilePage'
 import { PlaceholderPage } from './routes/PlaceholderPage'
+import { VacanciesPage } from '@/features/recruiting/vacancies/VacanciesPage'
+import { HiringRequestsPage } from '@/features/recruiting/hiring-requests/HiringRequestsPage'
+import { InvitesPage } from '@/features/recruiting/invites/InvitesPage'
+import { CandidateResponsesPage } from '@/features/recruiting/candidate-responses/CandidateResponsesPage'
 import CalendarPage from './routes/CalendarPage'
 import CalendarSettingsPage from './routes/CalendarSettingsPage'
 import { CompanySettingsPage } from './routes/CompanySettingsPage'
@@ -105,7 +109,7 @@ const workflowRoute = createRoute({
 const vacanciesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/vacancies',
-  component: () => layout(<PlaceholderPage title="Вакансии" />),
+  component: () => layout(<VacanciesPage />, 'Вакансии'),
 })
 
 const vacanciesSalaryRoute = createRoute({
@@ -117,7 +121,13 @@ const vacanciesSalaryRoute = createRoute({
 const hiringRequestsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/hiring-requests',
-  component: () => layout(<PlaceholderPage title="Заявки на подбор" />),
+  component: () => layout(<HiringRequestsPage />, 'Заявки на подбор'),
+})
+
+const invitesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/invites',
+  component: () => layout(<InvitesPage />, 'Инвайты'),
 })
 
 const financeBenchmarksRoute = createRoute({
@@ -886,7 +896,7 @@ const adminAnalyticsMetricsRoute = createRoute({
 const candidateResponsesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/candidate-responses',
-  component: () => layout(<PlaceholderPage title="Ответы кандидатам" />, 'Ответы кандидатам'),
+  component: () => layout(<CandidateResponsesPage />, 'Ответы кандидатам'),
 })
 
 const settingsModulesRoute = createRoute({
@@ -984,6 +994,7 @@ const routeTree = rootRoute.addChildren([
   vacanciesRoute,
   vacanciesSalaryRoute,
   hiringRequestsRoute,
+  invitesRoute,
   financeBenchmarksRoute,
   interviewersRoute,
   aichatRoute,

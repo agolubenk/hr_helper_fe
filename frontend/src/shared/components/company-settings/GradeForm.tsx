@@ -31,7 +31,7 @@ export default function GradeForm({
   additionalFields = [],
   onSave,
   onCancel,
-  isCreating,
+  isCreating: _isCreating,
 }: GradeFormProps) {
   const toast = useToast()
   const [formData, setFormData] = useState<Partial<Grade>>({

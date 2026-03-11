@@ -27,6 +27,8 @@ export interface WorkingHours {
   }
 }
 
+export type CustomWorkingSchedule = NonNullable<WorkingHours['custom']>
+
 export const DAY_KEYS = [
   'monday',
   'tuesday',
@@ -61,7 +63,7 @@ export const DAY_NAMES_SHORT: Record<string, string> = {
 
 export const DEFAULT_UNIFORM = { start: '09:00', end: '18:00' } as const
 
-export function createDefaultCustomSchedule(start = '09:00', end = '18:00'): WorkingHours['custom'] {
+export function createDefaultCustomSchedule(start = '09:00', end = '18:00'): CustomWorkingSchedule {
   return {
     monday: { start, end, isWorkday: true },
     tuesday: { start, end, isWorkday: true },
@@ -78,18 +80,15 @@ export function buildWorkTimeByDayFromUniform(
   start: string,
   end: string,
   meetingInterval?: string
-): WorkingHours['custom'] {
+): CustomWorkingSchedule {
   const schedule = createDefaultCustomSchedule(start, end)
   const intervalStr = meetingInterval ? String(meetingInterval).replace(/\s*мин\s*/i, '') : undefined
-  return DAY_KEYS.reduce<WorkingHours['custom']>((acc, day) => {
+  for (const day of DAY_KEYS) {
     const base = schedule[day]
-    if (!base) return acc
-    acc[day] = {
-      ...base,
-      meetingInterval: intervalStr || base.meetingInterval,
-    }
-    return acc
-  }, {})
+    if (!base) continue
+    schedule[day] = { ...base, meetingInterval: intervalStr || base.meetingInterval }
+  }
+  return schedule
 }
 
 /** Проверяет, образуют ли рабочие дни последовательный диапазон */

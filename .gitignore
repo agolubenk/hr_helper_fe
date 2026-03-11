@@ -37,6 +37,9 @@ pnpm-debug.log*
 .idea/
 .vscode/
 
+# Legacy workspace (keep out of git)
+frontend old/
+
 # Project-specific generated reports (frontend old)
 frontend old/api_coverage_report.json
 frontend old/detailed_coverage_report.json

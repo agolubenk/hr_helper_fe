@@ -554,6 +554,7 @@ function MenuItemComponent({ item, isActive = false, level = 0, onNavigate, path
  */
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { theme } = useTheme()
+  const navigate = useNavigate()
   const { pathname } = useRouterState().location
   // Проверка, является ли текущая страница recr-chat (для корректного позиционирования)
   const isRecrChatPage = pathname?.startsWith('/recr-chat')

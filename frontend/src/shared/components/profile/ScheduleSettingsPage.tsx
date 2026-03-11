@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, Flex, Text, Grid, Button, Switch, Select } from '@radix-ui/themes'
-import { ClockIcon, ChevronLeftIcon, CalendarIcon, Cross2Icon, CheckIcon } from '@radix-ui/react-icons'
+import { ClockIcon, ChevronLeftIcon, CalendarIcon, CheckIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
 import { FloatingLabelInput } from '@/shared/components/forms/FloatingLabelInput'
 import { DAY_KEYS, DAY_NAMES } from '@/shared/lib/types/working-hours'

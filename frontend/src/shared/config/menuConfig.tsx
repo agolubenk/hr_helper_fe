@@ -22,7 +22,6 @@ import {
   ClipboardIcon,
   ClockIcon,
   StarIcon,
-  DotsHorizontalIcon,
   GlobeIcon,
   PlusIcon,
   MixerHorizontalIcon,
@@ -81,29 +80,6 @@ const VacancyIcon = () => (
 const AiChatIcon = () => (
   <Box style={{ width: '16px', height: '16px', borderRadius: '50%', border: '1px solid var(--gray-12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <Box style={{ width: '6px', height: '6px', backgroundColor: 'var(--gray-12)', borderRadius: '50%' }} />
-  </Box>
-)
-
-/** Funnel/воронка */
-const FunnelIcon = () => (
-  <Box style={{ width: '16px', height: '16px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2 2L6 6V12L10 14V6L14 2H2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  </Box>
-)
-
-/** Reporting company */
-const ReportingCompanyIcon = () => (
-  <Box style={{ width: '16px', height: '16px', border: '1px solid var(--gray-12)', borderRadius: '2px', position: 'relative' }}>
-    <Box style={{ width: '10px', height: '6px', border: '1px solid var(--gray-12)', borderRadius: '1px', position: 'absolute', top: '2px', left: '2px' }} />
-  </Box>
-)
-
-/** Interviewer для отчётности */
-const ReportingInterviewerIcon = () => (
-  <Box style={{ width: '16px', height: '16px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <PersonIcon width={12} height={12} style={{ color: 'var(--gray-12)' }} />
   </Box>
 )
 

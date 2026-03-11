@@ -46,10 +46,6 @@ function downloadBlob(blob: Blob, filename: string) {
   triggerDownload(url, filename)
 }
 
-function downloadDataUrl(dataUrl: string, filename: string) {
-  triggerDownload(dataUrl, filename)
-}
-
 function OrgStructureVisual({
   departments,
   expandedNodes,
@@ -415,7 +411,7 @@ function OrgStructureVisual({
               transformOrigin: 'center center',
             }}
           >
-          <Flex direction="row" gap="6" justify="center" wrap="wrap" align="flex-start" className={styles.treeRoot}>
+          <Flex direction="row" gap="6" justify="center" wrap="wrap" align="start" className={styles.treeRoot}>
             {departments.map((dept) => (
               <TreeNode key={dept.id} node={dept} />
             ))}
@@ -693,7 +689,7 @@ export function OrgStructurePage() {
     }
   }
 
-  const handleEditDepartment = async (department: Department) => {
+  const handleEditDepartment = async (_department: Department) => {
     setSaving(true)
     try {
       setTimeout(() => {

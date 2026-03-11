@@ -130,7 +130,7 @@ export default function AccentColorSettings() {
               <Text
                 size="2"
                 weight={themePreference === opt.id ? 'medium' : 'regular'}
-                color={themePreference === opt.id ? 'highContrast' : 'gray'}
+                color={themePreference === opt.id ? undefined : 'gray'}
                 style={{ marginTop: '8px', display: 'block' }}
               >
                 {opt.label}

@@ -114,27 +114,33 @@ function InfoRow({
   )
 }
 
-function formatScheduleForClipboard(workTimeByDay: WorkingHours['custom']): string {
-  const rows = DAY_KEYS.filter((d) => workTimeByDay[d]?.isWorkday).map((d) => {
-    const s = workTimeByDay[d]!
-    return {
-      day: (DAY_NAMES as Record<string, string>)[d] ?? d,
-      start: s.start,
-      end: s.end,
-    }
+function formatScheduleForClipboard(workTimeByDay: NonNullable<WorkingHours['custom']>): string {
+  const rows = DAY_KEYS.flatMap((d) => {
+    const s = workTimeByDay[d]
+    if (!s?.isWorkday) return []
+    return [
+      {
+        day: (DAY_NAMES as Record<string, string>)[d] ?? d,
+        start: s.start,
+        end: s.end,
+      },
+    ]
   })
   return rows.map((r) => `${r.day}\t${r.start}-${r.end}`).join('\n')
 }
 
-function ScheduleTable({ workTimeByDay }: { workTimeByDay: WorkingHours['custom'] }) {
-  const rows = DAY_KEYS.filter((d) => workTimeByDay[d]?.isWorkday).map((d) => {
-    const s = workTimeByDay[d]!
-    return {
-      day: (DAY_NAMES as Record<string, string>)[d] ?? d,
-      start: s.start,
-      end: s.end,
-      interval: s.meetingInterval ? `${s.meetingInterval} мин` : '—',
-    }
+function ScheduleTable({ workTimeByDay }: { workTimeByDay: NonNullable<WorkingHours['custom']> }) {
+  const rows = DAY_KEYS.flatMap((d) => {
+    const s = workTimeByDay[d]
+    if (!s?.isWorkday) return []
+    return [
+      {
+        day: (DAY_NAMES as Record<string, string>)[d] ?? d,
+        start: s.start,
+        end: s.end,
+        interval: s.meetingInterval ? `${s.meetingInterval} мин` : '—',
+      },
+    ]
   })
   if (rows.length === 0) return null
   return (
@@ -163,7 +169,7 @@ function ScheduleTable({ workTimeByDay }: { workTimeByDay: WorkingHours['custom'
   )
 }
 
-function ScheduleSection({ workTimeByDay }: { workTimeByDay: WorkingHours['custom'] }) {
+function ScheduleSection({ workTimeByDay }: { workTimeByDay: NonNullable<WorkingHours['custom']> }) {
   const toast = useToast()
 
   const handleCopy = (e: React.MouseEvent) => {
