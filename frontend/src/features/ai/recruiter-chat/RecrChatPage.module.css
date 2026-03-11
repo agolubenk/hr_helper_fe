@@ -1,6 +1,7 @@
+/* 48px — высота футера; контент не должен заходить под футер */
 .container {
   display: flex;
-  height: calc(100vh - 112px);
+  height: calc(100vh - 112px - 48px);
   gap: 16px;
   padding: 16px;
   background-color: var(--gray-2);
@@ -59,6 +60,19 @@
   border-left: 3px solid #2180a0;
 }
 
+.unviewedDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  cursor: pointer;
+}
+
 .rightColumn {
   flex: 2;
   min-width: 340px;
@@ -82,6 +96,179 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Workflow strip */
+.workflowButtonsContainer {
+  padding: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.quickButton {
+  width: 44px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+}
+
+.quickButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.workflowToggle {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workflowButton {
+  position: relative;
+  padding: 0 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #1e40af;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.workflowButton[data-selected="true"] {
+  background-color: #10b981;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.workflowButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.workflowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selectedBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+.slotsButtonText {
+  display: inline;
+}
+
+@media (max-width: 600px) {
+  .slotsButtonText {
+    display: none;
+  }
+}
+
+/* Application Details table */
+.applicationDetailsTable :global(.rt-TableRoot) {
+  width: 100%;
+}
+
+.applicationDetailsTable :global(.rt-TableRoot table) {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.applicationDetailsTable :global(.rt-TableRoot table tbody tr td:first-child) {
+  width: 35%;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.applicationDetailsTable :global(.rt-TableRoot table tbody tr td:last-child) {
+  width: 65%;
+}
+
+.chatContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vacancySettings {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.subTabs {
+  border-bottom: 1px solid var(--gray-6);
+}
+
+.interviewOptionsPanel {
+  background: color-mix(in srgb, var(--gray-2) 50%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--gray-6);
+}
+
+.formatButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-6);
+}
+
+.formatButton[data-selected="true"] {
+  background-color: var(--accent-9);
+  border-color: var(--accent-9);
+  color: #fff;
+}
+
+.officeToggle {
+  flex-shrink: 0;
+}
+
+.officeButton {
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  background: transparent;
+}
+
+.officeButton[data-selected="true"] {
+  border-color: var(--accent-9);
+  background-color: var(--accent-3);
 }
 
 @media (max-width: 799px) {

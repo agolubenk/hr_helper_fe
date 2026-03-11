@@ -1,25 +1,21 @@
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { MOCK_CANDIDATES_BY_VACANCY, MOCK_VACANCIES } from './mocks'
+import { MOCK_CANDIDATES, getVacancyIdByTitle } from './mocks'
 
 /**
- * Главная страница ATS | Talent Pool по адресу /recr-chat.
- * Редирект на первую вакансию и первого кандидата для единого входа в интерфейс.
+ * /recr-chat — редирект на первую вакансию и первого кандидата (как в old).
  */
 export function RecrChatIndexPage() {
   const navigate = useNavigate()
   useEffect(() => {
-    const firstVacancy = MOCK_VACANCIES[0]
-    if (!firstVacancy) return
-    const candidates = MOCK_CANDIDATES_BY_VACANCY[firstVacancy.id] ?? []
-    const firstCandidate = candidates[0]
-    if (firstCandidate) {
-      navigate({
-        to: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId',
-        params: { vacancyId: firstVacancy.id, candidateId: firstCandidate.id },
-        replace: true,
-      })
-    }
+    const first = MOCK_CANDIDATES[0]
+    if (!first) return
+    const vacancyId = getVacancyIdByTitle(first.vacancy)
+    navigate({
+      to: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId',
+      params: { vacancyId, candidateId: first.id },
+      replace: true,
+    })
   }, [navigate])
   return null
 }

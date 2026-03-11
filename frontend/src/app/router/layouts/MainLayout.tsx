@@ -137,7 +137,9 @@ export function MainLayout({
           marginTop: isRecrChatPage ? '112px' : '64px',
           width: '100%',
           maxWidth: '100vw',
-          minHeight: isRecrChatPage ? 'calc(100vh - 112px)' : 'calc(100vh - 64px)',
+          minHeight: isRecrChatPage
+            ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
+            : `calc(100vh - 64px - ${FOOTER_HEIGHT}px)`,
           flexDirection: 'column',
           transition: 'all 0.2s ease-in-out',
         }}

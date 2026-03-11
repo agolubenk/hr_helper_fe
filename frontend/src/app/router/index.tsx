@@ -27,16 +27,21 @@ import { AIChatPage } from '@/features/ai/chat/AIChatPage'
 import { RecruiterChatPage } from '@/features/ai/recruiter-chat/RecruiterChatPage'
 import { RecrChatIndexPage } from '@/features/ai/recruiter-chat/RecrChatIndexPage'
 import { RecrChatCandidatePage } from '@/features/ai/recruiter-chat/RecrChatCandidatePage'
+import { RecrChatAssessmentNewPage } from '@/features/ai/recruiter-chat/RecrChatAssessmentNewPage'
+import { RecrChatAssessmentViewPage } from '@/features/ai/recruiter-chat/RecrChatAssessmentViewPage'
+import { RecrChatAssessmentEditPage } from '@/features/ai/recruiter-chat/RecrChatAssessmentEditPage'
 import { TelegramPage } from '@/features/integrations/telegram/TelegramPage'
 import CalendarPage from './routes/CalendarPage'
 import CalendarSettingsPage from './routes/CalendarSettingsPage'
 import { CompanySettingsPage } from './routes/CompanySettingsPage'
 import { RecruitingStagesPage } from './routes/company-settings/RecruitingStagesPage'
 import { RecruitingCommandsPage } from './routes/company-settings/RecruitingCommandsPage'
+import { RecruitingRulesPage } from './routes/company-settings/RecruitingRulesPage'
 import { CandidateFieldsPage } from './routes/company-settings/CandidateFieldsPage'
 import { ScorecardPage } from './routes/company-settings/ScorecardPage'
 import { SLAPage } from './routes/company-settings/SLAPage'
 import { VacancyPromptPage } from './routes/company-settings/VacancyPromptPage'
+import { OfferTemplatePage } from '@/features/company-settings/offer-template'
 import { OrgStructurePage } from './routes/company-settings/OrgStructurePage'
 import { GradesPage } from './routes/company-settings/GradesPage'
 import { RatingScalesPage } from './routes/company-settings/RatingScalesPage'
@@ -192,6 +197,24 @@ const recrChatCandidateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId',
   component: () => layout(<RecrChatCandidatePage />, 'ATS | Talent Pool'),
+})
+
+const recrChatAssessmentNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId/assessment/new',
+  component: () => layout(<RecrChatAssessmentNewPage />, 'Новая оценка'),
+})
+
+const recrChatAssessmentViewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId/assessment/$assessmentId',
+  component: () => layout(<RecrChatAssessmentViewPage />, 'Результат оценки'),
+})
+
+const recrChatAssessmentEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId/assessment/$assessmentId/edit',
+  component: () => layout(<RecrChatAssessmentEditPage />, 'Редактирование оценки'),
 })
 
 const integrationsTelegramRoute = createRoute({
@@ -365,7 +388,7 @@ const companySettingsRecruitingRoute = createRoute({
 const companySettingsRecruitingRulesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/company-settings/recruiting/rules',
-  component: () => layout(<PlaceholderPage title="Правила привлечения" />, 'Правила привлечения'),
+  component: () => layout(<RecruitingRulesPage />, 'Правила привлечения'),
 })
 
 const companySettingsRecruitingStagesRoute = createRoute({
@@ -383,7 +406,7 @@ const companySettingsRecruitingCommandsRoute = createRoute({
 const companySettingsRecruitingOfferTemplateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/company-settings/recruiting/offer-template',
-  component: () => layout(<PlaceholderPage title="Шаблон оффера" />, 'Шаблон оффера'),
+  component: () => layout(<OfferTemplatePage />, 'Шаблон оффера'),
 })
 
 const companySettingsCandidateFieldsRoute = createRoute({
@@ -1091,6 +1114,9 @@ const routeTree = rootRoute.addChildren([
   aiRecruiterChatRoute,
   recrChatIndexRoute,
   recrChatCandidateRoute,
+  recrChatAssessmentNewRoute,
+  recrChatAssessmentViewRoute,
+  recrChatAssessmentEditRoute,
   integrationsTelegramRoute,
   wikiRoute,
   wikiCreateRoute,

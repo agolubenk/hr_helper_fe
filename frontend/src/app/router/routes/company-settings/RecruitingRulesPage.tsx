@@ -1,0 +1,621 @@
+import { useState, useEffect } from 'react'
+import {
+  Flex,
+  Text,
+  Button,
+  Box,
+  TextField,
+  Table,
+  TextArea,
+  Badge,
+  Select,
+} from '@radix-ui/themes'
+import {
+  PlusIcon,
+  Pencil1Icon,
+  TrashIcon,
+  CheckIcon,
+  Cross2Icon,
+  MagnifyingGlassIcon,
+} from '@radix-ui/react-icons'
+import { useToast } from '@/shared/components/feedback/Toast'
+import styles from '../CompanySettingsPage.module.css'
+
+export interface AttractionRule {
+  id: string
+  name: string
+  description: string
+  source: string
+  bonus_amount: number | null
+  bonus_currency: string
+  is_active: boolean
+  priority: number
+  conditions: string
+  created_at: string
+  updated_at: string
+}
+
+const MOCK_RULES: AttractionRule[] = [
+  {
+    id: '1',
+    name: 'Бонус за рекомендацию',
+    description: 'Бонус за привлечение кандидата по рекомендации',
+    source: 'Рекомендации',
+    bonus_amount: 10000,
+    bonus_currency: 'RUB',
+    is_active: true,
+    priority: 1,
+    conditions:
+      'Кандидат должен быть принят на работу и проработать не менее 3 месяцев',
+    created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Бонус за hh.ru',
+    description: 'Бонус за привлечение кандидата с hh.ru',
+    source: 'hh.ru',
+    bonus_amount: 5000,
+    bonus_currency: 'RUB',
+    is_active: true,
+    priority: 2,
+    conditions: 'Кандидат должен быть принят на работу',
+    created_at: new Date(Date.now() - 86400000 * 60).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 10).toISOString(),
+  },
+  {
+    id: '3',
+    name: 'Бонус за LinkedIn',
+    description: 'Бонус за привлечение кандидата с LinkedIn',
+    source: 'LinkedIn',
+    bonus_amount: 8000,
+    bonus_currency: 'RUB',
+    is_active: false,
+    priority: 3,
+    conditions:
+      'Кандидат должен быть принят на работу и проработать не менее 6 месяцев',
+    created_at: new Date(Date.now() - 86400000 * 90).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 20).toISOString(),
+  },
+]
+
+const AVAILABLE_SOURCES = [
+  'hh.ru',
+  'LinkedIn',
+  'Рекомендации',
+  'Сайт компании',
+  'Социальные сети',
+  'Другое',
+]
+
+const AVAILABLE_CURRENCIES = ['RUB', 'USD', 'EUR']
+
+const initialNewRule: Partial<AttractionRule> = {
+  name: '',
+  description: '',
+  source: '',
+  bonus_amount: null,
+  bonus_currency: 'RUB',
+  is_active: true,
+  priority: 0,
+  conditions: '',
+}
+
+function formatBonus(amount: number | null, currency: string): string {
+  if (amount === null) return '-'
+  return `${amount.toLocaleString('ru-RU')} ${currency}`
+}
+
+export function RecruitingRulesPage() {
+  const toast = useToast()
+  const [rules, setRules] = useState<AttractionRule[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [editingRule, setEditingRule] = useState<AttractionRule | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newRule, setNewRule] = useState<Partial<AttractionRule>>(initialNewRule)
+
+  useEffect(() => {
+    setLoading(true)
+    const timer = setTimeout(() => {
+      setRules(MOCK_RULES)
+      setLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const loadRules = () => {
+    setRules([...MOCK_RULES])
+  }
+
+  const handleAddRule = async () => {
+    if (!newRule.name || !newRule.source) {
+      toast.showWarning('Заполните поля', 'Название и источник обязательны')
+      return
+    }
+    setSaving(true)
+    try {
+      await new Promise((r) => setTimeout(r, 500))
+      setShowAddForm(false)
+      setNewRule(initialNewRule)
+      loadRules()
+    } catch {
+      toast.showError('Ошибка', 'Не удалось создать правило')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEditRule = async (rule: AttractionRule) => {
+    setSaving(true)
+    try {
+      await new Promise((r) => setTimeout(r, 500))
+      setRules((prev) =>
+        prev.map((r) => (r.id === rule.id ? rule : r))
+      )
+      setEditingRule(null)
+    } catch {
+      toast.showError('Ошибка', 'Не удалось обновить правило')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteRule = (id: string) => {
+    toast.showWarning('Удалить правило?', 'Вы уверены, что хотите удалить это правило?', {
+      actions: [
+        { label: 'Отмена', onClick: () => {}, variant: 'soft', color: 'gray' },
+        {
+          label: 'Удалить',
+          onClick: () => performDeleteRule(id),
+          variant: 'solid',
+          color: 'red',
+        },
+      ],
+    })
+  }
+
+  const performDeleteRule = async (id: string) => {
+    try {
+      setRules((prev) => prev.filter((r) => r.id !== id))
+    } catch {
+      toast.showError('Ошибка', 'Ошибка при удалении правила')
+    }
+  }
+
+  const filteredRules = rules.filter(
+    (rule) =>
+      rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rule.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rule.source.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  return (
+    <Flex
+      direction="column"
+      gap="4"
+      className={styles.container}
+      style={{ maxWidth: '1400px' }}
+    >
+      <Box>
+        <Flex align="center" gap="2" mb="2">
+          <Text size="2">📋</Text>
+          <Text size="6" weight="bold">
+            Правила привлечения
+          </Text>
+        </Flex>
+        <Text size="2" color="gray">
+          Управление правилами привлечения кандидатов: настройка бонусов и условий для различных источников
+        </Text>
+      </Box>
+
+      <Flex gap="3" align="center">
+        <Box style={{ flex: 1, maxWidth: '400px' }}>
+          <TextField.Root
+            size="3"
+            placeholder="Поиск правил..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          >
+            <TextField.Slot>
+              <MagnifyingGlassIcon width={16} height={16} />
+            </TextField.Slot>
+          </TextField.Root>
+        </Box>
+        <Button size="3" onClick={() => setShowAddForm(!showAddForm)}>
+          <PlusIcon width={16} height={16} />
+          Добавить правило
+        </Button>
+      </Flex>
+
+      {showAddForm && (
+        <Box
+          style={{
+            padding: '20px',
+            border: '1px solid var(--gray-6)',
+            borderRadius: '8px',
+            backgroundColor: 'var(--gray-2)',
+          }}
+        >
+          <Flex direction="column" gap="3">
+            <Text size="5" weight="bold">
+              Добавить правило привлечения
+            </Text>
+            <Flex gap="3" wrap="wrap">
+              <Box style={{ flex: '1 1 300px' }}>
+                <Text size="2" weight="medium" mb="1" as="div">
+                  Название *
+                </Text>
+                <TextField.Root
+                  size="2"
+                  placeholder="Название правила"
+                  value={newRule.name ?? ''}
+                  onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
+                />
+              </Box>
+              <Box style={{ flex: '1 1 300px' }}>
+                <Text size="2" weight="medium" mb="1" as="div">
+                  Источник *
+                </Text>
+                <Select.Root
+                  value={newRule.source ?? ''}
+                  onValueChange={(value) => setNewRule({ ...newRule, source: value })}
+                >
+                  <Select.Trigger />
+                  <Select.Content>
+                    {AVAILABLE_SOURCES.map((source) => (
+                      <Select.Item key={source} value={source}>
+                        {source}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+              </Box>
+            </Flex>
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="div">
+                Описание
+              </Text>
+              <TextArea
+                size="2"
+                placeholder="Описание правила"
+                value={newRule.description ?? ''}
+                onChange={(e) => setNewRule({ ...newRule, description: e.target.value })}
+                rows={3}
+              />
+            </Box>
+            <Flex gap="3" wrap="wrap">
+              <Box style={{ flex: '1 1 200px' }}>
+                <Text size="2" weight="medium" mb="1" as="div">
+                  Размер бонуса
+                </Text>
+                <TextField.Root
+                  size="2"
+                  type="number"
+                  placeholder="0"
+                  value={newRule.bonus_amount?.toString() ?? ''}
+                  onChange={(e) =>
+                    setNewRule({
+                      ...newRule,
+                      bonus_amount: e.target.value ? parseInt(e.target.value, 10) : null,
+                    })
+                  }
+                />
+              </Box>
+              <Box style={{ flex: '1 1 150px' }}>
+                <Text size="2" weight="medium" mb="1" as="div">
+                  Валюта
+                </Text>
+                <Select.Root
+                  value={newRule.bonus_currency ?? 'RUB'}
+                  onValueChange={(value) => setNewRule({ ...newRule, bonus_currency: value })}
+                >
+                  <Select.Trigger />
+                  <Select.Content>
+                    {AVAILABLE_CURRENCIES.map((currency) => (
+                      <Select.Item key={currency} value={currency}>
+                        {currency}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+              </Box>
+              <Box style={{ flex: '1 1 150px' }}>
+                <Text size="2" weight="medium" mb="1" as="div">
+                  Приоритет
+                </Text>
+                <TextField.Root
+                  size="2"
+                  type="number"
+                  placeholder="0"
+                  value={newRule.priority?.toString() ?? '0'}
+                  onChange={(e) =>
+                    setNewRule({
+                      ...newRule,
+                      priority: parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                />
+              </Box>
+            </Flex>
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="div">
+                Условия
+              </Text>
+              <TextArea
+                size="2"
+                placeholder="Условия применения правила"
+                value={newRule.conditions ?? ''}
+                onChange={(e) => setNewRule({ ...newRule, conditions: e.target.value })}
+                rows={3}
+              />
+            </Box>
+            <Flex gap="2" align="center">
+              <Button size="2" onClick={() => handleAddRule()} disabled={saving}>
+                <CheckIcon width={16} height={16} />
+                Сохранить
+              </Button>
+              <Button
+                size="2"
+                variant="soft"
+                color="gray"
+                onClick={() => {
+                  setShowAddForm(false)
+                  setNewRule(initialNewRule)
+                }}
+              >
+                <Cross2Icon width={16} height={16} />
+                Отмена
+              </Button>
+            </Flex>
+          </Flex>
+        </Box>
+      )}
+
+      {loading ? (
+        <Box>
+          <Text>Загрузка...</Text>
+        </Box>
+      ) : (
+        <Box
+          style={{
+            border: '1px solid var(--gray-6)',
+            borderRadius: '8px',
+            overflow: 'hidden',
+          }}
+        >
+          <Table.Root>
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Название</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Источник</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Бонус</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Приоритет</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Статус</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Условия</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell style={{ width: '100px' }}>
+                  Действия
+                </Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {filteredRules.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={7}>
+                    <Text align="center" color="gray">
+                      {searchTerm ? 'Правила не найдены' : 'Нет правил'}
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+              ) : (
+                filteredRules.map((rule) => (
+                  <Table.Row key={rule.id}>
+                    {editingRule?.id === rule.id ? (
+                      <>
+                        <Table.Cell>
+                          <TextField.Root
+                            size="1"
+                            placeholder="Название"
+                            value={editingRule.name}
+                            onChange={(e) =>
+                              setEditingRule({ ...editingRule, name: e.target.value })
+                            }
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Select.Root
+                            value={editingRule.source}
+                            onValueChange={(value) =>
+                              setEditingRule({ ...editingRule, source: value })
+                            }
+                          >
+                            <Select.Trigger />
+                            <Select.Content>
+                              {AVAILABLE_SOURCES.map((source) => (
+                                <Select.Item key={source} value={source}>
+                                  {source}
+                                </Select.Item>
+                              ))}
+                            </Select.Content>
+                          </Select.Root>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex gap="1">
+                            <TextField.Root
+                              size="1"
+                              type="number"
+                              placeholder="0"
+                              value={editingRule.bonus_amount?.toString() ?? ''}
+                              onChange={(e) =>
+                                setEditingRule({
+                                  ...editingRule,
+                                  bonus_amount: e.target.value
+                                    ? parseInt(e.target.value, 10)
+                                    : null,
+                                })
+                              }
+                              style={{ width: '100px' }}
+                            />
+                            <Select.Root
+                              value={editingRule.bonus_currency}
+                              onValueChange={(value) =>
+                                setEditingRule({ ...editingRule, bonus_currency: value })
+                              }
+                            >
+                              <Select.Trigger style={{ width: '80px' }} />
+                              <Select.Content>
+                                {AVAILABLE_CURRENCIES.map((currency) => (
+                                  <Select.Item key={currency} value={currency}>
+                                    {currency}
+                                  </Select.Item>
+                                ))}
+                              </Select.Content>
+                            </Select.Root>
+                          </Flex>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <TextField.Root
+                            size="1"
+                            type="number"
+                            placeholder="0"
+                            value={editingRule.priority.toString()}
+                            onChange={(e) =>
+                              setEditingRule({
+                                ...editingRule,
+                                priority: parseInt(e.target.value, 10) || 0,
+                              })
+                            }
+                            style={{ width: '80px' }}
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Select.Root
+                            value={editingRule.is_active ? 'active' : 'inactive'}
+                            onValueChange={(value) =>
+                              setEditingRule({
+                                ...editingRule,
+                                is_active: value === 'active',
+                              })
+                            }
+                          >
+                            <Select.Trigger />
+                            <Select.Content>
+                              <Select.Item value="active">Активно</Select.Item>
+                              <Select.Item value="inactive">Неактивно</Select.Item>
+                            </Select.Content>
+                          </Select.Root>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <TextArea
+                            size="1"
+                            placeholder="Условия"
+                            value={editingRule.conditions}
+                            onChange={(e) =>
+                              setEditingRule({ ...editingRule, conditions: e.target.value })
+                            }
+                            rows={2}
+                            style={{ minWidth: '200px' }}
+                          />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex gap="1">
+                            <Button
+                              size="1"
+                              variant="soft"
+                              color="green"
+                              onClick={() => handleEditRule(editingRule)}
+                              disabled={saving}
+                            >
+                              <CheckIcon width={12} height={12} />
+                            </Button>
+                            <Button
+                              size="1"
+                              variant="soft"
+                              color="gray"
+                              onClick={() => setEditingRule(null)}
+                            >
+                              <Cross2Icon width={12} height={12} />
+                            </Button>
+                          </Flex>
+                        </Table.Cell>
+                      </>
+                    ) : (
+                      <>
+                        <Table.Cell>
+                          <Text size="2" weight="medium">
+                            {rule.name}
+                          </Text>
+                          {rule.description && (
+                            <Text size="1" color="gray" as="div">
+                              {rule.description}
+                            </Text>
+                          )}
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge size="1" variant="soft">
+                            {rule.source}
+                          </Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="2">
+                            {formatBonus(rule.bonus_amount, rule.bonus_currency)}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="2">{rule.priority}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge
+                            size="1"
+                            color={rule.is_active ? 'green' : 'red'}
+                            variant="soft"
+                          >
+                            {rule.is_active ? 'Активно' : 'Неактивно'}
+                          </Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text
+                            size="1"
+                            color="gray"
+                            style={{
+                              maxWidth: '200px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {rule.conditions || '-'}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Flex gap="1">
+                            <Button
+                              size="1"
+                              variant="soft"
+                              onClick={() => setEditingRule(rule)}
+                            >
+                              <Pencil1Icon width={12} height={12} />
+                            </Button>
+                            <Button
+                              size="1"
+                              variant="soft"
+                              color="red"
+                              onClick={() => handleDeleteRule(rule.id)}
+                            >
+                              <TrashIcon width={12} height={12} />
+                            </Button>
+                          </Flex>
+                        </Table.Cell>
+                      </>
+                    )}
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+        </Box>
+      )}
+    </Flex>
+  )
+}

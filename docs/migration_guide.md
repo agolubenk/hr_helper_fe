@@ -44,9 +44,21 @@
 
 \subsection*{Выполненные точечные доработки}
 \begin{itemize}
-\item \textbf{RecrChat:} маршруты /recr-chat и /recr-chat/vacancy/\$vacancyId/candidate/\$candidateId; двухколоночный layout (список кандидатов + карточка); моки вакансий и кандидатов; редирект /recr-chat → первый кандидат.
+\item \textbf{RecrChat (полный объём):}
+  \begin{itemize}
+  \item Маршруты: /recr-chat, /recr-chat/vacancy/\$vacancyId/candidate/\$candidateId; assessment: /assessment/new, /assessment/\$assessmentId, /assessment/\$assessmentId/edit (страницы-заглушки с навигацией).
+  \item Левая колонка: три вкладки (Candidates, Chat, Настройки вакансии); поиск; полоса workflow (быстрые кнопки, Скрининг/Интервью, кнопка «слоты» → Dialog с SlotsPanel); список кандидатов с аватарами, бейджами; во вкладке Chat — компонент WorkflowChat.
+  \item Правая колонка: подтабы карточки (Info, Activity, Ratings, Documents, History); Info: Application Details, блок Контакты (email, телефон), блок Соцсети и мессенджеры; остальные подтабы — заглушки.
+  \item Настройки вакансии: список разделов (текст вакансии, рекрутеры, вопросы, зарплата, Scorecard и т.д.) и заглушка правой колонки.
+  \item Моки: расширенные поля кандидата, в т.ч. social (LinkedIn, Telegram и др.).
+  \end{itemize}
 \item \textbf{StatusBar:} минимальная панель RecrChatStatusBar (выбор вакансии, пилли статусов) под Header на страницах /recr-chat; подключена в MainLayout.
 \item \textbf{FloatingLabelInput:} уже реализован в shared/components/forms/FloatingLabelInput.tsx.
+\item \textbf{Страницы настроек вакансии (company-settings/recruiting):}
+  \begin{itemize}
+  \item \textbf{Правила привлечения} (/company-settings/recruiting/rules): перенесена из frontend old; таблица правил, поиск, форма добавления, inline-редактирование, удаление с подтверждением через Toast; мок-данные.
+  \item \textbf{Шаблон оффера} (/company-settings/recruiting/offer-template): перенесена из frontend old; загрузка файла (DOCX, PPTX, Figma), предпросмотр DOCX/PPTX (mammoth, jszip), настройка переменных по категориям, добавление/удаление переменных, модальный предпросмотр на мобильных.
+  \end{itemize}
 \end{itemize}
 
 ---
