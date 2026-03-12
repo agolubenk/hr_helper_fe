@@ -38,7 +38,9 @@ export interface RecrChatCandidate {
   phones?: string[]
   hasDuplicateSuspicion?: boolean
   /** Соцсети: linkedin, telegram, github и т.д. */
-  social?: Record<string, string>
+  social?: Record<string, string | string[]>
+  /** Рейтинг кандидата (1–5) — как в old */
+  rating?: number
 }
 
 /** Вакансии для маппинга название → id при навигации (как availableVacancies в old) */
@@ -79,6 +81,7 @@ export const MOCK_CANDIDATES: RecrChatCandidate[] = [
     gender: 'Мужской',
     salaryExpectations: '150,000 - 200,000 USD',
     offer: '180,000 USD',
+    rating: 4,
     social: { LinkedIn: '/in/johndoe', Telegram: '@johndoe', WhatsApp: '+15551234567' },
   },
   {
@@ -101,7 +104,8 @@ export const MOCK_CANDIDATES: RecrChatCandidate[] = [
     vacancy: 'Product Designer',
     applied: 'Jan 20, 2026',
     source: 'Referral',
-    social: { LinkedIn: '/in/janesmith', Telegram: '@janesmith' },
+    rating: 5,
+    social: { LinkedIn: '/in/janesmith', Telegram: '@janesmith', Behance: 'janesmith', 'Хабр Карьера': 'janesmith' },
   },
   {
     id: '3',
@@ -123,7 +127,8 @@ export const MOCK_CANDIDATES: RecrChatCandidate[] = [
     vacancy: 'UI Designer',
     applied: 'Jan 18, 2026',
     source: 'Job Board',
-    social: { LinkedIn: '/in/mikechen', Behance: 'mikechen' },
+    rating: 3,
+    social: { LinkedIn: '/in/mikechen', Dribbble: 'mikechen', Behance: 'mikechen', Pinterest: 'mikechen', Instagram: '@mikechen' },
   },
   {
     id: '4',
@@ -151,6 +156,7 @@ export const MOCK_CANDIDATES: RecrChatCandidate[] = [
     gender: 'Мужской',
     salaryExpectations: '200,000 - 300,000 RUB',
     offer: '250,000 RUB',
+    rating: 4,
     social: { LinkedIn: '/in/ivanov', Telegram: '@ivanov', GitHub: 'ivanov' },
   },
   {
@@ -178,14 +184,47 @@ export const MOCK_CANDIDATES: RecrChatCandidate[] = [
     age: 30,
     gender: 'Женский',
     salaryExpectations: '250,000 - 350,000 RUB',
+    rating: 5,
     social: { LinkedIn: '/in/smirnova', Telegram: '@smirnova', GitHub: 'smirnova' },
   },
 ]
 
-/** Диалоги для вкладки Chat (бейдж непрочитанных) — как mockConversations в old */
-export const MOCK_CONVERSATIONS: { id: string; candidateId: string; name: string; unread: number }[] = [
-  { id: '1', candidateId: '1', name: 'John Doe', unread: 3 },
-  { id: '2', candidateId: '2', name: 'Jane Smith', unread: 0 },
+/** Диалоги для вкладки Chat — как mockConversations в old (полные поля) */
+export interface RecrChatConversation {
+  id: string
+  candidateId: string
+  name: string
+  avatar?: string
+  lastMessage?: string
+  timestamp?: string
+  unread: number
+  channel?: string
+  favourite?: boolean
+}
+
+export const MOCK_CONVERSATIONS: RecrChatConversation[] = [
+  {
+    id: '1',
+    candidateId: '1',
+    name: 'John Doe',
+    avatar: 'JD',
+    lastMessage: 'Sure, let me check...',
+    timestamp: 'Today 3:45 PM',
+    unread: 3,
+    channel: 'email',
+    favourite: true,
+  },
+  {
+    id: '2',
+    candidateId: '2',
+    name: 'Jane Smith',
+    avatar: 'JS',
+    lastMessage: 'Thanks for the update!',
+    timestamp: 'Today 1:20 PM',
+    unread: 0,
+    channel: 'telegram',
+    favourite: false,
+  },
 ]
 
 /** Для обратной совместимости: вакансии по id (title) */
@@ -213,4 +252,41 @@ export function getCandidateInitials(c: RecrChatCandidate): string {
 /** Количество непрочитанных в диалогах — для бейджа вкладки Chat */
 export function getUnreadConversationsCount(): number {
   return MOCK_CONVERSATIONS.filter((c) => c.unread > 0).length
+}
+
+/** Порядок статусов в workflow — как statusOrder в old */
+export const STATUS_ORDER = [
+  'New',
+  'Under Review',
+  'Interview',
+  'Offer',
+  'Accepted',
+  'Rejected',
+  'Declined',
+  'Archived',
+]
+
+/** Причины отказа — как rejectionReasons в old */
+export const REJECTION_REASONS = [
+  'Не подходит по опыту',
+  'Не подходит по навыкам',
+  'Зарплатные ожидания слишком высокие',
+  'Не подходит по локации',
+  'Другая причина',
+]
+
+const STATUS_COLORS: Record<string, string> = {
+  New: '#2180A0',
+  'Under Review': '#3B82F6',
+  Interview: '#8B5CF6',
+  Offer: '#22C55E',
+  Accepted: '#10B981',
+  Rejected: '#EF4444',
+  Declined: '#F59E0B',
+  Archived: '#6B7280',
+}
+
+/** Цвет статуса для Badge/Select — как getStatusColor в old */
+export function getStatusColor(status: string): string {
+  return STATUS_COLORS[status] ?? '#6B7280'
 }

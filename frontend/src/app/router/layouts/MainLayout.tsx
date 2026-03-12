@@ -137,11 +137,12 @@ export function MainLayout({
           marginTop: isRecrChatPage ? '112px' : '64px',
           width: '100%',
           maxWidth: '100vw',
-          minHeight: isRecrChatPage
+          height: isRecrChatPage
             ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
             : `calc(100vh - 64px - ${FOOTER_HEIGHT}px)`,
           flexDirection: 'column',
           transition: 'all 0.2s ease-in-out',
+          overflow: 'hidden',
         }}
       >
         <Box
@@ -150,12 +151,15 @@ export function MainLayout({
             padding: contentPadding
               ? isAdminPage
                 ? `0 0 ${FOOTER_HEIGHT + 24}px 0`
-                : `24px 0 ${FOOTER_HEIGHT + 24}px 0`
+                : isRecrChatPage
+                  ? `0`
+                  : `24px 0 ${FOOTER_HEIGHT + 24}px 0`
               : 0,
             borderTop: contentPadding ? '1px solid var(--gray-a6)' : 'none',
             flex: 1,
             minWidth: 0,
             maxWidth: '100%',
+            height: isRecrChatPage ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)` : undefined,
             marginLeft: '34px',
             marginRight: menuOpen ? '280px' : '24px',
             width: menuOpen ? 'calc(100% - 280px - 34px)' : 'calc(100% - 34px - 24px)',
