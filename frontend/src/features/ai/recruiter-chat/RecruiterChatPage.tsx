@@ -1,8 +1,9 @@
 import { Box, Text } from '@radix-ui/themes'
+import { Link } from '@tanstack/react-router'
 
 /**
- * Страница AI Рекрутер (Recruiter Chat).
- * Полная миграция из frontend old app/recr-chat/ — в планах (модуль объёмный).
+ * Страница обзора AI Рекрутер.
+ * Основная функциональность ATS перенесена в /ats.
  */
 export function RecruiterChatPage() {
   return (
@@ -10,9 +11,12 @@ export function RecruiterChatPage() {
       <Text size="4" weight="bold" style={{ display: 'block', marginBottom: 8 }}>
         AI Рекрутер
       </Text>
-      <Text size="2" color="gray" style={{ display: 'block' }}>
-        Здесь будет интерфейс чата с AI-рекрутером: выбор вакансии, список кандидатов, карточка кандидата и ассессменты. Модуль из frontend old (app/recr-chat/) будет перенесён отдельно.
+      <Text size="2" color="gray" style={{ display: 'block', marginBottom: 16 }}>
+        Обзорная страница AI Рекрутера. Основной функционал ATS доступен по ссылке ниже.
       </Text>
+      <Link to="/ats" style={{ color: 'var(--accent-9)' }}>
+        Перейти в ATS | Talent Pool →
+      </Link>
     </Box>
   )
 }

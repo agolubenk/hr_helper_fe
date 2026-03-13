@@ -5,7 +5,7 @@ import Header from '@/shared/components/navigation/Header/Header'
 import Sidebar from '@/shared/components/navigation/Sidebar/Sidebar'
 import { Footer } from '@/shared/components/navigation/Footer/Footer'
 import FloatingActions from '@/shared/components/navigation/FloatingActions/FloatingActions'
-import { RecrChatStatusBar } from '@/shared/components/layout/StatusBar/RecrChatStatusBar'
+import { AtsStatusBar } from '@/shared/components/layout/StatusBar/AtsStatusBar'
 import { useTheme } from '@/app/providers/ThemeProvider'
 import styles from './MainLayout.module.css'
 
@@ -33,7 +33,7 @@ export function MainLayout({
   contentPadding = true,
 }: MainLayoutProps) {
   const pathname = useRouterState().location.pathname
-  const isRecrChatPage = pathname?.startsWith('/recr-chat')
+  const isAtsPage = pathname?.startsWith('/ats')
   const isAdminPage = pathname?.startsWith('/admin')
 
   const isDesktop = () => {
@@ -127,17 +127,17 @@ export function MainLayout({
         onLogout={handleLogout}
         leftContent={leftHeaderContent}
       />
-      {isRecrChatPage && <RecrChatStatusBar />}
+      {isAtsPage && <AtsStatusBar />}
       <Sidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <FloatingActions />
 
       <Flex
         className={styles.contentWrapper}
         style={{
-          marginTop: isRecrChatPage ? '112px' : '64px',
+          marginTop: isAtsPage ? '112px' : '64px',
           width: '100%',
           maxWidth: '100vw',
-          height: isRecrChatPage
+          height: isAtsPage
             ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
             : `calc(100vh - 64px - ${FOOTER_HEIGHT}px)`,
           flexDirection: 'column',
@@ -151,7 +151,7 @@ export function MainLayout({
             padding: contentPadding
               ? isAdminPage
                 ? `0 0 ${FOOTER_HEIGHT + 24}px 0`
-                : isRecrChatPage
+                : isAtsPage
                   ? `0`
                   : `24px 0 ${FOOTER_HEIGHT + 24}px 0`
               : 0,
@@ -159,7 +159,7 @@ export function MainLayout({
             flex: 1,
             minWidth: 0,
             maxWidth: '100%',
-            height: isRecrChatPage ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)` : undefined,
+            height: isAtsPage ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)` : undefined,
             marginLeft: '34px',
             marginRight: menuOpen ? '280px' : '24px',
             width: menuOpen ? 'calc(100% - 280px - 34px)' : 'calc(100% - 34px - 24px)',

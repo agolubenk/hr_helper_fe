@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { AvatarIcon } from '@radix-ui/react-icons'
-import { useTheme } from '@/app/providers/ThemeProvider'
+import { useTheme } from '@/shared/lib/theme'
 import { LogoRobot } from '@/shared/components/logo'
 import { FloatingIcon } from './FloatingIcon'
 import { getRandomIcon } from './floatingIconsPool'

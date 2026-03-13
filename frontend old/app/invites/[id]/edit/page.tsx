@@ -756,7 +756,7 @@ export default function InviteEditPage() {
                       onClick={() => {
                         const candidateId = invite.candidate_id
                         if (candidateId) {
-                          router.push(`/recr-chat/vacancy/1/candidate/${encodeURIComponent(candidateId)}`)
+                          router.push(`/ats/vacancy/1/candidate/${encodeURIComponent(candidateId)}`)
                         } else {
                           toast.showError('Ошибка', 'ID кандидата не указан')
                         }

@@ -40,7 +40,7 @@
 
 | Путь | Компонент | Статус | Приоритет |
 |------|------------|--------|-----------|
-| /recr-chat/vacancy/:id/candidate/:id | — | 404 | 1 |
+| /ats/vacancy/:id/candidate/:id | — | 404 | 1 |
 | /invites | — | 404 | 2 |
 | /vacancies | PlaceholderPage | Заглушка | 3 |
 | /hiring-requests | PlaceholderPage | Заглушка | 4 |
@@ -219,7 +219,7 @@
 
 | № | Задача | Модуль | Действие |
 |---|--------|--------|----------|
-| 1.1 | Добавить маршрут /recr-chat/* | Рекрутинг | createRoute + PlaceholderPage или редирект |
+| 1.1 | Добавить маршрут /ats/* | Рекрутинг | createRoute + PlaceholderPage или редирект |
 | 1.2 | Добавить маршрут /invites | Рекрутинг | createRoute + PlaceholderPage |
 | 1.3 | Добавить маршруты /specializations* | Сотрудники | createRoute или редирект на /admin |
 | 1.4 | Добавить маршруты /projects* | Сотрудники | createRoute или редирект на /admin |

@@ -22,7 +22,7 @@ const SECTIONS: { key: SettingTab; label: string }[] = [
   { key: 'history', label: 'История правок' },
 ]
 
-// Константы как в recr-chat
+// Константы как в ats
 const questionLinkOffices = [{ id: 'by', name: 'Беларусь' }, { id: 'pl', name: 'Польша' }]
 const questionLinkColors = [
   { id: 'blue', hex: '#3B82F6', label: 'Синий' }, { id: 'green', hex: '#10B981', label: 'Зелёный' },

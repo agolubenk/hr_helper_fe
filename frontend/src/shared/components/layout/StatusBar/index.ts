@@ -1,1 +1,1 @@
-export { RecrChatStatusBar } from './RecrChatStatusBar'
+export { AtsStatusBar } from './AtsStatusBar'

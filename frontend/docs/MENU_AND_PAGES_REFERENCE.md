@@ -40,7 +40,7 @@
 | 0 | calendar | Календарь | /calendar | |
 | 0 | workflow-chat | Workflow chat | /workflow | |
 | 0 | recruiting | Рекрутинг | — | Раскрывающийся |
-| 1 | recr-chat | ATS \| Talent Pool | /recr-chat/vacancy/1/candidate/1 | |
+| 1 | ats | ATS \| Talent Pool | /ats/vacancy/1/candidate/1 | |
 | 1 | invites | Интервью, ТЗ и скрининги | /invites | |
 | 1 | vacancies-list | Вакансии | /vacancies | |
 | 1 | vacancies-requests | Заявки | /hiring-requests | |
@@ -199,7 +199,7 @@
 
 | Пункт | href | Маршрут | Компонент | Статус |
 |-------|------|---------|-----------|--------|
-| ATS \| Talent Pool | /recr-chat/vacancy/1/candidate/1 | /recr-chat/* | — | ❌ |
+| ATS \| Talent Pool | /ats/vacancy/1/candidate/1 | /ats/* | — | ❌ |
 | Интервью, ТЗ и скрининги | /invites | /invites | — | ❌ |
 | Вакансии | /vacancies | /vacancies | PlaceholderPage | ⚠️ |
 | Заявки | /hiring-requests | /hiring-requests | PlaceholderPage | ⚠️ |

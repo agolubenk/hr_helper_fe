@@ -188,7 +188,7 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
   // 'recruiting' активен на всех страницах рекрутинга (включая Workflow чат)
   if (item.id === 'recruiting' && (
     pathname === '/workflow' ||
-    pathname.startsWith('/recr-chat') ||
+    pathname.startsWith('/ats') ||
     pathname.startsWith('/invites') ||
     pathname.startsWith('/vacancies') ||
     pathname.startsWith('/hiring-requests') ||
@@ -262,8 +262,8 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
   if (item.id === 'projects-resources' && pathname.startsWith('/projects/resources')) {
     return true
   }
-  // 'recr-chat' активен на странице ATS | Talent Pool
-  if (item.id === 'recr-chat' && pathname.startsWith('/recr-chat')) {
+  // 'ats' активен на странице ATS | Talent Pool
+  if (item.id === 'ats' && pathname.startsWith('/ats')) {
     return true
   }
   // 'workflow-chat' активен на странице Workflow чат
@@ -544,7 +544,7 @@ function MenuItemComponent({ item, isActive = false, level = 0, onNavigate, path
  * - Определяет активные пункты меню по текущему пути
  * - Обрабатывает клики на пункты меню
  * - Закрывается на мобильных при навигации
- * - Адаптивное позиционирование (учитывает StatusBar на странице recr-chat)
+ * - Адаптивное позиционирование (учитывает StatusBar на странице ats)
  */
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   // Хук для получения текущей темы
@@ -554,19 +554,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   // Хук для отображения уведомлений
   const toast = useToast()
-  // Проверка, является ли текущая страница recr-chat (для корректного позиционирования)
-  const isRecrChatPage = pathname?.startsWith('/recr-chat')
+  // Проверка, является ли текущая страница ats (для корректного позиционирования)
+  const isRecrChatPage = pathname?.startsWith('/ats')
   /**
    * topOffset - отступ сверху для меню
    * 
    * Логика:
-   * - На странице recr-chat: 112px (64px Header + 48px StatusBar)
+   * - На странице ats: 112px (64px Header + 48px StatusBar)
    * - На остальных страницах: 64px (только Header)
    * 
    * Используется для:
    * - Корректного позиционирования меню под Header и StatusBar
    */
-  const topOffset = isRecrChatPage ? '112px' : '64px' // 64px header + 48px status bar (только для recr-chat)
+  const topOffset = isRecrChatPage ? '112px' : '64px' // 64px header + 48px status bar (только для ats)
 
   /**
    * handleInDevClick - обработчик клика на пункт "в разработке"
@@ -707,7 +707,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: <ChatBubbleIcon width={16} height={16} style={{ color: 'var(--gray-12)' }} />,
       children: [
         {
-          id: 'recr-chat',
+          id: 'ats',
           label: 'ATS | Talent Pool',
           icon: (
             <Box style={{ width: 16, height: 16, position: 'relative', flexShrink: 0 }}>
@@ -725,7 +725,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Box>
             </Box>
           ),
-          href: '/recr-chat/vacancy/1/candidate/1',
+          href: '/ats/vacancy/1/candidate/1',
         },
         {
           id: 'invites',
@@ -1112,7 +1112,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     {
       blockLabel: 'Рекрутинг',
       items: [
-        { label: 'ATS | Talent Pool', href: '/recr-chat/vacancy/1/candidate/1' },
+        { label: 'ATS | Talent Pool', href: '/ats/vacancy/1/candidate/1' },
         { label: 'Workflow чат', href: '/workflow' },
         { label: 'Интервью', href: '/invites' },
         { label: 'Вакансии', href: '/vacancies' },
@@ -1180,7 +1180,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <Box
       position="fixed"
-      top={topOffset} // Отступ сверху: 112px для recr-chat (Header + StatusBar), 64px для остальных (только Header)
+      top={topOffset} // Отступ сверху: 112px для ats (Header + StatusBar), 64px для остальных (только Header)
       right="0"
       bottom="0"
       className={styles.sidebar}
@@ -1219,13 +1219,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             (item.id === 'projects-resources' && pathname?.startsWith('/projects/resources')) ||
             (item.id === 'recruiting' && (
               pathname === '/workflow' ||
-              pathname?.startsWith('/recr-chat') ||
+              pathname?.startsWith('/ats') ||
               pathname?.startsWith('/invites') ||
               pathname?.startsWith('/vacancies') ||
               pathname?.startsWith('/hiring-requests') ||
               pathname?.startsWith('/interviewers')
             )) ||
-            (item.id === 'recr-chat' && pathname?.startsWith('/recr-chat')) ||
+            (item.id === 'ats' && pathname?.startsWith('/ats')) ||
             (item.id === 'workflow-chat' && pathname === '/workflow') ||
             (item.id === 'invites' && pathname?.startsWith('/invites')) ||
             (item.id === 'vacancies' && (

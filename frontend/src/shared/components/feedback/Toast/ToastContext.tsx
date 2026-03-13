@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Box, Theme } from '@radix-ui/themes'
-import { useTheme } from '@/app/providers/ThemeProvider'
+import { useTheme } from '@/shared/lib/theme'
 import Toast, { type ToastType } from './Toast'
 import styles from './Toast.module.css'
 

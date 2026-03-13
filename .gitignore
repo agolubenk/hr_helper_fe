@@ -43,3 +43,13 @@ frontend old/
 # Project-specific generated reports (frontend old)
 frontend old/api_coverage_report.json
 frontend old/detailed_coverage_report.json
+
+# Storybook
+*storybook.log
+storybook-static/
+
+# Bundle analysis
+frontend/dist/stats.html
+
+# Test artifacts
+frontend/coverage/

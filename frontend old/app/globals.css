@@ -14,7 +14,7 @@
 }
 
 /* Единый контейнер контента для обычных страниц (настройки, отчёты, списки).
-   Для сложных layout (специализации, recr-chat) в модулях остаётся свой .container. */
+   Для сложных layout (специализации, ats) в модулях остаётся свой .container. */
 .page-content-container {
   padding: 0 var(--page-padding);
   max-width: var(--content-max-width);

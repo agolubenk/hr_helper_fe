@@ -46,7 +46,7 @@ export interface MenuItemConfig {
 }
 
 const iconStyle = { color: 'var(--gray-12)' } as const
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const ic = (N: React.ComponentType<any>) => <N width={16} height={16} style={iconStyle} />
 
 /** Иконка доллара */
@@ -111,7 +111,7 @@ export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
     label: 'Рекрутинг',
     icon: ic(ChatBubbleIcon),
     children: [
-      { id: 'recr-chat', label: 'ATS | Talent Pool', icon: <AtsTalentPoolIcon />, href: '/recr-chat/vacancy/1/candidate/1' },
+      { id: 'ats', label: 'ATS | Talent Pool', icon: <AtsTalentPoolIcon />, href: '/ats/vacancy/1/candidate/1' },
       { id: 'vacancies-list', label: 'Вакансии', icon: ic(ListBulletIcon), href: '/vacancies' },
       { id: 'vacancies-requests', label: 'Заявки на найм', icon: ic(ClipboardIcon), href: '/hiring-requests' },
       { id: 'invites', label: 'Интервью, ТЗ и скрининги', icon: ic(EnvelopeClosedIcon), href: '/invites' },
@@ -306,7 +306,7 @@ function getFilterModule(blockId: string): string {
   if (/^calendar$/.test(blockId)) return 'Календарь'
   if (/^workflow-chat$/.test(blockId)) return 'Inbox / Workflow chat'
   if (/^tasks$/.test(blockId)) return 'Задачи'
-  if (/^recr-|^invites$|^vacancies-|^reporting-hiring-plan$|^recruiting-reports$/.test(blockId)) return 'Рекрутинг'
+  if (/^ats$|^invites$|^vacancies-|^reporting-hiring-plan$|^recruiting-reports$/.test(blockId)) return 'Рекрутинг'
   if (/^onboarding-/.test(blockId)) return 'Онбординг'
   if (/^hr-services-/.test(blockId)) return 'HROps'
   if (/^specializations-|^employees-|^hr-services-employee-relations$/.test(blockId)) return 'Employee relations'

@@ -323,7 +323,7 @@ export const SOCIAL_PLATFORMS: Record<
   },
 }
 
-/** Список платформ для recr-chat (без дубликатов) */
+/** Список платформ для ats (без дубликатов) */
 export const RECR_CHAT_SOCIAL_PLATFORMS: SocialPlatformKey[] = [
   'whatsapp',
   'viber',

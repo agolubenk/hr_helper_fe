@@ -25,11 +25,11 @@ import { SpecializationsRootPage } from '@/features/specializations/pages/Specia
 import { SpecializationInfoPage } from '@/features/specializations/pages/SpecializationInfoPage'
 import { AIChatPage } from '@/features/ai/chat/AIChatPage'
 import { RecruiterChatPage } from '@/features/ai/recruiter-chat/RecruiterChatPage'
-import { RecrChatIndexPage } from '@/features/ai/recruiter-chat/RecrChatIndexPage'
-import { RecrChatCandidatePage } from '@/features/ai/recruiter-chat/RecrChatCandidatePage'
-import { RecrChatAssessmentNewPage } from '@/features/ai/recruiter-chat/RecrChatAssessmentNewPage'
-import { RecrChatAssessmentViewPage } from '@/features/ai/recruiter-chat/RecrChatAssessmentViewPage'
-import { RecrChatAssessmentEditPage } from '@/features/ai/recruiter-chat/RecrChatAssessmentEditPage'
+import { AtsIndexPage } from '@/features/ai/ats/AtsIndexPage'
+import { AtsCandidatePage } from '@/features/ai/ats/AtsCandidatePage'
+import { AtsAssessmentNewPage } from '@/features/ai/ats/AtsAssessmentNewPage'
+import { AtsAssessmentViewPage } from '@/features/ai/ats/AtsAssessmentViewPage'
+import { AtsAssessmentEditPage } from '@/features/ai/ats/AtsAssessmentEditPage'
 import { TelegramPage } from '@/features/integrations/telegram/TelegramPage'
 import CalendarPage from './routes/CalendarPage'
 import CalendarSettingsPage from './routes/CalendarSettingsPage'
@@ -187,34 +187,34 @@ const aiRecruiterChatRoute = createRoute({
   component: () => layout(<RecruiterChatPage />, 'AI Рекрутер'),
 })
 
-const recrChatIndexRoute = createRoute({
+const atsIndexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/recr-chat',
-  component: () => layout(<RecrChatIndexPage />, 'ATS | Talent Pool'),
+  path: '/ats',
+  component: () => layout(<AtsIndexPage />, 'ATS | Talent Pool'),
 })
 
-const recrChatCandidateRoute = createRoute({
+const atsCandidateRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId',
-  component: () => layout(<RecrChatCandidatePage />, 'ATS | Talent Pool'),
+  path: '/ats/vacancy/$vacancyId/candidate/$candidateId',
+  component: () => layout(<AtsCandidatePage />, 'ATS | Talent Pool'),
 })
 
-const recrChatAssessmentNewRoute = createRoute({
+const atsAssessmentNewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId/assessment/new',
-  component: () => layout(<RecrChatAssessmentNewPage />, 'Новая оценка'),
+  path: '/ats/vacancy/$vacancyId/candidate/$candidateId/assessment/new',
+  component: () => layout(<AtsAssessmentNewPage />, 'Новая оценка'),
 })
 
-const recrChatAssessmentViewRoute = createRoute({
+const atsAssessmentViewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId/assessment/$assessmentId',
-  component: () => layout(<RecrChatAssessmentViewPage />, 'Результат оценки'),
+  path: '/ats/vacancy/$vacancyId/candidate/$candidateId/assessment/$assessmentId',
+  component: () => layout(<AtsAssessmentViewPage />, 'Результат оценки'),
 })
 
-const recrChatAssessmentEditRoute = createRoute({
+const atsAssessmentEditRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/recr-chat/vacancy/$vacancyId/candidate/$candidateId/assessment/$assessmentId/edit',
-  component: () => layout(<RecrChatAssessmentEditPage />, 'Редактирование оценки'),
+  path: '/ats/vacancy/$vacancyId/candidate/$candidateId/assessment/$assessmentId/edit',
+  component: () => layout(<AtsAssessmentEditPage />, 'Редактирование оценки'),
 })
 
 const integrationsTelegramRoute = createRoute({
@@ -1112,11 +1112,11 @@ const routeTree = rootRoute.addChildren([
   interviewersRoute,
   aichatRoute,
   aiRecruiterChatRoute,
-  recrChatIndexRoute,
-  recrChatCandidateRoute,
-  recrChatAssessmentNewRoute,
-  recrChatAssessmentViewRoute,
-  recrChatAssessmentEditRoute,
+  atsIndexRoute,
+  atsCandidateRoute,
+  atsAssessmentNewRoute,
+  atsAssessmentViewRoute,
+  atsAssessmentEditRoute,
   integrationsTelegramRoute,
   wikiRoute,
   wikiCreateRoute,

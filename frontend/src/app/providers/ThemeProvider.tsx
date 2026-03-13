@@ -1,44 +1,24 @@
 'use client'
 
 import { Theme } from '@radix-ui/themes'
-import { useState, useEffect, createContext, useContext, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { getFaviconDataUrl } from '@/shared/components/logo'
+import {
+  ThemeContext,
+  THEME_PREFERENCE_KEY,
+  LIGHT_ACCENT_KEY,
+  DARK_ACCENT_KEY,
+  type ThemeMode,
+  type ThemePreference,
+  type AccentColorValue,
+} from '@/shared/lib/theme'
 
-/** Radix UI accent color values */
-type AccentColorValue =
-  | 'blue' | 'tomato' | 'red' | 'ruby' | 'crimson' | 'pink' | 'plum' | 'purple'
-  | 'violet' | 'iris' | 'indigo' | 'cyan' | 'teal' | 'jade' | 'green' | 'grass'
-  | 'lime' | 'yellow' | 'amber' | 'orange' | 'brown'
-
-export type ThemeMode = 'light' | 'dark'
-export type ThemePreference = 'light' | 'dark' | 'auto'
-
-interface ThemeContextType {
-  theme: ThemeMode
-  themePreference: ThemePreference
-  setThemePreference: (pref: ThemePreference) => void
-  toggleTheme: () => void
-  lightThemeAccentColor: AccentColorValue
-  darkThemeAccentColor: AccentColorValue
-  setLightThemeAccentColor: (color: AccentColorValue) => void
-  setDarkThemeAccentColor: (color: AccentColorValue) => void
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
-
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider')
-  }
-  return context
-}
+export { useTheme } from '@/shared/lib/theme'
+export type { ThemeMode, ThemePreference } from '@/shared/lib/theme'
 
 interface ThemeProviderProps {
   children: ReactNode
 }
-
-const THEME_PREFERENCE_KEY = 'themePreference'
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState<ThemeMode>('light')
@@ -65,8 +45,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       : pref
     setTheme(initialTheme)
 
-    const savedLightAccent = localStorage.getItem('lightThemeAccentColor') as AccentColorValue | null
-    const savedDarkAccent = localStorage.getItem('darkThemeAccentColor') as AccentColorValue | null
+    const savedLightAccent = localStorage.getItem(LIGHT_ACCENT_KEY) as AccentColorValue | null
+    const savedDarkAccent = localStorage.getItem(DARK_ACCENT_KEY) as AccentColorValue | null
 
     if (savedLightAccent) setLightThemeAccentColorState(savedLightAccent)
     if (savedDarkAccent) setDarkThemeAccentColorState(savedDarkAccent)
@@ -143,12 +123,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const setLightThemeAccentColor = (color: AccentColorValue) => {
     setLightThemeAccentColorState(color)
-    localStorage.setItem('lightThemeAccentColor', color)
+    localStorage.setItem(LIGHT_ACCENT_KEY, color)
   }
 
   const setDarkThemeAccentColor = (color: AccentColorValue) => {
     setDarkThemeAccentColorState(color)
-    localStorage.setItem('darkThemeAccentColor', color)
+    localStorage.setItem(DARK_ACCENT_KEY, color)
   }
 
   const currentAccentColor = theme === 'light' ? lightThemeAccentColor : darkThemeAccentColor

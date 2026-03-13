@@ -20,7 +20,7 @@
  * Связи:
  * - AppLayout: отображается на всех страницах
  * - useRouter: для навигации на страницу настроек
- * - usePathname: для определения отступа сверху (recr-chat имеет StatusBar)
+ * - usePathname: для определения отступа сверху (ats имеет StatusBar)
  * - ThemeProvider: для получения текущей темы
  * - localStorage: сохранение состояния закрепления и видимости кнопок
  * - CustomEvent: синхронизация состояния между вкладками
@@ -264,19 +264,19 @@ export default function FloatingActions({ actions = [] }: FloatingActionsProps) 
   const router = useRouter()
   // Получение текущего пути для определения отступа сверху
   const pathname = usePathname()
-  // Проверка, является ли текущая страница recr-chat (для корректного позиционирования)
-  const isRecrChatPage = pathname?.startsWith('/recr-chat')
+  // Проверка, является ли текущая страница ats (для корректного позиционирования)
+  const isRecrChatPage = pathname?.startsWith('/ats')
   /**
    * topOffset - отступ сверху для панели
    * 
    * Логика:
-   * - На странице recr-chat: 112px (64px Header + 48px StatusBar)
+   * - На странице ats: 112px (64px Header + 48px StatusBar)
    * - На остальных страницах: 64px (только Header)
    * 
    * Используется для:
    * - Корректного позиционирования панели под Header и StatusBar
    */
-  const topOffset = isRecrChatPage ? '112px' : '64px' // 64px header + 48px status bar (только для recr-chat)
+  const topOffset = isRecrChatPage ? '112px' : '64px' // 64px header + 48px status bar (только для ats)
 
   /**
    * handleSettingsClick - обработчик клика на кнопку "Настройки"
@@ -1095,7 +1095,7 @@ export default function FloatingActions({ actions = [] }: FloatingActionsProps) 
       <Box
         ref={triggerZoneRef}
         position="fixed"
-        top={topOffset} // Отступ сверху: 112px для recr-chat, 64px для остальных
+        top={topOffset} // Отступ сверху: 112px для ats, 64px для остальных
         left="0"
         bottom="0"
         width="7px" // Узкая зона для срабатывания

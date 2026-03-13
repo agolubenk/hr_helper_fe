@@ -2,7 +2,7 @@
 
 import { Box, Text, Flex, Select, Grid } from '@radix-ui/themes'
 import { ColorWheelIcon } from '@radix-ui/react-icons'
-import { useTheme, type ThemePreference } from '@/app/providers/ThemeProvider'
+import { useTheme, type ThemePreference } from '@/shared/lib/theme'
 import styles from './AccentColorSettings.module.css'
 
 function ThemePreviewCard({ type }: { type: 'auto' | 'light' | 'dark' }) {

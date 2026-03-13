@@ -29,7 +29,7 @@ import {
 } from '@radix-ui/react-icons'
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { useTheme } from '@/app/providers/ThemeProvider'
+import { useTheme } from '@/shared/lib/theme'
 import { getQuickButtons, QUICK_BUTTONS_ENABLED_KEY, QUICK_BUTTONS_KEY } from '@/shared/lib/quickButtonsStorage'
 
 const PinUnpinnedIcon = ({ width = 15, height = 15, color = 'currentColor' }: { width?: number; height?: number; color?: string }) => (
@@ -96,8 +96,8 @@ export default function FloatingActions({ actions = [] }: FloatingActionsProps) 
   const navigate = useNavigate()
   const routerState = useRouterState()
   const pathname = routerState.location.pathname
-  const isRecrChatPage = pathname?.startsWith('/recr-chat')
-  const topOffset = isRecrChatPage ? '112px' : '64px'
+  const isAtsPage = pathname?.startsWith('/ats')
+  const topOffset = isAtsPage ? '112px' : '64px'
 
   const handleSettingsClick = () => {
     if (typeof window !== 'undefined') {

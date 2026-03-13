@@ -37,7 +37,7 @@ export interface SettingsMenuItemConfig {
 }
 
 const iconStyle = { color: 'var(--gray-12)' } as const
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const ic = (N: React.ComponentType<any>) => <N width={16} height={16} style={iconStyle} />
 
 const CompanyIcon = () => (

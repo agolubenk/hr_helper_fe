@@ -38,7 +38,7 @@ import { ChevronDownIcon, ChevronUpIcon, GearIcon, OpenInNewWindowIcon, PlusIcon
 import { useState, ReactNode, useEffect, useCallback } from "react"
 import { useNavigate, useRouterState } from "@tanstack/react-router"
 import styles from './Sidebar.module.css'
-import { useTheme } from "@/app/providers/ThemeProvider"
+import { useTheme } from '@/shared/lib/theme'
 import { MAIN_MENU_ITEMS, MENU_SECTIONS } from "@/shared/config/menuConfig"
 import { SETTINGS_MENU_ITEMS } from "@/shared/config/settingsMenuConfig"
 import { PROFILE_REQUESTS_BLOCKS } from "@/shared/config/profileRequestsConfig"
@@ -141,7 +141,7 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
   }
   // 'recruiting' активен на всех страницах рекрутинга
   if (item.id === 'recruiting' && (
-    pathname.startsWith('/recr-chat') ||
+    pathname.startsWith('/ats') ||
     pathname.startsWith('/invites') ||
     pathname.startsWith('/vacancies') ||
     pathname.startsWith('/hiring-requests') ||
@@ -270,8 +270,8 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
   if (item.id === 'projects-resources' && pathname.startsWith('/projects/resources')) {
     return true
   }
-  // 'recr-chat' активен на странице ATS | Talent Pool
-  if (item.id === 'recr-chat' && pathname.startsWith('/recr-chat')) {
+  // 'ats' активен на странице ATS | Talent Pool
+  if (item.id === 'ats' && pathname.startsWith('/ats')) {
     return true
   }
   // 'workflow-chat' активен на странице Workflow чат
@@ -550,25 +550,25 @@ function MenuItemComponent({ item, isActive = false, level = 0, onNavigate, path
  * - Определяет активные пункты меню по текущему пути
  * - Обрабатывает клики на пункты меню
  * - Закрывается на мобильных при навигации
- * - Адаптивное позиционирование (учитывает StatusBar на странице recr-chat)
+ * - Адаптивное позиционирование (учитывает StatusBar на странице ats)
  */
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { theme } = useTheme()
   const navigate = useNavigate()
   const { pathname } = useRouterState().location
-  // Проверка, является ли текущая страница recr-chat (для корректного позиционирования)
-  const isRecrChatPage = pathname?.startsWith('/recr-chat')
+  // Проверка, является ли текущая страница ats (для корректного позиционирования)
+  const isAtsPage = pathname?.startsWith('/ats')
   /**
    * topOffset - отступ сверху для меню
    * 
    * Логика:
-   * - На странице recr-chat: 112px (64px Header + 48px StatusBar)
+   * - На странице ats: 112px (64px Header + 48px StatusBar)
    * - На остальных страницах: 64px (только Header)
    * 
    * Используется для:
    * - Корректного позиционирования меню под Header и StatusBar
    */
-  const topOffset = isRecrChatPage ? '112px' : '64px' // 64px header + 48px status bar (только для recr-chat)
+  const topOffset = isAtsPage ? '112px' : '64px' // 64px header + 48px status bar (только для ats)
 
   /**
    * homeHref - выбранная главная страница для кнопки «Главная».
@@ -639,7 +639,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     {
       blockLabel: 'Рекрутинг',
       items: [
-        { label: 'ATS | Talent Pool', href: '/recr-chat/vacancy/1/candidate/1' },
+        { label: 'ATS | Talent Pool', href: '/ats/vacancy/1/candidate/1' },
         { label: 'Вакансии', href: '/vacancies' },
         { label: 'Заявки на найм', href: '/hiring-requests' },
         { label: 'Интервью, ТЗ и скрининги', href: '/invites' },
@@ -785,7 +785,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <Box
       position="fixed"
-      top={topOffset} // Отступ сверху: 112px для recr-chat (Header + StatusBar), 64px для остальных (только Header)
+      top={topOffset} // Отступ сверху: 112px для ats (Header + StatusBar), 64px для остальных (только Header)
       right="0"
       className={styles.sidebar}
       style={{
@@ -871,7 +871,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             (item.id === 'projects-resources' && pathname?.startsWith('/projects/resources')) ||
             (item.id === 'projects-hr' && pathname?.startsWith('/projects/hr')) ||
             (item.id === 'recruiting' && (
-              pathname?.startsWith('/recr-chat') ||
+              pathname?.startsWith('/ats') ||
               pathname?.startsWith('/invites') ||
               pathname?.startsWith('/vacancies') ||
               pathname?.startsWith('/hiring-requests') ||
@@ -879,7 +879,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               pathname?.startsWith('/reporting')
             )) ||
             (item.id === 'tasks' && pathname?.startsWith('/tasks')) ||
-            (item.id === 'recr-chat' && pathname?.startsWith('/recr-chat')) ||
+            (item.id === 'ats' && pathname?.startsWith('/ats')) ||
             (item.id === 'workflow-chat' && pathname === '/workflow') ||
             (item.id === 'invites' && pathname?.startsWith('/invites')) ||
             (item.id === 'vacancies-list' && pathname?.startsWith('/vacancies')) ||
