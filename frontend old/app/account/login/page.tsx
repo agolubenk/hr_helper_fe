@@ -266,11 +266,13 @@ export default function LoginPage() {
               direction="column" - вертикальное расположение
               gap="2" - отступ между заголовком и подзаголовком */}
           <Flex direction="column" gap="2" align="center">
-            {/* Название приложения - крупный текст */}
+            {/* Логотип и название приложения */}
+            <Box style={{ marginBottom: 4 }}>
+              <img src="/favicon.svg" alt="" width={48} height={48} style={{ display: 'block' }} />
+            </Box>
             <Text size="7" weight="bold">
-              aichat
+              HR Helper
             </Text>
-            {/* Подзаголовок - описание действия */}
             <Text size="3" color="gray">
               Войдите в свой аккаунт
             </Text>

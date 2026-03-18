@@ -1,0 +1,80 @@
+/* Стили для навигации профиля */
+
+.navigation {
+  background-color: var(--color-panel);
+  border: 1px solid var(--gray-a6);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menuItem {
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+}
+
+.menuItem:hover {
+  background-color: var(--gray-a3);
+}
+
+.menuItem.active {
+  background-color: var(--accent-9);
+  color: white;
+}
+
+.menuItem.active svg {
+  color: white;
+}
+
+.menuItem:not(.active) {
+  color: var(--gray-12);
+}
+
+.menuItem:not(.active) svg,
+.menuItem:not(.active) .menuIcon {
+  color: var(--accent-9);
+}
+
+.menuIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profileEditGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--accent-6);
+  border-radius: 8px;
+}
+
+@media (max-width: 1024px) {
+  .navigation {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .menuItem {
+    flex: 0 0 auto;
+    min-width: fit-content;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .profileEditGroup {
+    flex-direction: row;
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+}

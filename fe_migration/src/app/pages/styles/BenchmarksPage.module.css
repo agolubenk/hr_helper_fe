@@ -1,0 +1,117 @@
+.container {
+  padding: 0 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.statsGrid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.statCard {
+  flex: 1;
+  min-width: 200px;
+  padding: 20px;
+  transition: all 0.2s ease-in-out;
+  background: var(--color-background);
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px var(--gray-a3);
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--gray-a4);
+}
+
+.statCard[data-border="total"] {
+  border-top: 2px solid var(--blue-9);
+  border-bottom: 2px solid var(--green-9);
+}
+
+.statCard[data-border="candidates"] {
+  border-top: 2px solid var(--green-9);
+  border-bottom: 2px solid var(--green-10);
+}
+
+.statCard[data-border="vacancies"] {
+  border-top: 2px solid var(--blue-9);
+  border-bottom: 2px solid var(--blue-10);
+}
+
+.statLabel,
+.statLabelCandidates {
+  color: var(--gray-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statLabelCandidates {
+  color: var(--green-11);
+}
+
+.statIcon {
+  color: var(--gray-12);
+}
+
+.statValue {
+  color: var(--gray-12);
+}
+
+.filtersCard {
+  padding: 20px;
+}
+
+.additionalFields {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--gray-2);
+  border-radius: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.additionalFieldsInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.fieldToggle {
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.pagination {
+  gap: 0;
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  overflow: hidden;
+  display: inline-flex;
+}
+
+.pagination button {
+  border-radius: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
+.salaryColumn {
+  min-width: 160px;
+}

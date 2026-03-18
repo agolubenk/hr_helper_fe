@@ -4,10 +4,13 @@
  * statusesScroll: горизонтальный скролл — Все, New (5), Under Review (3), «N этапов без кандидатов», Interview (8), Offer (2), Accepted (1), Rejected (4), Declined (2), Archived (12).
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Box, Flex, Text, Badge, DropdownMenu, Button } from '@radix-ui/themes'
 import { PlusIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons'
 import styles from './AtsStatusBar.module.css'
+
+export const ATS_STATUS_CHANGE_EVENT = 'atsStatusChange'
+export const ATS_STATUS_COUNTS_EVENT = 'atsStatusCountsUpdate'
 
 const DEFAULT_VACANCIES = [
   { id: '1', title: 'Frontend Senior' },
@@ -18,21 +21,27 @@ const DEFAULT_VACANCIES = [
   { id: '6', title: 'QA Lead' },
 ]
 
-const DEFAULT_STATUSES = [
-  { id: 'new', label: 'New', color: '#2180A0', count: 5 },
-  { id: 'under-review', label: 'Under Review', color: '#3B82F6', count: 3 },
-  { id: 'message', label: 'Message', color: '#6366F1', count: undefined },
-  { id: 'contact', label: 'Contact', color: '#8B5CF6', count: undefined },
-  { id: 'hr-screening', label: 'HR Screening', color: '#A855F7', count: undefined },
-  { id: 'test-task', label: 'Test Task', color: '#C084FC', count: undefined },
-  { id: 'final-interview', label: 'Final Interview', color: '#D946EF', count: undefined },
-  { id: 'decision', label: 'Decision', color: '#EC4899', count: undefined },
-  { id: 'interview', label: 'Interview', color: '#8B5CF6', count: 8 },
-  { id: 'offer', label: 'Offer', color: '#22C55E', count: 2 },
-  { id: 'accepted', label: 'Accepted', color: '#10B981', count: 1 },
-  { id: 'rejected', label: 'Rejected', color: '#EF4444', count: 4 },
-  { id: 'declined', label: 'Declined', color: '#F59E0B', count: 2 },
-  { id: 'archived', label: 'Archived', color: '#6B7280', count: 12 },
+interface AtsStatusBarProps {
+  selectedStatus?: string | null
+  onStatusChange?: (status: string | null) => void
+  statusCounts?: Record<string, number>
+}
+
+const getDefaultStatuses = (counts: Record<string, number>) => [
+  { id: 'New', label: 'New', color: '#2180A0', count: counts['New'] ?? 0 },
+  { id: 'Under Review', label: 'Under Review', color: '#F59E0B', count: counts['Under Review'] ?? 0 },
+  { id: 'Message', label: 'Message', color: '#6366F1', count: counts['Message'] ?? 0 },
+  { id: 'Contact', label: 'Contact', color: '#8B5CF6', count: counts['Contact'] ?? 0 },
+  { id: 'HR Screening', label: 'HR Screening', color: '#A855F7', count: counts['HR Screening'] ?? 0 },
+  { id: 'Test Task', label: 'Test Task', color: '#C084FC', count: counts['Test Task'] ?? 0 },
+  { id: 'Final Interview', label: 'Final Interview', color: '#D946EF', count: counts['Final Interview'] ?? 0 },
+  { id: 'Decision', label: 'Decision', color: '#EC4899', count: counts['Decision'] ?? 0 },
+  { id: 'Interview', label: 'Interview', color: '#8B5CF6', count: counts['Interview'] ?? 0 },
+  { id: 'Offer', label: 'Offer', color: '#10B981', count: counts['Offer'] ?? 0 },
+  { id: 'Accepted', label: 'Accepted', color: '#059669', count: counts['Accepted'] ?? 0 },
+  { id: 'Rejected', label: 'Rejected', color: '#EF4444', count: counts['Rejected'] ?? 0 },
+  { id: 'Declined', label: 'Declined', color: '#6B7280', count: counts['Declined'] ?? 0 },
+  { id: 'Archived', label: 'Archived', color: '#9CA3AF', count: counts['Archived'] ?? 0 },
 ]
 
 type StatusGroup = {
@@ -46,10 +55,26 @@ type StatusItem = {
   status: { id: string; label: string; color: string; count?: number }
 }
 
-export function AtsStatusBar() {
+export function AtsStatusBar({ selectedStatus: propSelectedStatus, onStatusChange, statusCounts: propStatusCounts }: AtsStatusBarProps) {
   const [selectedVacancy, setSelectedVacancy] = useState(DEFAULT_VACANCIES[0]?.id ?? '__my__')
   const [viewMode, setViewMode] = useState<'my' | 'all'>('my')
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [localSelectedStatus, setLocalSelectedStatus] = useState<string | null>(null)
+  const [localStatusCounts, setLocalStatusCounts] = useState<Record<string, number>>({})
+
+  const selectedStatus = propSelectedStatus !== undefined ? propSelectedStatus : localSelectedStatus
+  const statusCounts = propStatusCounts ?? localStatusCounts
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleCountsUpdate = (e: CustomEvent<Record<string, number>>) => {
+      setLocalStatusCounts(e.detail)
+    }
+
+    window.addEventListener(ATS_STATUS_COUNTS_EVENT, handleCountsUpdate as EventListener)
+    return () => window.removeEventListener(ATS_STATUS_COUNTS_EVENT, handleCountsUpdate as EventListener)
+  }, [])
 
   const myVacancies = DEFAULT_VACANCIES.slice(0, 2)
 
@@ -60,11 +85,13 @@ export function AtsStatusBar() {
         ? 'Мои'
         : DEFAULT_VACANCIES.find((v) => v.id === selectedVacancy)?.title ?? 'Выберите вакансию'
 
+  const statuses = useMemo(() => getDefaultStatuses(statusCounts), [statusCounts])
+
   const groupedStatuses = useMemo(() => {
     const result: Array<StatusGroup | StatusItem> = []
     let currentGroup: Array<{ id: string; label: string; color: string; count?: number }> = []
 
-    DEFAULT_STATUSES.forEach((status, index) => {
+    statuses.forEach((status, index) => {
       const isActive = status.count !== undefined && status.count > 0
 
       if (!isActive) {
@@ -86,12 +113,23 @@ export function AtsStatusBar() {
       result.push({
         type: 'group',
         statuses: currentGroup,
-        groupId: `group-${DEFAULT_STATUSES.length - currentGroup.length}`,
+        groupId: `group-${statuses.length - currentGroup.length}`,
       })
     }
 
     return result
-  }, [])
+  }, [statuses])
+
+  const handleStatusClick = useCallback((statusId: string) => {
+    const newStatus = statusId === '' || selectedStatus === statusId ? null : statusId
+
+    if (onStatusChange) {
+      onStatusChange(newStatus)
+    } else {
+      setLocalSelectedStatus(newStatus)
+      window.dispatchEvent(new CustomEvent(ATS_STATUS_CHANGE_EVENT, { detail: newStatus }))
+    }
+  }, [selectedStatus, onStatusChange])
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => {
@@ -110,7 +148,7 @@ export function AtsStatusBar() {
             <Button
               className={styles.selectTrigger}
               variant="soft"
-              style={{ width: '100%', justifyContent: 'space-between' }}
+              style={{ justifyContent: 'space-between' }}
             >
               <Text size="2" truncate style={{ flex: 1, textAlign: 'left' }}>
                 {triggerLabel}
@@ -196,13 +234,56 @@ export function AtsStatusBar() {
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Button
+              size="2"
+              variant="soft"
+              style={{
+                flexShrink: 0,
+                minWidth: 30,
+                width: 30,
+                height: 30,
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Взять на другую вакансию"
+            >
+              <PlusIcon width={14} height={14} />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="start">
+            {DEFAULT_VACANCIES.map((v) => (
+              <DropdownMenu.Item key={v.id}>{v.title}</DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </Box>
 
       <Box className={styles.statusesScroll}>
         <Flex align="center" gap="1" className={styles.statusesContainer}>
-          <Box className={styles.statusItem} style={{ borderColor: '#6B7280' }}>
-            <Badge size="2" style={{ backgroundColor: '#6B7280', color: 'white', cursor: 'pointer' }}>
+          <Box
+            className={styles.statusItem}
+            style={{
+              borderColor: '#6B7280',
+              backgroundColor: selectedStatus === null ? 'var(--accent-3)' : undefined,
+            }}
+            onClick={() => handleStatusClick('')}
+          >
+            <Badge
+              size="2"
+              style={{
+                backgroundColor: selectedStatus === null ? 'var(--accent-9)' : '#6B7280',
+                color: 'white',
+                cursor: 'pointer',
+              }}
+            >
               Все
+              <Text size="1" style={{ marginLeft: '4px', opacity: 0.9 }}>
+                ({Object.values(statusCounts).reduce((a, b) => a + b, 0)})
+              </Text>
             </Badge>
           </Box>
           {groupedStatuses.map((item) => {
@@ -292,6 +373,7 @@ export function AtsStatusBar() {
 
             const status = item.status
             const isActive = status.count !== undefined && status.count > 0
+            const isSelected = selectedStatus === status.id
 
             return (
               <Box
@@ -301,11 +383,14 @@ export function AtsStatusBar() {
                   borderColor: status.color,
                   opacity: isActive ? 1 : 0.5,
                   cursor: isActive ? 'pointer' : 'not-allowed',
+                  backgroundColor: isSelected ? 'var(--accent-3)' : undefined,
                 }}
                 onClick={(e) => {
                   if (!isActive) {
                     e.preventDefault()
                     e.stopPropagation()
+                  } else {
+                    handleStatusClick(status.id)
                   }
                 }}
                 onMouseDown={(e) => {
@@ -318,7 +403,7 @@ export function AtsStatusBar() {
                 <Badge
                   size="2"
                   style={{
-                    backgroundColor: status.color,
+                    backgroundColor: isSelected ? 'var(--accent-9)' : status.color,
                     color: 'white',
                     cursor: isActive ? 'pointer' : 'not-allowed',
                     opacity: isActive ? 1 : 0.6,

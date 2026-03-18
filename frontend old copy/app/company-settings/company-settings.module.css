@@ -1,0 +1,6 @@
+/* Контейнер страницы: отступы и ширина из глобальных переменных (app/globals.css) */
+.container {
+  padding: 0 var(--page-padding);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}

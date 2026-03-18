@@ -108,7 +108,7 @@ export default function AccentColorSettings() {
         <Flex align="center" gap="2">
           <ColorWheelIcon width={20} height={20} />
           <Text size="4" weight="bold">
-            Настройки темы
+            Темы и оформление
           </Text>
         </Flex>
       </Box>

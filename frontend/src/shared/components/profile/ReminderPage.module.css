@@ -48,6 +48,17 @@
   resize: vertical;
 }
 
+.siteItem {
+  padding: 8px 12px;
+  border: 1px solid var(--gray-a5);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-normal);
+}
+
+.siteItem:hover {
+  background-color: var(--gray-a2);
+}
+
 /* Темная тема */
 [data-theme="dark"] .header,
 .radix-themes[data-appearance="dark"] .header {

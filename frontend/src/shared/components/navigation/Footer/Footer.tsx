@@ -56,15 +56,35 @@ const EXAMPLE_ITEMS: TrayItem[] = [
   { id: '24', type: 'notification', text: 'Напоминание: дедлайн оффера' },
 ]
 
+const STORAGE_KEY_ENABLED = 'footerTasksEnabled'
+const STORAGE_KEY_COLLAPSED = 'footerTasksCollapsed'
+
 export function Footer() {
   const year = new Date().getFullYear()
   const [items, setItems] = useState<TrayItem[]>(EXAMPLE_ITEMS)
   const [visibleCount, setVisibleCount] = useState(EXAMPLE_ITEMS.length)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [dropdownRight, setDropdownRight] = useState(12)
+  const [tasksEnabled, setTasksEnabled] = useState(true)
+  const [alwaysCollapsed, setAlwaysCollapsed] = useState(false)
   const trayRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const moreBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const storedEnabled = localStorage.getItem(STORAGE_KEY_ENABLED)
+    const storedCollapsed = localStorage.getItem(STORAGE_KEY_COLLAPSED)
+    if (storedEnabled !== null) setTasksEnabled(storedEnabled === 'true')
+    if (storedCollapsed !== null) setAlwaysCollapsed(storedCollapsed === 'true')
+
+    const handleSettingsChange = (e: CustomEvent<{ enabled: boolean; collapsed: boolean }>) => {
+      setTasksEnabled(e.detail.enabled)
+      setAlwaysCollapsed(e.detail.collapsed)
+    }
+    window.addEventListener('footerTasksSettingsChange', handleSettingsChange as EventListener)
+    return () => window.removeEventListener('footerTasksSettingsChange', handleSettingsChange as EventListener)
+  }, [])
 
   const calculateLayout = useCallback(() => {
     const container = trayRef.current
@@ -118,9 +138,10 @@ export function Footer() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownOpen])
 
-  const visibleItems = items.slice(0, visibleCount)
-  const hiddenItems = items.slice(visibleCount)
-  const hasItems = items.length > 0
+  const effectiveVisibleCount = alwaysCollapsed ? 0 : visibleCount
+  const visibleItems = items.slice(0, effectiveVisibleCount)
+  const hiddenItems = items.slice(effectiveVisibleCount)
+  const hasItems = tasksEnabled && items.length > 0
 
   return (
     <footer className={styles.footer}>

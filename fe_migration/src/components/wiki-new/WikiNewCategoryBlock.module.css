@@ -1,0 +1,29 @@
+.category {
+  margin-bottom: 32px;
+}
+
+.category:last-child {
+  margin-bottom: 0;
+}
+
+.categoryHeader {
+  margin-bottom: 12px;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

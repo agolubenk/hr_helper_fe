@@ -1,0 +1,309 @@
+.editContainer {
+  padding: 24px;
+}
+
+/* Обёртка формы: колонка на всю ширину (верхняя строка + карточка содержания) */
+.formWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.content {
+  align-items: flex-start;
+}
+
+.formContainer {
+  flex: 1;
+  background: var(--gray-2);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid var(--gray-6);
+}
+
+/* Для темной темы */
+[data-theme="dark"] .formContainer,
+.radix-themes[data-appearance="dark"] .formContainer {
+  background: var(--gray-3);
+}
+
+.formHeader {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gray-6);
+}
+
+/* Кнопка «Справка»: только на мобильных (на десктопе справка в сайдбаре) */
+.helpTriggerMobile {
+  display: none;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  padding: 8px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.radix-themes[data-appearance="dark"] .toolbar {
+  background: var(--gray-3);
+}
+
+.blockTrigger {
+  min-width: 160px;
+}
+
+.preview {
+  padding: 20px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  min-height: 320px;
+}
+
+.radix-themes[data-appearance="dark"] .preview {
+  background: var(--gray-3);
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.actions {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-6);
+}
+
+.fullWidthBlock {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-6);
+}
+
+/* Карточка на всю ширину: Содержание + порядок сортировки, опубликовано, примечание, кнопки */
+.mainContentBlock {
+  width: 100%;
+  padding: 20px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.radix-themes[data-appearance="dark"] .mainContentBlock {
+  background: var(--gray-3);
+}
+
+.mainContentBlock .contentBlock {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  padding-bottom: 0;
+}
+
+/* Блок «Содержание»: шапка (заголовок + кнопки + переключатель) и редактор */
+.contentBlock {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-6);
+  padding-bottom: 4px;
+}
+
+.contentBlockHeader {
+  margin-bottom: 12px;
+}
+
+.helpContainer {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.helpModalBody {
+  padding-top: 8px;
+}
+
+.helpModalBody ul {
+  margin-left: 20px;
+}
+
+.helpCard {
+  background: var(--gray-2);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--gray-6);
+  position: sticky;
+  top: 24px;
+}
+
+/* Для темной темы */
+[data-theme="dark"] .helpCard,
+.radix-themes[data-appearance="dark"] .helpCard {
+  background: var(--gray-3);
+}
+
+@media (max-width: 1024px) {
+  .content {
+    flex-direction: column;
+  }
+
+  .helpContainer {
+    width: 100%;
+  }
+
+  .helpCard {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .editContainer {
+    padding: 16px;
+  }
+
+  .formContainer {
+    padding: 16px;
+  }
+
+  /* На мобильных: сайдбар справки скрыт, показываем кнопку инфо */
+  .helpContainer {
+    display: none;
+  }
+
+  .helpTriggerMobile {
+    display: inline-flex;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* Отдельные карточки: параметры публикации и кнопки действий */
+.card {
+  width: 100%;
+  padding: 20px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.radix-themes[data-appearance="dark"] .card {
+  background: var(--gray-3);
+}
+
+.optionsCard .row {
+  margin-top: 0;
+}
+
+.optionsCard .field {
+  margin-bottom: 0;
+}
+
+.actionsCard .actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Скрываем статические кнопки Отмена/Сохранить, когда видна плавающая панель (чтобы не было двойного контура) */
+.actionsGroupHidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Плавающие кнопки: справа (как в карточке), над футером; диаметр чуть меньше кнопок в карточке; расширяются при прокрутке (--expansion 0..1) */
+.floatingActions {
+  position: fixed;
+  bottom: 56px;
+  right: 24px; /* по умолчанию; переопределяется из JS по контейнеру контента */
+  left: auto;
+  z-index: 90;
+  padding: 5px 5px 5px 12px;
+  /* Прозрачность за счёт смешивания с transparent; цвет берётся из темы (--color-background / --gray-2), оттенок не меняется */
+  background: var(--color-background);
+  background: color-mix(in srgb, var(--color-background) 62%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--gray-a5);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease, right 0.2s ease;
+}
+
+.radix-themes[data-appearance="dark"] .floatingActions {
+  background: var(--gray-2);
+  background: color-mix(in srgb, var(--gray-2) 58%, transparent);
+  border-color: var(--gray-a5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.floatingActions .floatingCancel {
+  min-width: 40px;
+  width: calc(40px + (72 * var(--expansion, 0)));
+  height: 40px;
+  /* Без текста (expansion 0): симметричные отступы 9px, иконка по центру; с текстом — отступ справа под подпись */
+  padding: 0 calc(9px + (12 - 9) * var(--expansion, 0)) !important;
+  gap: calc(8px * var(--expansion, 0));
+  border-radius: 999px;
+  overflow: hidden;
+  transition: width 0.25s ease, padding 0.2s ease, gap 0.2s ease;
+}
+
+.floatingActions .floatingSave {
+  min-width: 40px;
+  width: calc(40px + (152 * var(--expansion, 0)));
+  height: 40px;
+  padding: 0 calc(9px + (16 - 9) * var(--expansion, 0)) !important;
+  gap: calc(8px * var(--expansion, 0));
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--accent-9) !important;
+  color: #ffffff !important;
+  transition: width 0.25s ease, padding 0.2s ease, gap 0.2s ease;
+}
+
+.floatingIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.floatingLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: calc(140px * var(--expansion, 0));
+  opacity: var(--expansion, 0);
+  transition: max-width 0.25s ease, opacity 0.2s ease;
+}
+
+.floatingActions .floatingSave .floatingLabel {
+  max-width: calc(220px * var(--expansion, 0));
+}

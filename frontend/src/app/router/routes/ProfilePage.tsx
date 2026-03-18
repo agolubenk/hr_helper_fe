@@ -9,6 +9,7 @@ import { IntegrationsPage } from '@/shared/components/profile/IntegrationsPage'
 import QuickButtonsPage from '@/shared/components/profile/QuickButtonsPage'
 import ReminderPage from '@/shared/components/profile/ReminderPage'
 import AccentColorSettings from '@/shared/components/profile/AccentColorSettings'
+import QuickTasksSettings from '@/shared/components/profile/QuickTasksSettings'
 import { ProfileRequestsPage } from '@/shared/components/profile/ProfileRequestsPage'
 import { createSocialLink } from '@/shared/lib/types/social-links'
 import type { SocialLink } from '@/shared/lib/types/social-links'
@@ -171,7 +172,12 @@ export function ProfilePage() {
           />
         )
       case 'theme':
-        return <AccentColorSettings />
+        return (
+          <Flex direction="column" gap="4">
+            <AccentColorSettings />
+            <QuickTasksSettings />
+          </Flex>
+        )
       case 'integrations':
         return <IntegrationsPage />
       case 'quick-buttons':

@@ -1,0 +1,25 @@
+.errorCode {
+  font-size: 120px;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--orange-9, #f76808) 0%, var(--orange-11, #d1540d) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.errorIcon {
+  color: var(--orange-9, #f76808);
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-4px) rotate(-5deg); }
+  75% { transform: translateX(4px) rotate(5deg); }
+}

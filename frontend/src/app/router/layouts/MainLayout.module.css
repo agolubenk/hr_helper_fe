@@ -1,7 +1,9 @@
 /* Адаптивные стили для контента в MainLayout */
 
 .contentWrapper {
-  /* Контент растягивается по высоте, страница скроллится естественно */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .content {
@@ -13,5 +15,12 @@
     margin-left: 12px !important;
     margin-right: 12px !important;
     width: calc(100% - 24px) !important;
+  }
+}
+
+@media (max-width: 549px) {
+  .contentWrapper {
+    height: auto !important;
+    min-height: calc(100vh - 64px - 48px);
   }
 }

@@ -1,0 +1,112 @@
+/* ==========================================================================
+   БАЗОВЫЕ СТИЛИ ДЛЯ ВСЕХ СТРАНИЦ
+   Подключаются в main.tsx (вместе с @radix-ui/themes/styles.css).
+   Новые общие стили и переменные добавлять сюда — тогда они автоматически
+   подтянутся на все страницы.
+   ========================================================================== */
+
+/* Отступы и размеры контента (использовать в модулях: var(--page-padding) и т.д.) */
+:root {
+  --page-padding: 24px;
+  --page-padding-mobile: 16px;
+  --content-max-width: 1200px;
+  --content-gap: 16px;
+}
+
+.page-content-container {
+  padding: 0 var(--page-padding);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .page-content-container {
+    padding: 0 var(--page-padding-mobile);
+  }
+}
+
+#root {
+  height: 100%;
+  min-height: 0;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+body {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+body[data-theme="light"],
+body.light-theme {
+  background-color: #ffffff !important;
+  color: #000000;
+}
+
+body[data-theme="dark"],
+body.dark-theme {
+  background-color: var(--gray-1, #1c1c1f) !important;
+  color: var(--gray-12, #ffffff);
+}
+
+.radix-themes[data-is-root-theme='true'] {
+  min-height: auto;
+}
+
+body[data-theme="dark"] .radix-themes,
+.radix-themes[data-appearance="dark"] {
+  background-color: var(--gray-1, #1c1c1f);
+}
+
+body[data-theme="light"] .radix-themes,
+.radix-themes[data-appearance="light"] {
+  background-color: #ffffff;
+}
+
+:root {
+  --z-menu: 3000;
+  --z-toasts: 10000;
+  --z-modals: 2000;
+}
+
+body [data-radix-popper-content-wrapper],
+body [data-radix-select-content],
+body .rt-SelectContent {
+  z-index: 3000 !important;
+}
+
+body [data-radix-select-viewport] {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+[data-radix-dialog-overlay],
+.rt-DialogOverlay,
+div[data-radix-dialog-overlay] {
+  z-index: 2000 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(4px);
+}
+
+[data-radix-dialog-content],
+.rt-DialogContent,
+div[data-radix-dialog-content] {
+  z-index: 2000 !important;
+}
+
+body > [data-radix-portal] [data-radix-dialog-overlay],
+body > [data-radix-portal] [data-radix-dialog-content],
+[data-radix-portal] [data-radix-dialog-overlay],
+[data-radix-portal] [data-radix-dialog-content] {
+  z-index: 2000 !important;
+}
+
+[data-radix-portal] {
+  z-index: 2000 !important;
+}

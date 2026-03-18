@@ -142,7 +142,8 @@ export function MainLayout({
             : `calc(100vh - 64px - ${FOOTER_HEIGHT}px)`,
           flexDirection: 'column',
           transition: 'all 0.2s ease-in-out',
-          overflow: 'hidden',
+          overflowX: 'hidden',
+          overflowY: 'auto',
         }}
       >
         <Box

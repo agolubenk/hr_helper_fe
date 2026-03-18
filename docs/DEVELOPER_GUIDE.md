@@ -16,17 +16,15 @@ cd frontend && npm install
 npm run dev
 ```
 
-Приложение будет доступно на http://localhost:3001
+Приложение будет доступно на http://localhost:3001 (порт по умолчанию в `vite.config`); для **3000** см. ниже.
 
-### Запуск обоих фронтендов
+### Скрипты в корне репозитория
 
-```bash
-# В корневой папке проекта
-./start-dev.sh
-```
-
-- Старый фронтенд (Next.js): http://localhost:3000
-- Новый фронтенд (Vite): http://localhost:3001
+| Скрипт | URL |
+|--------|-----|
+| `./start-dev.sh` | Next **3001** + новый Vite **3000** |
+| `./start-dev-new.sh` | только новый фронт **3000** |
+| `./start-dev-migration.sh` | Next **3001** + fe_migration **3002** (сравнение переноса) |
 
 ---
 

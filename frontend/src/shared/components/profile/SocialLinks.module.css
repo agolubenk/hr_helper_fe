@@ -41,8 +41,8 @@
   padding: 0;
   border: none;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--gray-12);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--duration-normal) var(--ease-default);

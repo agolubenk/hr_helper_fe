@@ -1,0 +1,77 @@
+.statsContainer {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  flex: 1;
+  min-width: 200px;
+  background: var(--color-background);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid var(--gray-6);
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px var(--gray-a3);
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--gray-a4);
+}
+
+.statCard[data-border="total"] {
+  border-top: 2px solid var(--blue-9);
+  border-bottom: 2px solid var(--green-9);
+}
+
+.statCard[data-border="pending"] {
+  border-top: 2px solid var(--orange-9);
+  border-bottom: 2px solid var(--orange-10);
+}
+
+.statCard[data-border="sent"] {
+  border-top: 2px solid var(--blue-9);
+  border-bottom: 2px solid var(--blue-10);
+}
+
+.statCard[data-border="completed"] {
+  border-top: 2px solid var(--green-9);
+  border-bottom: 2px solid var(--green-10);
+}
+
+.statLabel,
+.statLabelPending,
+.statLabelCompleted {
+  color: var(--gray-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statLabelPending {
+  color: var(--orange-11);
+}
+
+.statLabelCompleted {
+  color: var(--green-11);
+}
+
+.statIcon {
+  color: var(--gray-12);
+}
+
+.statValue {
+  color: var(--gray-12);
+}
+
+@media (max-width: 768px) {
+  .statsContainer {
+    flex-direction: column;
+  }
+  
+  .statCard {
+    width: 100%;
+    min-width: unset;
+  }
+}

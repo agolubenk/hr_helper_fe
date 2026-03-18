@@ -38,6 +38,7 @@ import {
 import { useToast } from '@/shared/components/feedback/Toast'
 import {
   MOCK_CANDIDATES,
+  MOCK_RATINGS,
   AVAILABLE_VACANCIES,
   getCandidateInitials,
   getVacancyIdByTitle,
@@ -323,6 +324,15 @@ export function AtsCandidatePage() {
   const [isRightColumnOpen, setIsRightColumnOpen] = useState(false)
   const [leftTab, setLeftTab] = useState<LeftTab>('candidates')
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const [ratingDetailOpen, setRatingDetailOpen] = useState(false)
+  const [selectedRating, setSelectedRating] = useState<typeof MOCK_RATINGS['1'][0] | null>(null)
+  const [newRatingDialogOpen, setNewRatingDialogOpen] = useState(false)
+  const [ratingScores, setRatingScores] = useState<Record<string, number>>({})
+  const [ratingComments, setRatingComments] = useState<Record<string, string>>({})
+  const [ratingFiles, setRatingFiles] = useState<Record<string, File[]>>({})
+  const [selectedInterviewer, setSelectedInterviewer] = useState('')
+  const [generalFeedback, setGeneralFeedback] = useState('')
   const [slotsOpen, setSlotsOpen] = useState(false)
   const [rightTab, setRightTab] = useState<RightTab>('info')
   const [selectedSettingTab, setSelectedSettingTab] = useState<
@@ -352,17 +362,6 @@ export function AtsCandidatePage() {
     toast.showSuccess('Версия восстановлена', `Версия ${versionToRestore.version} применена.`)
   }, [versionToRestore, editHistory, toast])
 
-  const filteredCandidates = useMemo(() => {
-    if (!searchQuery.trim()) return MOCK_CANDIDATES
-    const q = searchQuery.toLowerCase()
-    return MOCK_CANDIDATES.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.position?.toLowerCase().includes(q) ?? false) ||
-        (c.email?.toLowerCase().includes(q) ?? false)
-    )
-  }, [searchQuery])
-
   const selected = useMemo(
     () =>
       MOCK_CANDIDATES.find((c) => c.id === cid) ?? MOCK_CANDIDATES[0] ?? null,
@@ -376,6 +375,56 @@ export function AtsCandidatePage() {
   const [localCandidateOverrides, setLocalCandidateOverrides] = useState<
     Record<string, Partial<AtsCandidate>>
   >({})
+
+  const candidatesWithOverrides = useMemo(() => {
+    return MOCK_CANDIDATES.map((c) => ({
+      ...c,
+      ...(localCandidateOverrides[c.id] ?? {}),
+    }))
+  }, [localCandidateOverrides])
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    candidatesWithOverrides.forEach((c) => {
+      counts[c.status] = (counts[c.status] || 0) + 1
+    })
+    return counts
+  }, [candidatesWithOverrides])
+
+  const filteredCandidates = useMemo(() => {
+    let result = candidatesWithOverrides
+
+    if (selectedStatus) {
+      result = result.filter((c) => c.status === selectedStatus)
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          (c.position?.toLowerCase().includes(q) ?? false) ||
+          (c.email?.toLowerCase().includes(q) ?? false)
+      )
+    }
+
+    return result
+  }, [candidatesWithOverrides, searchQuery, selectedStatus])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.dispatchEvent(new CustomEvent('atsStatusCountsUpdate', { detail: statusCounts }))
+  }, [statusCounts])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleStatusChange = (e: CustomEvent<string | null>) => {
+      setSelectedStatus(e.detail)
+    }
+    window.addEventListener('atsStatusChange', handleStatusChange as EventListener)
+    return () => window.removeEventListener('atsStatusChange', handleStatusChange as EventListener)
+  }, [])
+
   const [statusComment, setStatusComment] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
   const [editingEmailIndex, setEditingEmailIndex] = useState<number | null>(null)
@@ -412,6 +461,98 @@ export function AtsCandidatePage() {
   const [addContactModalOpen, setAddContactModalOpen] = useState(false)
   const [newContactType, setNewContactType] = useState<'email' | 'phone'>('email')
   const [newContactValue, setNewContactValue] = useState('')
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false)
+  const [candidatePhotosMap, setCandidatePhotosMap] = useState<Record<string, { url: string; date: string }[]>>(() => {
+    const initial: Record<string, { url: string; date: string }[]> = {}
+    MOCK_CANDIDATES.forEach((c) => {
+      if (c.avatarUrl) {
+        initial[c.id] = [{ url: c.avatarUrl, date: '01.01.2026' }]
+      }
+    })
+    return initial
+  })
+  const [currentPhotoIndexMap, setCurrentPhotoIndexMap] = useState<Record<string, number>>({})
+  const [isDragging, setIsDragging] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+
+  const currentPhotoIndex = selected ? (currentPhotoIndexMap[selected.id] ?? 0) : 0
+
+  const candidatePhotos = useMemo(() => {
+    if (!selected) return []
+    return candidatePhotosMap[selected.id] ?? []
+  }, [selected, candidatePhotosMap])
+
+  const currentCandidateAvatarUrl = useMemo(() => {
+    if (candidatePhotos.length > 0 && currentPhotoIndex < candidatePhotos.length) {
+      return candidatePhotos[currentPhotoIndex]?.url
+    }
+    return selected?.avatarUrl
+  }, [candidatePhotos, currentPhotoIndex, selected])
+
+  const getCandidateAvatarUrl = useCallback((candidateId: string, fallbackUrl?: string) => {
+    const photos = candidatePhotosMap[candidateId]
+    const photoIndex = currentPhotoIndexMap[candidateId] ?? 0
+    if (photos && photos.length > 0 && photoIndex < photos.length) {
+      return photos[photoIndex]?.url
+    }
+    return fallbackUrl
+  }, [candidatePhotosMap, currentPhotoIndexMap])
+
+  const handlePhotoUpload = useCallback((file: File) => {
+    if (!file.type.startsWith('image/') || !selected) return
+    const url = URL.createObjectURL(file)
+    const today = new Date()
+    const date = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`
+    setCandidatePhotosMap((prev) => ({
+      ...prev,
+      [selected.id]: [{ url, date }, ...(prev[selected.id] ?? [])],
+    }))
+    setCurrentPhotoIndexMap((prev) => ({ ...prev, [selected.id]: 0 }))
+  }, [selected])
+
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handlePhotoUpload(file)
+  }, [handlePhotoUpload])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handlePhotoUpload(file)
+  }, [handlePhotoUpload])
+
+  const handlePhotoSelect = useCallback((index: number) => {
+    if (!selected) return
+    setCurrentPhotoIndexMap((prev) => ({ ...prev, [selected.id]: index }))
+  }, [selected])
+
+  const handlePhotoDelete = useCallback((index: number) => {
+    if (!selected) return
+    const currentPhotos = candidatePhotosMap[selected.id] ?? []
+    const newPhotos = currentPhotos.filter((_, i) => i !== index)
+    
+    setCandidatePhotosMap((prev) => ({ ...prev, [selected.id]: newPhotos }))
+    
+    if (currentPhotoIndex >= newPhotos.length) {
+      setCurrentPhotoIndexMap((prev) => ({ ...prev, [selected.id]: Math.max(0, newPhotos.length - 1) }))
+    } else if (index < currentPhotoIndex) {
+      setCurrentPhotoIndexMap((prev) => ({ ...prev, [selected.id]: currentPhotoIndex - 1 }))
+    }
+  }, [currentPhotoIndex, selected, candidatePhotosMap])
 
   const displayCandidate = selected
     ? { ...selected, ...(localCandidateOverrides[selected.id] ?? {}) }
@@ -865,6 +1006,7 @@ export function AtsCandidatePage() {
                   <Flex align="center" gap="3">
                     <Avatar
                       size="3"
+                      src={getCandidateAvatarUrl(c.id, c.avatarUrl)}
                       fallback={getCandidateInitials(c)}
                       style={{ backgroundColor: c.statusColor }}
                     />
@@ -1309,10 +1451,14 @@ export function AtsCandidatePage() {
                       flexShrink: 0,
                       display: 'flex',
                       alignItems: 'center',
+                      cursor: 'pointer',
                     }}
+                    onClick={() => setPhotoDialogOpen(true)}
+                    title="Нажмите, чтобы изменить фото"
                   >
                     <Avatar
                       size="5"
+                      src={currentCandidateAvatarUrl}
                       fallback={getCandidateInitials(selected)}
                       style={{
                         backgroundColor: displayCandidate.statusColor ?? 'var(--accent-9)',
@@ -1391,49 +1537,6 @@ export function AtsCandidatePage() {
                           </Badge>
                         </Flex>
                       </Box>
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger>
-                          <Button
-                            size="2"
-                            variant="soft"
-                            style={{
-                              flexShrink: 1,
-                              minWidth: 30,
-                              maxWidth: 'none',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              paddingLeft: 8,
-                              paddingRight: 8,
-                            }}
-                            title="Взять на другую вакансию"
-                          >
-                            <PlusIcon width={14} height={14} style={{ flexShrink: 0 }} />
-                            {!isMobile && (
-                              <span
-                                style={{
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  minWidth: 0,
-                                  flexShrink: 1,
-                                  maxWidth: '100%',
-                                }}
-                              >
-                                Взять на другую вакансию
-                              </span>
-                            )}
-                          </Button>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Content align="end">
-                          {AVAILABLE_VACANCIES.filter((v) => v.name !== (displayCandidate.vacancy ?? vacancyTitle)).map((v) => (
-                            <DropdownMenu.Item key={v.id}>{v.name}</DropdownMenu.Item>
-                          ))}
-                        </DropdownMenu.Content>
-                      </DropdownMenu.Root>
                     </Flex>
                     <Flex align="center" gap="2" wrap="wrap" style={{ width: '100%', minWidth: 0 }}>
                   <Box style={{ flex: '1 1 auto', minWidth: 0 }}>
@@ -1483,21 +1586,69 @@ export function AtsCandidatePage() {
                           </Select.Content>
                         </Select.Root>
                       )}
+                      {displayCandidate.status === 'Accepted' && (
+                        <>
+                          <TextField.Root
+                            size="2"
+                            placeholder="Дата"
+                            style={{ width: 90, minWidth: 90, flexShrink: 0 }}
+                            defaultValue=""
+                          >
+                            <TextField.Slot side="left">
+                              <Text size="1">📅</Text>
+                            </TextField.Slot>
+                          </TextField.Root>
+                          <Button
+                            size="2"
+                            variant="soft"
+                            onClick={() => handleStatusChange('Archived')}
+                            style={{
+                              flexShrink: 0,
+                              backgroundColor: '#10B981',
+                              color: 'white',
+                              minWidth: 30,
+                              width: 30,
+                              padding: 0,
+                            }}
+                            title="Hired"
+                          >
+                            <CheckIcon width={14} height={14} />
+                          </Button>
+                          <Button
+                            size="2"
+                            variant="soft"
+                            onClick={() => handleStatusChange('Rejected')}
+                            style={{
+                              flexShrink: 0,
+                              backgroundColor: '#EF4444',
+                              color: 'white',
+                              minWidth: 30,
+                              width: 30,
+                              padding: 0,
+                            }}
+                            title="Rejected"
+                          >
+                            <Cross2Icon width={14} height={14} />
+                          </Button>
+                        </>
+                      )}
                     </Flex>
                   </Box>
-                  <Button
-                    size="2"
-                    variant="soft"
-                    onClick={handleNextStatus}
-                    disabled={getNextStatus(displayCandidate.status) === displayCandidate.status}
-                    style={{
-                      flexShrink: 0,
-                      backgroundColor: getStatusColor(getNextStatus(displayCandidate.status)),
-                      color: 'white',
-                    }}
-                  >
-                    <Text size="3">→</Text>
-                  </Button>
+                  {displayCandidate.status !== 'Accepted' && (
+                    <Button
+                      size="2"
+                      variant="soft"
+                      onClick={handleNextStatus}
+                      disabled={getNextStatus(displayCandidate.status) === displayCandidate.status}
+                      style={{
+                        flexShrink: 0,
+                        backgroundColor: getStatusColor(getNextStatus(displayCandidate.status)),
+                        color: 'white',
+                      }}
+                    >
+                      <Text size="3">→</Text>
+                    </Button>
+                  )}
                 </Flex>
                   </Flex>
                 </Flex>
@@ -2066,6 +2217,15 @@ export function AtsCandidatePage() {
                                     }}
                                   />
                                 </Button>
+                                {(() => {
+                                  const unreadCount = displayCandidate.unreadSources?.[platform] ?? 0
+                                  if (unreadCount === 0) return null
+                                  return (
+                                    <span className={styles.socialMessageBadge}>
+                                      {unreadCount >= 10 ? '+' : unreadCount}
+                                    </span>
+                                  )
+                                })()}
                               </Box>
                             )
                           })
@@ -2731,15 +2891,109 @@ export function AtsCandidatePage() {
                   </Flex>
                 </Tabs.Content>
                 <Tabs.Content value="ratings">
-                  <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>
-                    Оценки по матрице компетенций
-                  </Text>
-                  <Text size="2" color="gray" mb="3">
-                    Оценка по навыкам из конфигуратора специализаций. Проводится по этапам встреч.
-                  </Text>
-                  <Flex direction="column" gap="2">
-                    <Text size="2" color="gray">Оценки пока не выставлены.</Text>
-                  </Flex>
+                  {(() => {
+                    const candidateRatings = selected ? (MOCK_RATINGS[selected.id] ?? []) : []
+                    const avgScore = candidateRatings.length > 0 
+                      ? (candidateRatings.reduce((sum, r) => sum + r.score, 0) / candidateRatings.length).toFixed(1) 
+                      : null
+
+                    const getStageColor = (stage: string): 'green' | 'blue' | 'purple' | 'orange' => {
+                      if (stage.includes('HR')) return 'green'
+                      if (stage.includes('Tech')) return 'blue'
+                      if (stage.includes('Final')) return 'purple'
+                      return 'orange'
+                    }
+
+                    return (
+                      <Flex direction="column" gap="4">
+                        <Box>
+                          <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>
+                            Оценки по матрице компетенций
+                          </Text>
+                          <Text size="2" color="gray" mb="3">
+                            Оценка проводится по навыкам из конфигуратора специализаций.
+                          </Text>
+                          <Flex gap="2" mb="3">
+                            <Button size="1" variant="soft" onClick={() => {}}>
+                              <GlobeIcon width={14} height={14} />
+                              Открыть матрицу специализации (Frontend)
+                            </Button>
+                            <Button size="1" variant="solid" onClick={() => setNewRatingDialogOpen(true)}>
+                              <PlusIcon width={14} height={14} />
+                              Провести новую оценку
+                            </Button>
+                          </Flex>
+                        </Box>
+
+                        <Card size="1">
+                          <Text size="2" weight="bold" mb="3" style={{ display: 'block' }}>
+                            История оценок
+                          </Text>
+                          {candidateRatings.length === 0 ? (
+                            <Text size="2" color="gray">Пока нет оценок для этого кандидата.</Text>
+                          ) : (
+                            <Flex direction="column" gap="3">
+                              {candidateRatings.map((rating) => {
+                                const color = getStageColor(rating.stage)
+
+                                return (
+                                  <Box
+                                    key={rating.id}
+                                    style={{
+                                      padding: 12,
+                                      border: `1px solid var(--${color}-6)`,
+                                      borderRadius: 8,
+                                      backgroundColor: `var(--${color}-2)`,
+                                      cursor: 'pointer',
+                                    }}
+                                    onClick={() => {
+                                      setSelectedRating(rating)
+                                      setRatingDetailOpen(true)
+                                    }}
+                                  >
+                                    <Flex justify="between" align="center">
+                                      <Flex direction="column" gap="1">
+                                        <Text size="2" weight="medium">{rating.stage}</Text>
+                                        <Text size="1" color="gray">{rating.date} · {rating.interviewer}</Text>
+                                      </Flex>
+                                      <Badge size="1" color={color}>{rating.score} / {rating.maxScore}</Badge>
+                                    </Flex>
+                                  </Box>
+                                )
+                              })}
+                            </Flex>
+                          )}
+                        </Card>
+
+                        {candidateRatings.length > 0 && avgScore && (
+                          <Card size="1">
+                            <Text size="2" weight="bold" mb="3" style={{ display: 'block' }}>
+                              Итоговая оценка
+                            </Text>
+                            <Flex align="center" gap="3">
+                              <Box style={{ 
+                                width: 60, 
+                                height: 60, 
+                                borderRadius: '50%', 
+                                background: 'linear-gradient(135deg, var(--green-9), var(--blue-9))',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                                <Text size="4" weight="bold" style={{ color: 'white' }}>{avgScore}</Text>
+                              </Box>
+                              <Flex direction="column">
+                                <Text size="2" weight="medium">Средний балл по всем этапам</Text>
+                                <Text size="1" color="gray">
+                                  {candidateRatings.length} {candidateRatings.length === 1 ? 'оценка' : candidateRatings.length < 5 ? 'оценки' : 'оценок'} · Рекомендация: {parseFloat(avgScore) >= 4 ? 'Нанять' : parseFloat(avgScore) >= 3 ? 'Рассмотреть' : 'Отказ'}
+                                </Text>
+                              </Flex>
+                            </Flex>
+                          </Card>
+                        )}
+                      </Flex>
+                    )
+                  })()}
                 </Tabs.Content>
                 <Tabs.Content value="documents">
                   <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>
@@ -2792,6 +3046,468 @@ export function AtsCandidatePage() {
           <Flex gap="3" justify="end" mt="4">
             <Button variant="soft" onClick={() => setSlotsOpen(false)}>
               Закрыть
+            </Button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      <Dialog.Root open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+        <Dialog.Content style={{ maxWidth: 600, maxHeight: '80vh' }}>
+          <Dialog.Title>Фото кандидата</Dialog.Title>
+          <Dialog.Description size="2" color="gray">
+            Загрузите новое фото или просмотрите существующие
+          </Dialog.Description>
+          <Flex direction="column" gap="4" pt="4">
+            <Card size="1">
+              <Text size="2" weight="medium" mb="3" style={{ display: 'block' }}>
+                Загрузить новое фото
+              </Text>
+              <Flex direction="column" gap="3">
+                <Box
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 24,
+                    borderRadius: 8,
+                    border: isDragging ? '2px solid var(--accent-11)' : '2px dashed var(--accent-9)',
+                    backgroundColor: isDragging ? 'var(--accent-4)' : 'var(--accent-2)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+                  }}
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  <PlusIcon width={24} height={24} style={{ color: isDragging ? 'var(--accent-11)' : 'var(--accent-9)', marginBottom: 8 }} />
+                  <Text size="2" weight="medium" style={{ color: 'var(--accent-11)' }}>
+                    {isDragging ? 'Отпустите файл для загрузки' : 'Нажмите или перетащите файл сюда'}
+                  </Text>
+                  <Text size="1" color="gray" mt="1">
+                    PNG, JPG, GIF до 10MB
+                  </Text>
+                </Box>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileInputChange}
+                />
+              </Flex>
+            </Card>
+
+            {candidatePhotos.length > 0 && (
+              <Card size="1">
+                <Text size="2" weight="medium" mb="3" style={{ display: 'block' }}>
+                  Загруженные фото
+                </Text>
+                <Flex direction="column" gap="3">
+                  <Box>
+                    <Flex align="center" gap="2" wrap="wrap">
+                      {candidatePhotos.map((photo, index) => (
+                        <Box
+                          key={index}
+                          onClick={() => handlePhotoSelect(index)}
+                          style={{
+                            position: 'relative',
+                            width: index === currentPhotoIndex ? 150 : 100,
+                            height: index === currentPhotoIndex ? 150 : 100,
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            border: index === currentPhotoIndex ? '3px solid var(--accent-9)' : '2px solid var(--gray-6)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <img
+                            src={photo.url}
+                            alt={`Фото ${index + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          {index === currentPhotoIndex && (
+                            <Badge
+                              size="1"
+                              color="green"
+                              style={{
+                                position: 'absolute',
+                                top: 4,
+                                left: 4,
+                              }}
+                            >
+                              Текущее
+                            </Badge>
+                          )}
+                          <Badge
+                            size="1"
+                            color="gray"
+                            style={{
+                              position: 'absolute',
+                              bottom: 4,
+                              left: 4,
+                              fontSize: 9,
+                            }}
+                          >
+                            {photo.date}
+                          </Badge>
+                          <Button
+                            size="1"
+                            variant="solid"
+                            color="red"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handlePhotoDelete(index)
+                            }}
+                            style={{
+                              position: 'absolute',
+                              bottom: 4,
+                              right: 4,
+                              width: 22,
+                              height: 22,
+                              padding: 0,
+                              minWidth: 22,
+                              borderRadius: 4,
+                            }}
+                            title="Удалить фото"
+                          >
+                            <TrashIcon width={12} height={12} />
+                          </Button>
+                        </Box>
+                      ))}
+                    </Flex>
+                  </Box>
+                </Flex>
+              </Card>
+            )}
+          </Flex>
+          <Flex gap="3" justify="end" mt="4">
+            <Button variant="soft" onClick={() => setPhotoDialogOpen(false)}>
+              Закрыть
+            </Button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Модальное окно детальной оценки */}
+      <Dialog.Root open={ratingDetailOpen} onOpenChange={setRatingDetailOpen}>
+        <Dialog.Content style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}>
+          <Dialog.Title>
+            {selectedRating?.stage} — Детальная оценка
+          </Dialog.Title>
+          <Dialog.Description size="2" color="gray" mb="4">
+            {selectedRating?.date} · Интервьюер: {selectedRating?.interviewer}
+          </Dialog.Description>
+
+          {selectedRating && (
+            <Flex direction="column" gap="4">
+              {/* Метаданные */}
+              {selectedRating.metadata && (
+                <Card size="1">
+                  <Flex gap="4" wrap="wrap">
+                    {selectedRating.metadata.duration && (
+                      <Flex direction="column">
+                        <Text size="1" color="gray">Длительность</Text>
+                        <Text size="2" weight="medium">{selectedRating.metadata.duration}</Text>
+                      </Flex>
+                    )}
+                    {selectedRating.metadata.format && (
+                      <Flex direction="column">
+                        <Text size="1" color="gray">Формат</Text>
+                        <Text size="2" weight="medium">{selectedRating.metadata.format}</Text>
+                      </Flex>
+                    )}
+                    {selectedRating.metadata.location && (
+                      <Flex direction="column">
+                        <Text size="1" color="gray">Место</Text>
+                        <Text size="2" weight="medium">{selectedRating.metadata.location}</Text>
+                      </Flex>
+                    )}
+                  </Flex>
+                </Card>
+              )}
+
+              {/* Общая оценка и навыки */}
+              <Card size="1">
+                <Flex justify="between" align="center" mb="3">
+                  <Text size="2" weight="bold">Общая оценка</Text>
+                  <Badge size="2" color="green">{selectedRating.score} / {selectedRating.maxScore}</Badge>
+                </Flex>
+                <Flex direction="column" gap="2">
+                  {selectedRating.skills.map((skill) => (
+                    <Flex key={skill.name} justify="between" align="center">
+                      <Text size="2">{skill.name}</Text>
+                      <Flex align="center" gap="2">
+                        <Box style={{ width: 100, height: 6, backgroundColor: 'var(--gray-4)', borderRadius: 3 }}>
+                          <Box style={{ width: `${(skill.score / 5) * 100}%`, height: '100%', backgroundColor: 'var(--accent-9)', borderRadius: 3 }} />
+                        </Box>
+                        <Text size="2" weight="medium" style={{ minWidth: 20, textAlign: 'right' }}>{skill.score}</Text>
+                      </Flex>
+                    </Flex>
+                  ))}
+                </Flex>
+              </Card>
+
+              {/* Вопросы и ответы */}
+              {selectedRating.questions && selectedRating.questions.length > 0 && (
+                <Card size="1">
+                  <Text size="2" weight="bold" mb="3" style={{ display: 'block' }}>Вопросы и ответы</Text>
+                  <Flex direction="column" gap="3">
+                    {selectedRating.questions.map((q) => (
+                      <Box key={q.id} style={{ padding: 12, backgroundColor: 'var(--gray-2)', borderRadius: 6, border: '1px solid var(--gray-a4)' }}>
+                        <Flex justify="between" align="start" mb="2">
+                          <Text size="2" weight="medium" style={{ flex: 1 }}>{q.question}</Text>
+                          <Badge size="1" color={q.score >= 4 ? 'green' : q.score >= 3 ? 'orange' : 'red'}>{q.score}/{q.maxScore}</Badge>
+                        </Flex>
+                        <Text size="2" color="gray" style={{ display: 'block', marginBottom: q.comment || q.literatureLinks ? 8 : 0 }}>
+                          {q.answer}
+                        </Text>
+                        {q.comment && (
+                          <Text size="1" style={{ display: 'block', fontStyle: 'italic', color: 'var(--accent-11)', marginTop: 4 }}>
+                            Комментарий: {q.comment}
+                          </Text>
+                        )}
+                        {q.literatureLinks && q.literatureLinks.length > 0 && (
+                          <Flex gap="2" mt="2" wrap="wrap">
+                            {q.literatureLinks.map((link, i) => (
+                              <Badge key={i} size="1" color="blue" style={{ cursor: 'pointer' }}>
+                                <GlobeIcon width={10} height={10} />
+                                {link.title}
+                              </Badge>
+                            ))}
+                          </Flex>
+                        )}
+                      </Box>
+                    ))}
+                  </Flex>
+                </Card>
+              )}
+
+              {/* Фидбек */}
+              {selectedRating.feedback && (
+                <Card size="1">
+                  <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>Итоговый фидбек</Text>
+                  <Text size="2" style={{ display: 'block', padding: 12, backgroundColor: 'var(--green-2)', borderRadius: 6, border: '1px solid var(--green-6)' }}>
+                    {selectedRating.feedback}
+                  </Text>
+                </Card>
+              )}
+
+              {/* Комментарии */}
+              {selectedRating.comments && selectedRating.comments.length > 0 && (
+                <Card size="1">
+                  <Text size="2" weight="bold" mb="3" style={{ display: 'block' }}>Комментарии</Text>
+                  <Flex direction="column" gap="2">
+                    {selectedRating.comments.map((comment, i) => (
+                      <Flex key={i} gap="2" style={{ padding: 8, backgroundColor: 'var(--gray-2)', borderRadius: 4 }}>
+                        <Avatar size="1" fallback={comment.author[0]} />
+                        <Flex direction="column" style={{ flex: 1 }}>
+                          <Flex justify="between">
+                            <Text size="1" weight="medium">{comment.author}</Text>
+                            <Text size="1" color="gray">{comment.date}</Text>
+                          </Flex>
+                          <Text size="2">{comment.text}</Text>
+                        </Flex>
+                      </Flex>
+                    ))}
+                  </Flex>
+                </Card>
+              )}
+
+              {/* Скриншоты */}
+              {selectedRating.screenshots && selectedRating.screenshots.length > 0 && (
+                <Card size="1">
+                  <Text size="2" weight="bold" mb="3" style={{ display: 'block' }}>Скриншоты</Text>
+                  <Flex gap="2" wrap="wrap">
+                    {selectedRating.screenshots.map((screenshot, i) => (
+                      <Box key={i} style={{ width: 150, position: 'relative' }}>
+                        <Box
+                          style={{
+                            width: '100%',
+                            height: 100,
+                            backgroundColor: 'var(--gray-4)',
+                            borderRadius: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text size="1" color="gray">[Скриншот]</Text>
+                        </Box>
+                        {screenshot.caption && (
+                          <Text size="1" color="gray" style={{ display: 'block', marginTop: 4 }}>{screenshot.caption}</Text>
+                        )}
+                      </Box>
+                    ))}
+                  </Flex>
+                </Card>
+              )}
+            </Flex>
+          )}
+
+          <Flex gap="3" justify="end" mt="4">
+            <Button variant="soft" onClick={() => setRatingDetailOpen(false)}>
+              Закрыть
+            </Button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Диалог проведения новой оценки */}
+      <Dialog.Root open={newRatingDialogOpen} onOpenChange={(open) => {
+        setNewRatingDialogOpen(open)
+        if (!open) {
+          setRatingScores({})
+          setRatingComments({})
+          setRatingFiles({})
+          setSelectedInterviewer('')
+          setGeneralFeedback('')
+        }
+      }}>
+        <Dialog.Content style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}>
+          <Dialog.Title>Провести новую оценку</Dialog.Title>
+          <Dialog.Description size="2" color="gray" mb="4">
+            Заполните оценку кандидата {selected?.name}
+          </Dialog.Description>
+
+          <Flex direction="column" gap="4">
+            <Flex gap="3">
+              <Box style={{ flex: 1 }}>
+                <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Этап оценки</Text>
+                <TextField.Root 
+                  value={displayCandidate?.status ?? ''} 
+                  readOnly 
+                  style={{ backgroundColor: 'var(--gray-3)' }}
+                />
+              </Box>
+              <Box style={{ flex: 1 }}>
+                <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Дата проведения</Text>
+                <TextField.Root 
+                  value={new Date().toLocaleDateString('ru-RU')} 
+                  readOnly 
+                  style={{ backgroundColor: 'var(--gray-3)' }}
+                />
+              </Box>
+            </Flex>
+
+            <Box>
+              <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Интервьюер</Text>
+              <Select.Root value={selectedInterviewer} onValueChange={setSelectedInterviewer}>
+                <Select.Trigger placeholder="Выберите интервьюера" style={{ width: '100%' }} />
+                <Select.Content>
+                  <Select.Item value="Иван Петров">Иван Петров</Select.Item>
+                  <Select.Item value="Мария Козлова">Мария Козлова</Select.Item>
+                  <Select.Item value="Алексей Смирнов">Алексей Смирнов</Select.Item>
+                  <Select.Item value="Дмитрий Волков">Дмитрий Волков</Select.Item>
+                  <Select.Item value="CTO">CTO</Select.Item>
+                  <Select.Item value="Team Lead">Team Lead</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </Box>
+
+            <Box>
+              <Text size="2" weight="bold" mb="3" style={{ display: 'block' }}>Матрица компетенций</Text>
+              <Flex direction="column" gap="4">
+                {['Коммуникация', 'Технические навыки', 'Решение проблем', 'Командная работа'].map((skill) => (
+                  <Card key={skill} size="1" style={{ padding: 12 }}>
+                    <Flex direction="column" gap="2">
+                      <Flex justify="between" align="center">
+                        <Text size="2" weight="medium">{skill}</Text>
+                        <Flex gap="1">
+                          {[1, 2, 3, 4, 5].map((score) => (
+                            <Button 
+                              key={score} 
+                              size="1" 
+                              variant={ratingScores[skill] === score ? 'solid' : 'soft'}
+                              color={ratingScores[skill] === score ? 'green' : undefined}
+                              style={{ minWidth: 28, padding: '0 8px' }}
+                              onClick={() => setRatingScores((prev) => ({ ...prev, [skill]: score }))}
+                            >
+                              {score}
+                            </Button>
+                          ))}
+                        </Flex>
+                      </Flex>
+                      <TextField.Root 
+                        placeholder="Комментарий к оценке..."
+                        value={ratingComments[skill] ?? ''}
+                        onChange={(e) => setRatingComments((prev) => ({ ...prev, [skill]: e.target.value }))}
+                        size="1"
+                      />
+                      <Flex align="center" gap="2">
+                        <Text size="1" color="gray">Файлы ({(ratingFiles[skill] ?? []).length}/3):</Text>
+                        <input
+                          type="file"
+                          id={`file-${skill}`}
+                          style={{ display: 'none' }}
+                          multiple
+                          accept="image/*,.pdf,.doc,.docx"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files ?? [])
+                            const currentFiles = ratingFiles[skill] ?? []
+                            const newFiles = [...currentFiles, ...files].slice(0, 3)
+                            setRatingFiles((prev) => ({ ...prev, [skill]: newFiles }))
+                            e.target.value = ''
+                          }}
+                        />
+                        <Button 
+                          size="1" 
+                          variant="ghost" 
+                          disabled={(ratingFiles[skill] ?? []).length >= 3}
+                          onClick={() => document.getElementById(`file-${skill}`)?.click()}
+                        >
+                          <PlusIcon width={12} height={12} />
+                          Добавить
+                        </Button>
+                        {(ratingFiles[skill] ?? []).map((file, i) => (
+                          <Badge key={i} size="1" color="gray">
+                            {file.name.slice(0, 15)}...
+                            <Cross2Icon 
+                              width={10} 
+                              height={10} 
+                              style={{ marginLeft: 4, cursor: 'pointer' }}
+                              onClick={() => {
+                                setRatingFiles((prev) => ({
+                                  ...prev,
+                                  [skill]: (prev[skill] ?? []).filter((_, idx) => idx !== i)
+                                }))
+                              }}
+                            />
+                          </Badge>
+                        ))}
+                      </Flex>
+                    </Flex>
+                  </Card>
+                ))}
+              </Flex>
+            </Box>
+
+            <Box>
+              <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Общий фидбек</Text>
+              <TextField.Root 
+                placeholder="Введите ваши наблюдения и рекомендации..." 
+                value={generalFeedback}
+                onChange={(e) => setGeneralFeedback(e.target.value)}
+              />
+            </Box>
+          </Flex>
+
+          <Flex gap="3" justify="end" mt="4">
+            <Button variant="soft" onClick={() => setNewRatingDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button 
+              variant="solid" 
+              disabled={!selectedInterviewer || Object.keys(ratingScores).length < 4}
+              onClick={() => {
+                toast.showSuccess('Оценка сохранена', 'Результаты добавлены в профиль кандидата')
+                setNewRatingDialogOpen(false)
+              }}
+            >
+              Сохранить оценку
             </Button>
           </Flex>
         </Dialog.Content>

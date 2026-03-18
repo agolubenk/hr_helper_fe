@@ -1,0 +1,15 @@
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  color: var(--gray-12);
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

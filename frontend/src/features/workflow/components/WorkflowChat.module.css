@@ -168,6 +168,26 @@
   overflow: hidden;
 }
 
+/* Для темной темы */
+[data-theme="dark"] .inviteMessage,
+[data-theme="dark"] .screeningMessage,
+.radix-themes[data-appearance="dark"] .inviteMessage,
+.radix-themes[data-appearance="dark"] .screeningMessage {
+  background: var(--gray-3);
+}
+
+.inviteHeader,
+.screeningHeader {
+  background: transparent;
+  padding: 12px 16px;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.botIcon {
+  font-size: 20px;
+}
+
 .candidateInfo {
   margin-top: 0;
   display: flex;
@@ -195,17 +215,41 @@
   min-width: 100%;
 }
 
-.candidateInfo :global(.rt-TableCell) {
-  padding: 0 6px;
+.candidateInfo :global(.rt-TableBody) {
   border: none !important;
+}
+
+.candidateInfo :global(.rt-TableRow) {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.candidateInfo :global(.rt-TableRow + .rt-TableRow),
+.candidateInfo :global(.rt-TableRow:not(:first-child)) {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.candidateInfo :global(.rt-TableCell) {
+  padding: 0px 6px;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
   vertical-align: middle;
   line-height: 1.2;
+  height: auto;
 }
 
 .candidateInfo :global(.rt-TableCell:first-child) {
   padding-right: 12px;
   padding-left: 0;
   white-space: nowrap;
+  border-left: none !important;
 }
 
 .candidateInfo :global(.rt-TableCell:last-child) {
@@ -213,6 +257,115 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding-right: 0;
+  border-right: none !important;
+}
+
+/* Убираем границы у нативных элементов таблицы */
+.candidateInfo :global(table),
+.candidateInfo :global(.rt-TableRootTable) {
+  border: none !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.candidateInfo :global(td),
+.candidateInfo :global(th),
+.candidateInfo :global(.rt-TableCell) {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  padding: 0px 6px !important;
+  vertical-align: middle !important;
+  line-height: 1.2 !important;
+}
+
+.candidateInfo :global(tr),
+.candidateInfo :global(.rt-TableRow) {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.candidateInfo :global(tr + tr) {
+  border-top: none !important;
+}
+
+.candidateInfo :global(tbody),
+.candidateInfo :global(.rt-TableBody) {
+  border: none !important;
+}
+
+.candidateInfo :global(thead),
+.candidateInfo :global(.rt-TableHeader) {
+  border: none !important;
+}
+
+/* Дополнительные правила для полного удаления границ */
+.candidateInfo :global(.rt-TableRow),
+.candidateInfo :global(.rt-TableCell),
+.candidateInfo :global(tr),
+.candidateInfo :global(td),
+.candidateInfo :global(th) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Специфичные правила для нижних границ строк - максимальная специфичность */
+.candidateInfo :global(.rt-TableRow[style*="border-bottom"]),
+.candidateInfo :global(tr[style*="border-bottom"]) {
+  border-bottom: none !important;
+}
+
+.candidateInfo :global(.rt-TableCell[style*="border-bottom"]),
+.candidateInfo :global(td[style*="border-bottom"]),
+.candidateInfo :global(th[style*="border-bottom"]) {
+  border-bottom: none !important;
+}
+
+/* Убираем границы через все возможные селекторы */
+.candidateInfo :global(.rt-TableRow > .rt-TableCell),
+.candidateInfo :global(tr > td),
+.candidateInfo :global(tr > th) {
+  border-bottom: none !important;
+  border-top: none !important;
+}
+
+.candidateInfo :global(.rt-TableRow:not(:last-child) > .rt-TableCell),
+.candidateInfo :global(tr:not(:last-child) > td),
+.candidateInfo :global(tr:not(:last-child) > th) {
+  border-bottom: none !important;
+}
+
+.candidateInfo :global(.rt-TableRow:last-child > .rt-TableCell),
+.candidateInfo :global(tr:last-child > td),
+.candidateInfo :global(tr:last-child > th) {
+  border-bottom: none !important;
+}
+
+/* Агрессивное удаление всех границ через универсальные селекторы */
+.candidateInfo :global(.rt-TableRoot *) {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.candidateInfo :global(table *) {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
 }
 
 .actionButtons {
@@ -263,6 +416,20 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Для темной темы */
+[data-theme="dark"] .inputContainer,
+.radix-themes[data-appearance="dark"] .inputContainer {
+  background: var(--gray-3);
+}
+
+.inputContainer :global(.rt-TextAreaRoot) {
+  border-radius: 6px !important;
+}
+
+.inputContainer :global(.rt-Button) {
+  flex-shrink: 0;
 }
 
 .attachedFilesContainer {
@@ -327,6 +494,19 @@
 
 .removeFileButton:hover {
   background: var(--gray-6) !important;
+}
+
+/* Для темной темы */
+[data-theme="dark"] .attachedFilesContainer,
+.radix-themes[data-appearance="dark"] .attachedFilesContainer {
+  background: var(--gray-4);
+  border-color: var(--gray-6);
+}
+
+[data-theme="dark"] .fileTag,
+.radix-themes[data-appearance="dark"] .fileTag {
+  background: var(--gray-5);
+  border-color: var(--gray-7);
 }
 
 .commandTag {

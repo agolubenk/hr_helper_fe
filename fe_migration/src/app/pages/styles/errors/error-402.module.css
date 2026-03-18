@@ -1,0 +1,24 @@
+.errorCode {
+  font-size: 120px;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--purple-9, #8e4ec6) 0%, var(--purple-11, #6d2a9e) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.cardIcon {
+  color: var(--purple-9, #8e4ec6);
+  animation: flip 2s ease-in-out infinite;
+}
+
+@keyframes flip {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(180deg); }
+}

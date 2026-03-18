@@ -1,0 +1,49 @@
+/* Стили для карточки пользователя */
+
+.userCard {
+  background-color: var(--color-panel);
+  border: 1px solid var(--gray-a6);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.avatarContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gray-a6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.avatarPlaceholder {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background-color: var(--gray-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-11);
+  border: 2px solid var(--gray-a6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.userName {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--gray-12);
+}
+
+.emailRow {
+  justify-content: center;
+  margin-bottom: 0;
+  color: var(--gray-11);
+}

@@ -10,7 +10,7 @@ import { LogoRobot } from '@/shared/components/logo'
 import type { AccentColorValue } from '@/shared/components/logo'
 import styles from './Header.module.css'
 
-const NARROW_BREAKPOINT = 400
+const NARROW_BREAKPOINT = 550
 
 interface HeaderProps {
   pageTitle: string

@@ -1,0 +1,17 @@
+.themeButtonMobile {
+  display: block;
+}
+
+.themeButtonDesktop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .themeButtonMobile {
+    display: none;
+  }
+
+  .themeButtonDesktop {
+    display: block;
+  }
+}

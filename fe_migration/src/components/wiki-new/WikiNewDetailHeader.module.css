@@ -1,0 +1,21 @@
+.header {
+  margin-bottom: 24px;
+}
+
+.breadcrumbs {
+  flex-wrap: wrap;
+}
+
+.title {
+  color: var(--gray-12);
+}
+
+.editBtn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .editBtn {
+    width: 100%;
+  }
+}

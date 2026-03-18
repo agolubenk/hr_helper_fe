@@ -1,0 +1,71 @@
+.filtersContainer {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: var(--gray-2);
+  border-radius: 12px;
+  border: 1px solid var(--gray-6);
+}
+
+.radix-themes[data-appearance="dark"] .filtersContainer {
+  background: var(--gray-3);
+}
+
+.searchRow {
+  width: 100%;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.searchButton {
+  flex-shrink: 0;
+}
+
+.filtersRow {
+  margin-bottom: 12px;
+}
+
+.selectTrigger {
+  min-width: 180px;
+}
+
+.tagsRow {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-6);
+}
+
+.tagsScroll {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.tagsScroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tagChip {
+  flex-shrink: 0;
+  border-radius: 9999px;
+}
+
+@media (max-width: 768px) {
+  .filtersContainer {
+    padding: 16px;
+  }
+
+  .filtersRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .selectTrigger {
+    width: 100%;
+  }
+}

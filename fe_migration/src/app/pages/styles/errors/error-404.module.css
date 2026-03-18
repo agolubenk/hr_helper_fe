@@ -1,0 +1,30 @@
+.searchIconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center top;
+  animation: searchWrapper 5s ease-in-out infinite;
+}
+
+.searchIcon {
+  color: var(--accent-9, var(--gray-9));
+  transform-origin: center center;
+  animation: searchRotate 5s ease-in-out infinite;
+}
+
+@keyframes searchRotate {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(90deg); }
+  20%, 80%, 90% { transform: rotate(90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes searchWrapper {
+  0%, 15%, 20%, 80%, 90%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  35% { transform: rotate(-15deg); }
+  45% { transform: rotate(10deg); }
+  55% { transform: rotate(-10deg); }
+  65% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}

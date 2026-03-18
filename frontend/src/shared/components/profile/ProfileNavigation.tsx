@@ -14,7 +14,7 @@ const menuItems: { id: ProfileTabType; label: string; icon: React.ReactNode }[] 
   { id: 'profile', label: 'Профиль', icon: <PersonIcon width={14} height={14} /> },
   { id: 'edit', label: 'Редактировать', icon: <Pencil1Icon width={14} height={14} /> },
   { id: 'schedule', label: 'Расписание', icon: <CalendarIcon width={14} height={14} /> },
-  { id: 'theme', label: 'Настройки темы', icon: <ColorWheelIcon width={14} height={14} /> },
+  { id: 'theme', label: 'Темы и оформление', icon: <ColorWheelIcon width={14} height={14} /> },
   { id: 'integrations', label: 'Интеграции и API', icon: <IntegrationsIcon size={14} /> },
   { id: 'quick-buttons', label: 'Быстрые кнопки', icon: <LightningBoltIcon width={14} height={14} /> },
   { id: 'reminder', label: 'Напоминание', icon: <LockClosedIcon width={14} height={14} /> },

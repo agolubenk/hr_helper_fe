@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Box, Flex, Text, Button, Dialog, TextField, Select } from '@radix-ui/themes'
 import { PlusIcon, Cross2Icon, Pencil1Icon } from '@radix-ui/react-icons'
 import type { SocialLink } from '@/shared/lib/types/social-links'
@@ -6,6 +6,8 @@ import { createSocialLink } from '@/shared/lib/types/social-links'
 import type { SocialPlatformKey } from '@/shared/lib/socialPlatforms'
 import { SOCIAL_PLATFORM_KEYS, SOCIAL_PLATFORMS, getPlatformInfo } from '@/shared/lib/socialPlatforms'
 import styles from './SocialLinksManager.module.css'
+
+const MAX_LINKS_PER_PLATFORM = 3
 
 const PLACEHOLDERS: Partial<Record<SocialPlatformKey, string>> = {
   whatsapp: '+375291234567',
@@ -31,9 +33,19 @@ export function SocialLinksManager({ links, onUpdate }: SocialLinksManagerProps)
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
 
-  const availablePlatforms = SOCIAL_PLATFORM_KEYS.filter(
-    (p) => !links.some((l) => l.platform === p) || editingLink?.platform === p
-  )
+  const platformUsageCount = useMemo(() => {
+    const counts: Partial<Record<SocialPlatformKey, number>> = {}
+    for (const link of links) {
+      counts[link.platform] = (counts[link.platform] || 0) + 1
+    }
+    return counts
+  }, [links])
+
+  const availablePlatforms = SOCIAL_PLATFORM_KEYS.filter((p) => {
+    const count = platformUsageCount[p] || 0
+    if (editingLink?.platform === p) return true
+    return count < MAX_LINKS_PER_PLATFORM
+  })
 
   const handleAdd = () => {
     setEditingLink(null)
@@ -121,7 +133,14 @@ export function SocialLinksManager({ links, onUpdate }: SocialLinksManagerProps)
           </Dialog.Description>
           <Flex direction="column" gap="3">
             <Box>
-              <Text size="2" weight="medium" mb="2" as="div">Платформа</Text>
+              <Flex justify="between" align="center" mb="2">
+                <Text size="2" weight="medium" as="div">Платформа</Text>
+                {selectedPlatform && (
+                  <Text size="1" color="gray" as="div">
+                    {platformUsageCount[selectedPlatform] || 0} / {MAX_LINKS_PER_PLATFORM}
+                  </Text>
+                )}
+              </Flex>
               <Select.Root
                 value={selectedPlatform}
                 onValueChange={(v) => {
@@ -131,13 +150,54 @@ export function SocialLinksManager({ links, onUpdate }: SocialLinksManagerProps)
                 }}
                 disabled={!!editingLink}
               >
-                <Select.Trigger placeholder="Выберите платформу" />
+                <Select.Trigger placeholder="Выберите платформу" style={{ width: '100%' }}>
+                  {selectedPlatform && (
+                    <Flex align="center" gap="2">
+                      <Box style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        width: 20,
+                        height: 20,
+                        borderRadius: 4,
+                        backgroundColor: SOCIAL_PLATFORMS[selectedPlatform].color,
+                        color: 'white',
+                        flexShrink: 0,
+                      }}>
+                        {SOCIAL_PLATFORMS[selectedPlatform].icon}
+                      </Box>
+                      <span>{SOCIAL_PLATFORMS[selectedPlatform].label}</span>
+                    </Flex>
+                  )}
+                </Select.Trigger>
                 <Select.Content>
-                  {availablePlatforms.map((p) => (
-                    <Select.Item key={p} value={p}>
-                      {SOCIAL_PLATFORMS[p].label}
-                    </Select.Item>
-                  ))}
+                  {availablePlatforms.map((p) => {
+                    const info = SOCIAL_PLATFORMS[p]
+                    const count = platformUsageCount[p] || 0
+                    return (
+                      <Select.Item key={p} value={p}>
+                        <Flex align="center" gap="2" justify="between" style={{ width: '100%' }}>
+                          <Flex align="center" gap="2">
+                            <Box style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              width: 20,
+                              height: 20,
+                              borderRadius: 4,
+                              backgroundColor: info.color,
+                              color: 'white',
+                              flexShrink: 0,
+                            }}>
+                              {info.icon}
+                            </Box>
+                            <span>{info.label}</span>
+                          </Flex>
+                          <Text size="1" color="gray">{count}/{MAX_LINKS_PER_PLATFORM}</Text>
+                        </Flex>
+                      </Select.Item>
+                    )
+                  })}
                 </Select.Content>
               </Select.Root>
             </Box>
