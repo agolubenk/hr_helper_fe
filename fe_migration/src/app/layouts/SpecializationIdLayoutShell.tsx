@@ -6,6 +6,8 @@
 
 import { Box, Text, Tabs } from '@radix-ui/themes'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useSpecializations } from '@/app/specializations/context/SpecializationsContext'
+import styles from '@/app/pages/styles/SpecializationsPage.module.css'
 
 const TAB_ROUTES = [
   { value: 'info', label: 'Основная информация' },
@@ -29,11 +31,12 @@ export function SpecializationIdLayoutShell() {
     idIndex >= 0 && pathSegments[idIndex + 1] && TAB_ROUTES.some((t) => t.value === pathSegments[idIndex + 1])
       ? pathSegments[idIndex + 1]
       : 'info'
+  const { selectedNode } = useSpecializations()
 
-  if (!id) {
+  if (!id || !selectedNode) {
     return (
-      <Box style={{ padding: 24, color: 'var(--gray-11)' }}>
-        <Text size="2" color="gray">Специализация не найдена.</Text>
+      <Box className={styles.noSelection}>
+        <Text size="2" color="gray">Специализация не найдена или не выбрана.</Text>
       </Box>
     )
   }
@@ -46,22 +49,16 @@ export function SpecializationIdLayoutShell() {
     <Tabs.Root
       value={currentTab}
       onValueChange={handleTabChange}
-      style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}
+      className={styles.centerTabsRoot}
     >
-      <Tabs.List
-        style={{
-          flexShrink: 0,
-          borderBottom: '1px solid var(--gray-a6)',
-          padding: '0 16px',
-        }}
-      >
+      <Tabs.List className={styles.centerTabsList}>
         {TAB_ROUTES.map((tab) => (
           <Tabs.Trigger key={tab.value} value={tab.value}>
             {tab.label}
           </Tabs.Trigger>
         ))}
       </Tabs.List>
-      <Box style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 20 }}>
+      <Box className={styles.centerTabsContent}>
         <Outlet />
       </Box>
     </Tabs.Root>

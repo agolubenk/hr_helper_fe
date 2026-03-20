@@ -52,7 +52,7 @@ export default function WikiDetailHeader({ title, category, tags }: WikiDetailHe
           </Flex>
         </Box>
         
-        <Flex gap="2" align="center">
+        <Flex gap="2" align="center" className={styles.headerButtons}>
           <Button
             size="3"
             variant="soft"
@@ -61,9 +61,11 @@ export default function WikiDetailHeader({ title, category, tags }: WikiDetailHe
               color: 'var(--gray-11)',
             }}
             onClick={() => router.push('/wiki')}
+            title="Вернуться к списку"
           >
             <ArrowLeftIcon width={16} height={16} />
-            Вернуться к списку
+            <span className={styles.backBtnTextPart1}>Вернуться</span>
+            <span className={styles.backBtnTextPart2}> к списку</span>
           </Button>
           
           <Button
@@ -74,9 +76,10 @@ export default function WikiDetailHeader({ title, category, tags }: WikiDetailHe
               border: '1px solid #ffffff',
             }}
             onClick={() => router.push(`/wiki/${params.id}/edit`)}
+            title="Редактировать"
           >
             <Pencil1Icon width={16} height={16} />
-            Редактировать
+            <span className={styles.editBtnText}>Редактировать</span>
           </Button>
         </Flex>
       </Flex>

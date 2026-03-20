@@ -332,7 +332,7 @@ export default function AppLayout({
         style={{
           marginTop: isRecrChatPage ? '112px' : '64px',
           width: '100%',
-          height: isRecrChatPage ? 'calc(100vh - 112px - 49px)' : 'calc(100vh - 64px - 49px)', /* минус header, footer */
+          height: isRecrChatPage ? 'calc(100vh - 112px - 49px)' : 'calc(100vh - 49px)', /* минус footer; высота контента увеличена на высоту header */
           minHeight: 0,
           overflow: 'hidden',
           transition: 'all 0.2s ease-in-out',

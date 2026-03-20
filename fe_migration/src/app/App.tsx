@@ -27,6 +27,19 @@ import { WikiEditPage } from '@/app/pages/WikiEditPage'
 import { WikiNewPage } from '@/app/pages/WikiNewPage'
 import { WikiNewDetailPage } from '@/app/pages/WikiNewDetailPage'
 import { WikiNewEditPage } from '@/app/pages/WikiNewEditPage'
+import { ReportingPage } from '@/app/pages/ReportingPage'
+import { CompanyReportPage } from '@/app/pages/CompanyReportPage'
+import { HiringPlanPage } from '@/app/pages/HiringPlanPage'
+import { YearlyHiringPlanPage } from '@/app/pages/YearlyHiringPlanPage'
+import { TelegramPage } from '@/app/pages/TelegramPage'
+import { Telegram2FAPage } from '@/app/pages/Telegram2FAPage'
+import { TelegramChatsPage } from '@/app/pages/TelegramChatsPage'
+import { ProjectsPage } from '@/app/pages/ProjectsPage'
+import { ProjectDetailPage } from '@/app/pages/ProjectDetailPage'
+import { ProjectsTeamsPage } from '@/app/pages/ProjectsTeamsPage'
+import { ProjectsResourcesPage } from '@/app/pages/ProjectsResourcesPage'
+import { mockProjectDetails } from '@/app/pages/projectsMocks'
+import { useParams } from '@/router-adapter'
 import { Error404Page } from '@/app/pages/Error404Page'
 import { LoginPage } from '@/app/pages/LoginPage'
 import { ForgotPasswordPage } from '@/app/pages/ForgotPasswordPage'
@@ -39,6 +52,41 @@ import { ForbiddenPage } from '@/app/pages/ForbiddenPage'
 import { AdminLayoutShell } from '@/app/layouts/AdminLayoutShell'
 import { SpecializationsLayoutShell } from '@/app/layouts/SpecializationsLayoutShell'
 import { SpecializationIdLayoutShell } from '@/app/layouts/SpecializationIdLayoutShell'
+import { SpecializationsRootPage } from '@/app/pages/SpecializationsRootPage'
+import { SpecializationIdRedirectPage } from '@/app/pages/SpecializationIdRedirectPage'
+import { SpecializationInfoPage } from '@/app/pages/SpecializationInfoPage'
+import { SpecializationGradesPage } from '@/app/pages/SpecializationGradesPage'
+import { SpecializationMatrixPage } from '@/app/pages/SpecializationMatrixPage'
+import { SpecializationCareerPage } from '@/app/pages/SpecializationCareerPage'
+import { SpecializationVacanciesPage } from '@/app/pages/SpecializationVacanciesPage'
+import { SpecializationAllocationPage } from '@/app/pages/SpecializationAllocationPage'
+import { SpecializationPreviewPage } from '@/app/pages/SpecializationPreviewPage'
+import { AdminPage } from '@/app/pages/AdminPage'
+import { AdminUsersPage } from '@/app/pages/AdminUsersPage'
+import { AdminGroupsPage } from '@/app/pages/AdminGroupsPage'
+import { AtsIndexPage } from '@/app/pages/AtsIndexPage'
+import { AtsCandidatePage } from '@/app/pages/AtsCandidatePage'
+import { AtsAssessmentNewPage } from '@/app/pages/AtsAssessmentNewPage'
+import { AtsAssessmentViewPage } from '@/app/pages/AtsAssessmentViewPage'
+import { AtsAssessmentEditPage } from '@/app/pages/AtsAssessmentEditPage'
+import {
+  CompanySettingsPage,
+  CompanySettingsOrgStructurePage,
+  CompanySettingsGradesPage,
+  CompanySettingsRatingScalesPage,
+  CompanySettingsEmployeeLifecyclePage,
+  CompanySettingsIntegrationsPage,
+  CompanySettingsUserGroupsPage,
+  CompanySettingsUsersPage,
+  CompanySettingsRecruitingRulesPage,
+  CompanySettingsRecruitingStagesPage,
+  CompanySettingsRecruitingCommandsPage,
+  CompanySettingsCandidateFieldsPage,
+  CompanySettingsScorecardPage,
+  CompanySettingsSlaPage,
+  CompanySettingsVacancyPromptPage,
+  CompanySettingsRecruitingOfferTemplatePage,
+} from '@/app/pages/CompanySettingsPages'
 
 const layoutProps = {
   pageTitle: 'HR Helper',
@@ -53,11 +101,16 @@ function RedirectAdminCrm() {
   return <Navigate to={newPath + location.search} replace />
 }
 
-function Placeholder({ text }: { text: string }) {
+/** Заголовок в шапке = имя проекта (как в Next AppLayout pageTitle). */
+function ProjectDetailAppLayout() {
+  const params = useParams()
+  const id = typeof params.id === 'string' ? params.id : ''
+  const project = id ? mockProjectDetails[id] : undefined
+  const pageTitle = project?.name ?? 'Проект'
   return (
-    <div style={{ padding: 24, color: 'var(--gray-11)', fontSize: 14 }}>
-      {text}
-    </div>
+    <AppLayout {...layoutProps} pageTitle={pageTitle}>
+      <ProjectDetailPage />
+    </AppLayout>
   )
 }
 
@@ -89,7 +142,25 @@ export function App() {
             <Route path="/account/reset-password" element={<ResetPasswordPage />} />
             <Route path="/account/profile" element={<AppLayout {...layoutProps}><ProfilePage /></AppLayout>} />
             <Route path="/finance" element={<Navigate to="/company-settings/finance" replace />} />
+            <Route path="/company-settings" element={<AppLayout {...layoutProps} pageTitle="Общие настройки компании"><CompanySettingsPage /></AppLayout>} />
+            <Route path="/company-settings/org-structure" element={<AppLayout {...layoutProps} pageTitle="Оргструктура"><CompanySettingsOrgStructurePage /></AppLayout>} />
+            <Route path="/company-settings/grades" element={<AppLayout {...layoutProps} pageTitle="Настройки грейдов"><CompanySettingsGradesPage /></AppLayout>} />
+            <Route path="/company-settings/rating-scales" element={<AppLayout {...layoutProps} pageTitle="Шкалы оценок"><CompanySettingsRatingScalesPage /></AppLayout>} />
+            <Route path="/company-settings/employee-lifecycle" element={<AppLayout {...layoutProps} pageTitle="Жизненный цикл сотрудников"><CompanySettingsEmployeeLifecyclePage /></AppLayout>} />
             <Route path="/company-settings/finance" element={<AppLayout {...layoutProps} pageTitle="Финансы"><FinanceSettingsPage /></AppLayout>} />
+            <Route path="/company-settings/integrations" element={<AppLayout {...layoutProps} pageTitle="Интеграции"><CompanySettingsIntegrationsPage /></AppLayout>} />
+            <Route path="/company-settings/user-groups" element={<AppLayout {...layoutProps} pageTitle="Группы пользователей"><CompanySettingsUserGroupsPage /></AppLayout>} />
+            <Route path="/company-settings/users" element={<AppLayout {...layoutProps} pageTitle="Пользователи"><CompanySettingsUsersPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting" element={<Navigate to="/company-settings/recruiting/rules" replace />} />
+            <Route path="/company-settings/recruiting/rules" element={<AppLayout {...layoutProps} pageTitle="Правила привлечения"><CompanySettingsRecruitingRulesPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/stages" element={<AppLayout {...layoutProps} pageTitle="Этапы найма и причины отказа"><CompanySettingsRecruitingStagesPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/commands" element={<AppLayout {...layoutProps} pageTitle="Команды workflow"><CompanySettingsRecruitingCommandsPage /></AppLayout>} />
+            <Route path="/company-settings/candidate-fields" element={<AppLayout {...layoutProps} pageTitle="Поля кандидатов"><CompanySettingsCandidateFieldsPage /></AppLayout>} />
+            <Route path="/company-settings/scorecard" element={<AppLayout {...layoutProps} pageTitle="Настройки Scorecard"><CompanySettingsScorecardPage /></AppLayout>} />
+            <Route path="/company-settings/sla" element={<AppLayout {...layoutProps} pageTitle="SLA для вакансий"><CompanySettingsSlaPage /></AppLayout>} />
+            <Route path="/company-settings/vacancy-prompt" element={<AppLayout {...layoutProps} pageTitle="Промпт для вакансий"><CompanySettingsVacancyPromptPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/offer-template" element={<AppLayout {...layoutProps} pageTitle="Шаблон оффера"><CompanySettingsRecruitingOfferTemplatePage /></AppLayout>} />
+            <Route path="/company-settings/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки зарплат"><BenchmarksPage /></AppLayout>} />
             <Route path="/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки зарплат"><BenchmarksPage /></AppLayout>} />
             <Route path="/wiki" element={<AppLayout {...layoutProps} pageTitle="Wiki"><WikiPage /></AppLayout>} />
             <Route path="/wiki/:id" element={<AppLayout {...layoutProps} pageTitle="Wiki"><WikiDetailPage /></AppLayout>} />
@@ -97,17 +168,54 @@ export function App() {
             <Route path="/wiki-new" element={<AppLayout {...layoutProps} pageTitle="База знаний (новый вариант)"><WikiNewPage /></AppLayout>} />
             <Route path="/wiki-new/:id" element={<AppLayout {...layoutProps} pageTitle="База знаний"><WikiNewDetailPage /></AppLayout>} />
             <Route path="/wiki-new/:id/edit" element={<AppLayout {...layoutProps} pageTitle="Редактирование"><WikiNewEditPage /></AppLayout>} />
+            <Route path="/reporting" element={<AppLayout {...layoutProps} pageTitle="Отчетность"><ReportingPage /></AppLayout>} />
+            <Route path="/reporting/company" element={<AppLayout {...layoutProps} pageTitle="Отчет по компании"><CompanyReportPage /></AppLayout>} />
+            <Route path="/reporting/hiring-plan" element={<AppLayout {...layoutProps} pageTitle="План найма"><HiringPlanPage /></AppLayout>} />
+            <Route path="/reporting/hiring-plan/yearly" element={<AppLayout {...layoutProps} pageTitle="План найма (год)"><YearlyHiringPlanPage /></AppLayout>} />
+            <Route path="/telegram" element={<AppLayout {...layoutProps} pageTitle="Telegram"><TelegramPage /></AppLayout>} />
+            <Route path="/telegram/2fa" element={<AppLayout {...layoutProps} pageTitle="Telegram — 2FA"><Telegram2FAPage /></AppLayout>} />
+            <Route path="/telegram/chats" element={<AppLayout {...layoutProps} pageTitle="Telegram — Чаты"><TelegramChatsPage /></AppLayout>} />
+            <Route path="/projects/teams" element={<AppLayout {...layoutProps} pageTitle="Команды проектов"><ProjectsTeamsPage /></AppLayout>} />
+            <Route path="/projects/resources" element={<AppLayout {...layoutProps} pageTitle="Ресурсы и аллокация"><ProjectsResourcesPage /></AppLayout>} />
+            <Route path="/projects/:id" element={<ProjectDetailAppLayout />} />
+            <Route path="/projects" element={<AppLayout {...layoutProps} pageTitle="Проекты"><ProjectsPage /></AppLayout>} />
+            <Route path="/ats" element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsIndexPage /></AppLayout>} />
+            <Route
+              path="/ats/vacancy/:vacancyId/candidate/:candidateId/assessment/new"
+              element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsAssessmentNewPage /></AppLayout>}
+            />
+            <Route
+              path="/ats/vacancy/:vacancyId/candidate/:candidateId/assessment/:assessmentId/edit"
+              element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsAssessmentEditPage /></AppLayout>}
+            />
+            <Route
+              path="/ats/vacancy/:vacancyId/candidate/:candidateId/assessment/:assessmentId"
+              element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsAssessmentViewPage /></AppLayout>}
+            />
+            <Route
+              path="/ats/vacancy/:vacancyId/candidate/:candidateId"
+              element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsCandidatePage /></AppLayout>}
+            />
             <Route path="/admin-crm" element={<Navigate to="/admin" replace />} />
             <Route path="/admin-crm/*" element={<RedirectAdminCrm />} />
             <Route path="/admin" element={<AdminLayoutShell />}>
-              <Route index element={<Placeholder text="Главная админки" />} />
-              <Route path="*" element={<Placeholder text="Раздел в разработке" />} />
+              <Route index element={<AdminPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="groups" element={<AdminGroupsPage />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
             <Route path="/specializations" element={<SpecializationsLayoutShell />}>
-              <Route index element={<Placeholder text="Выберите специализацию" />} />
+              <Route index element={<SpecializationsRootPage />} />
               <Route path=":id" element={<SpecializationIdLayoutShell />}>
-                <Route index element={<Placeholder text="Основная информация" />} />
-                <Route path="*" element={<Placeholder text="Раздел в разработке" />} />
+                <Route index element={<SpecializationIdRedirectPage />} />
+                <Route path="info" element={<SpecializationInfoPage />} />
+                <Route path="grades" element={<SpecializationGradesPage />} />
+                <Route path="matrix" element={<SpecializationMatrixPage />} />
+                <Route path="career" element={<SpecializationCareerPage />} />
+                <Route path="vacancies" element={<SpecializationVacanciesPage />} />
+                <Route path="allocation" element={<SpecializationAllocationPage />} />
+                <Route path="preview" element={<SpecializationPreviewPage />} />
+                <Route path="*" element={<Navigate to="info" replace />} />
               </Route>
             </Route>
             <Route path="/errors/401" element={<Error401Page />} />

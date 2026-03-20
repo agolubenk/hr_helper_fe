@@ -1,15 +1,33 @@
 /**
  * WikiDetailPage — просмотр статьи вики по id из URL.
  * Без AppLayout (обёртка в App.tsx).
+ * При ширине ≤760px кнопки «Редактировать» и «Вернуться» из шапки скрыты; показывается плавающий блок справа сверху (под хедером) с тремя кнопками-иконками: Редактировать, Содержание, Назад.
  */
 
-import { Box, Flex } from '@radix-ui/themes'
-import { useParams } from '@/router-adapter'
+import { useState, useEffect } from 'react'
+import { Box, Flex, Button, Popover } from '@radix-ui/themes'
+import { ListBulletIcon, Pencil1Icon, ArrowLeftIcon } from '@radix-ui/react-icons'
+import { useParams, useRouter } from '@/router-adapter'
 import WikiDetailHeader from '@/components/wiki/WikiDetailHeader'
 import WikiDetailContent from '@/components/wiki/WikiDetailContent'
 import WikiDetailSidebar from '@/components/wiki/WikiDetailSidebar'
 import WikiDetailHistory from '@/components/wiki/WikiDetailHistory'
 import styles from './styles/WikiDetailPage.module.css'
+
+const FLOATING_BAR_BREAKPOINT = '(max-width: 760px)'
+
+function useMatchMedia(query: string): boolean {
+  const [matches, setMatches] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const m = window.matchMedia(query)
+    setMatches(m.matches)
+    const listener = () => setMatches(m.matches)
+    m.addEventListener('change', listener)
+    return () => m.removeEventListener('change', listener)
+  }, [query])
+  return matches
+}
 
 const wikiPageContent = {
   id: '',
@@ -43,17 +61,83 @@ const wikiPageContent = {
 
 export function WikiDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const pageId = (params?.id as string) ?? ''
+  const showFloatingBar = useMatchMedia(FLOATING_BAR_BREAKPOINT)
+  const [tocOpen, setTocOpen] = useState(false)
 
   return (
     <Box className={styles.wikiDetailContainer}>
       <WikiDetailHeader title={wikiPageContent.title} category={wikiPageContent.category} tags={wikiPageContent.tags} />
+
+      {/* При ширине ≤760px: плавающий блок с тремя кнопками — Назад, Содержание, Редактировать */}
+      {showFloatingBar && (
+        <Flex gap="2" align="center" className={styles.floatingActionsBar}>
+          <Button
+            type="button"
+            size="3"
+            variant="soft"
+            radius="full"
+            className={styles.floatingBarButton}
+            title="Вернуться к списку"
+            aria-label="Вернуться к списку"
+            onClick={() => router.push('/wiki')}
+            style={{ backgroundColor: 'var(--gray-3)', color: 'var(--gray-11)' }}
+          >
+            <ArrowLeftIcon width={18} height={18} />
+          </Button>
+          <Popover.Root open={tocOpen} onOpenChange={setTocOpen}>
+            {/* @ts-expect-error Radix Themes Popover.Trigger typings omit asChild */}
+            <Popover.Trigger asChild>
+              <Button
+                type="button"
+                size="3"
+                variant="soft"
+                radius="full"
+                className={styles.floatingBarButton}
+                aria-label="Открыть содержание"
+                title="Содержание"
+              >
+                <ListBulletIcon width={18} height={18} />
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content
+              className={styles.tocPopoverContent}
+              align="end"
+              sideOffset={8}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <WikiDetailSidebar
+                pageId={pageId}
+                sections={wikiPageContent.content.sections}
+                onSectionClick={() => setTocOpen(false)}
+              />
+            </Popover.Content>
+          </Popover.Root>
+          <Button
+            type="button"
+            size="3"
+            variant="solid"
+            radius="full"
+            className={styles.floatingBarButton}
+            title="Редактировать"
+            aria-label="Редактировать"
+            onClick={() => router.push(`/wiki/${pageId}/edit`)}
+            style={{ backgroundColor: 'var(--accent-9)', color: '#ffffff' }}
+          >
+            <Pencil1Icon width={18} height={18} />
+          </Button>
+        </Flex>
+      )}
+
       <Flex gap="4" className={styles.detailContent}>
         <Box className={styles.mainContent}>
           <WikiDetailContent content={wikiPageContent.content} />
         </Box>
         <Flex direction="column" gap="3" className={styles.sidebar}>
-          <WikiDetailSidebar pageId={pageId} sections={wikiPageContent.content.sections} />
+          {!showFloatingBar && (
+            <WikiDetailSidebar pageId={pageId} sections={wikiPageContent.content.sections} />
+          )}
           <WikiDetailHistory
             author={wikiPageContent.author}
             lastEditor={wikiPageContent.lastEditor}

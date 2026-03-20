@@ -77,6 +77,8 @@ frontend old/
 
 - Базовый эталон переноса: **frontend old (3001)** → сравнение **`./start-dev-migration.sh`** (3001 + 3002).  
 - План переноса страниц и чек-листы: **`fe_migration/MIGRATION_PLAN.md`** (фазы A–K, построчная проверка I, J1–J5).  
+- **Очередь нерешённого** (приёмка, улучшения, роли, хвосты): **`fe_migration/MIGRATION_PLAN_UPD.md`**.  
+- **Расхождения с эталоном 3001** (намеренные и найденные при приёмке): **`fe_migration/docs/MIGRATION_DIVERGENCES.md`**.  
 - Отдельно зафиксирована **доработка UI профиля и оболочки** под новую платформу (**frontend :3000**): **`fe_migration/docs/UI_MIGRATION_PLAN.md`** (футер, FloatingActions, тема, соцсети, UserCard и т.д.).  
 - **`src/router-adapter.tsx`** вместо `next/link` и `next/navigation`.
 
@@ -93,5 +95,6 @@ frontend old/
 ## Миграция и качество переноса
 
 - Перенос legacy-страниц (3001 → 3002): **`fe_migration/MIGRATION_PLAN.md`**.  
+- Нерешённое и отложенное: **`fe_migration/MIGRATION_PLAN_UPD.md`**.  
 - UI-изменения и parity с **3000** по профилю/хедеру/футеру: **`fe_migration/docs/UI_MIGRATION_PLAN.md`**.  
 - После переноса каждой страницы: сверка построчно (**I**), чек-лист (**J**), таблица учёта (**G**).

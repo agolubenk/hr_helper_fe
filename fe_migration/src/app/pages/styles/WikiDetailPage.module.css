@@ -20,6 +20,39 @@
   gap: 16px;
 }
 
+/* Плавающий блок кнопок (Редактировать, Содержание, Назад) — при ширине ≤760px; размер −20%, фон 50% прозрачный */
+.floatingActionsBar {
+  display: none;
+}
+
+.floatingBarButton {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .floatingActionsBar {
+    display: flex;
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    z-index: 999;
+    padding: 3px 3px 3px 8px;
+    gap: 6px;
+    background: var(--color-background);
+    background: color-mix(in srgb, var(--color-background) 50%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--gray-a5);
+    border-radius: 999px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
 @media (max-width: 768px) {
   .wikiDetailContainer {
     padding: 16px;
@@ -32,4 +65,14 @@
   .sidebar {
     width: 100%;
   }
+}
+
+/* Popover «Содержание»: правый край выровнен с правым краем плавающего блока (триггер — средняя кнопка, сдвиг вправо) */
+/* Контент Popover — сразу WikiDetailSidebar без лишней обёртки */
+.tocPopoverContent {
+  max-height: min(70vh, 500px);
+  overflow-y: auto;
+  width: min(320px, calc(100vw - 32px));
+  transform: translateX(46px);
+  padding: 4px;
 }

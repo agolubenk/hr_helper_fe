@@ -199,6 +199,12 @@
     flex-direction: column;
     gap: 12px;
   }
+
+  /* В карточке действий кнопки всегда в одну строку */
+  .actionsCard .actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
 }
 
 /* Отдельные карточки: параметры публикации и кнопки действий */
@@ -229,6 +235,16 @@
   border-top: none;
 }
 
+/* Обёртка карточки действий: ref для замера ширины; при скрытом ребёнке не занимает место */
+.actionsCardWrapper {
+  min-height: 0;
+}
+
+/* Когда ширина блока карточки действий <= 800px (режим по ширине блока), карточку скрываем — только плавающие кнопки */
+.actionsCardHiddenWhenNarrow {
+  display: none !important;
+}
+
 /* Скрываем статические кнопки Отмена/Сохранить, когда видна плавающая панель (чтобы не было двойного контура) */
 .actionsGroupHidden {
   opacity: 0;
@@ -236,74 +252,3 @@
   transition: opacity 0.2s ease;
 }
 
-/* Плавающие кнопки: справа (как в карточке), над футером; диаметр чуть меньше кнопок в карточке; расширяются при прокрутке (--expansion 0..1) */
-.floatingActions {
-  position: fixed;
-  bottom: 56px;
-  right: 24px; /* по умолчанию; переопределяется из JS по контейнеру контента */
-  left: auto;
-  z-index: 90;
-  padding: 5px 5px 5px 12px;
-  /* Прозрачность за счёт смешивания с transparent; цвет берётся из темы (--color-background / --gray-2), оттенок не меняется */
-  background: var(--color-background);
-  background: color-mix(in srgb, var(--color-background) 62%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--gray-a5);
-  border-radius: 999px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s ease, right 0.2s ease;
-}
-
-.radix-themes[data-appearance="dark"] .floatingActions {
-  background: var(--gray-2);
-  background: color-mix(in srgb, var(--gray-2) 58%, transparent);
-  border-color: var(--gray-a5);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
-
-.floatingActions .floatingCancel {
-  min-width: 40px;
-  width: calc(40px + (72 * var(--expansion, 0)));
-  height: 40px;
-  /* Без текста (expansion 0): симметричные отступы 9px, иконка по центру; с текстом — отступ справа под подпись */
-  padding: 0 calc(9px + (12 - 9) * var(--expansion, 0)) !important;
-  gap: calc(8px * var(--expansion, 0));
-  border-radius: 999px;
-  overflow: hidden;
-  transition: width 0.25s ease, padding 0.2s ease, gap 0.2s ease;
-}
-
-.floatingActions .floatingSave {
-  min-width: 40px;
-  width: calc(40px + (152 * var(--expansion, 0)));
-  height: 40px;
-  padding: 0 calc(9px + (16 - 9) * var(--expansion, 0)) !important;
-  gap: calc(8px * var(--expansion, 0));
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--accent-9) !important;
-  color: #ffffff !important;
-  transition: width 0.25s ease, padding 0.2s ease, gap 0.2s ease;
-}
-
-.floatingIcon {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-}
-
-.floatingLabel {
-  white-space: nowrap;
-  overflow: hidden;
-  max-width: calc(140px * var(--expansion, 0));
-  opacity: var(--expansion, 0);
-  transition: max-width 0.25s ease, opacity 0.2s ease;
-}
-
-.floatingActions .floatingSave .floatingLabel {
-  max-width: calc(220px * var(--expansion, 0));
-}

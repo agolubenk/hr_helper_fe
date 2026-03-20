@@ -8,6 +8,7 @@ import styles from './WikiDeleteConfirmDialog.module.css'
 interface WikiDeleteConfirmPopoverProps {
   isOpen: boolean
   onClose: () => void
+  onOpenChange?: (open: boolean) => void
   onConfirm: () => void
   trigger: React.ReactNode
   message?: string
@@ -16,6 +17,7 @@ interface WikiDeleteConfirmPopoverProps {
 export default function WikiDeleteConfirmPopover({
   isOpen,
   onClose,
+  onOpenChange,
   onConfirm,
   trigger,
   message = 'Вы уверены, что хотите удалить эту страницу?'
@@ -26,11 +28,13 @@ export default function WikiDeleteConfirmPopover({
   }
 
   return (
-    <Popover.Root open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        onClose()
-      }
-    }}>
+    <Popover.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        onOpenChange?.(open)
+        if (!open) onClose()
+      }}
+    >
       <Popover.Trigger asChild>
         {trigger}
       </Popover.Trigger>

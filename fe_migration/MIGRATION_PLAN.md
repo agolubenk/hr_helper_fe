@@ -2,6 +2,8 @@
 
 **Цель:** всё отображается и ведёт себя как в старой версии. **Архитектуру FSD не вводим** — структура как сейчас: `src/components/`, `src/app/pages/`, общий `AppLayout` там, где он был в Next.
 
+**Очередь нерешённого и отложенного** (приёмка, улучшения, роли, хвосты D/L/E) — в **`MIGRATION_PLAN_UPD.md`**.
+
 **Стек уже сменён:** Vite + React Router. Навигация через `@/router-adapter` (как Next: `Link href`, `useRouter().push`).
 
 ---
@@ -128,8 +130,15 @@
 | **Вики — плавающие кнопки** | Над футером справа: круглые кнопки «Отмена» и «Сохранить» (40 px), пока карточка с кнопками не в зоне видимости. Позиция привязана к контейнеру контента `[data-app-layout-content]` (ResizeObserver) — при открытии меню кнопки смещаются вместе с контентом. При прокрутке к карточке кнопки визуально расширяются до полноразмерных (IntersectionObserver, `--expansion`). Статические кнопки в карточке скрыты, пока видна плавающая панель (нет двойного контура). Фон панели полупрозрачный (color-mix с цветами темы), без лишних отступов у иконок в режиме «только иконка». |
 | **Вики — прокрутка** | В `globals.css`: body и #root без прокрутки (`height: 100%`, `overflow: hidden`); прокручивается только область контента (`[data-app-layout-content]` с `overflow: auto` в AppLayout). |
 | **Вики — документация** | Подробное описание и changelog формы редактирования: `src/components/wiki/COMPONENTS_DOCUMENTATION.md`. Краткая сводка: `docs/UI_MIGRATION_PLAN.md` (раздел «Форма редактирования вики»). |
+| **Вики — плавающие кнопки (компонент)** | Вынесены в `FloatingConfirmActions` (название без привязки к вики): красная «Удалить», капсула «Отмена»/«Сохранить», анимация по `--expansion`. Подробности: `COMPONENTS_DOCUMENTATION.md` (п. 13). |
+| **Вики — мобильный режим по ширине блока** | Расчёт «мобильная версия или нет» определяется **шириной блока** карточки действий (ResizeObserver по ref), порог 800px; не по viewport. При узком блоке карточка скрывается, панель всегда видна; при скрытой карточке кнопки всегда в компактном виде (только иконки). |
+| **Вики — удаление через тост** | Подтверждение удаления страницы — тост с кнопками «Отмена»/«Удалить» (useToast.showWarning), без Popover. |
+| **Фаза 8** | Отчётность: перенесены ReportingPage, CompanyReportPage, HiringPlanPage, YearlyHiringPlanPage; маршруты /reporting, /reporting/company, /reporting/hiring-plan, /reporting/hiring-plan/yearly; стили в pages/styles/. |
+| **Фаза 10** | Проекты: ProjectsPage, ProjectDetailPage, ProjectsTeamsPage, ProjectsResourcesPage; моки `projectsMocks.ts`; стили `ProjectsPage.module.css`; маршруты `/projects`, `/projects/:id`, `/projects/teams`, `/projects/resources`; динамический `pageTitle` для карточки проекта через `ProjectDetailAppLayout` в `App.tsx`. |
+| **Фаза 14** | ATS: `AtsIndexPage`, `AtsCandidatePage`, assessment new/view/edit; моки `atsMocks.ts`; маршруты в `App.tsx` (порядок: специфичные assessment перед кандидатом). |
+| **Фаза 15** | Финальная приёмка: smoke по `docs/MIGRATION_CHECK_URLS.md`, части F–J плана; при необходимости — `.env.example` (`VITE_API_URL`), построчный аудит I для критичных страниц. |
 
-**Следующий этап:** Фаза 8 — Отчётность (/reporting, /reporting/company, /reporting/hiring-plan, /reporting/hiring-plan/yearly). Двигаться по шагам A1 и K для каждого маршрута.
+**Следующий этап:** Фаза 15 — финальная приёмка (см. ниже и `docs/MIGRATION_CHECK_URLS.md`).
 
 ---
 
@@ -184,51 +193,84 @@
 
 ### Фаза 8 — Отчётность
 
-| № | Путь | Файл |
-|---|------|------|
-| 1 | `/reporting` | `app/reporting/page.tsx` |
-| 2 | `/reporting/company` | `app/reporting/company/page.tsx` |
-| 3 | `/reporting/hiring-plan` | `app/reporting/hiring-plan/page.tsx` |
-| 4 | `/reporting/hiring-plan/yearly` | `app/reporting/hiring-plan/yearly/page.tsx` |
+| № | Путь | Файл | Статус |
+|---|------|------|--------|
+| 1 | `/reporting` | `app/reporting/page.tsx` | ✓ |
+| 2 | `/reporting/company` | `app/reporting/company/page.tsx` | ✓ |
+| 3 | `/reporting/hiring-plan` | `app/reporting/hiring-plan/page.tsx` | ✓ |
+| 4 | `/reporting/hiring-plan/yearly` | `app/reporting/hiring-plan/yearly/page.tsx` | ✓ |
+
+Перенесены: `ReportingPage`, `CompanyReportPage`, `HiringPlanPage`, `YearlyHiringPlanPage`; стили в `pages/styles/`; маршруты в `App.tsx`. Навигация через `useRouter`/`Link` из `@/router-adapter`. Моки на месте.
 
 ---
 
 ### Фаза 9 — Telegram
 
-| № | Путь | Файл |
-|---|------|------|
-| 1 | `/telegram` | `app/telegram/page.tsx` |
-| 2 | `/telegram/2fa` | `app/telegram/2fa/page.tsx` |
-| 3 | `/telegram/chats` | `app/telegram/chats/page.tsx` |
+| № | Путь | Файл | Статус |
+|---|------|------|--------|
+| 1 | `/telegram` | `app/telegram/page.tsx` | ✓ |
+| 2 | `/telegram/2fa` | `app/telegram/2fa/page.tsx` | ✓ |
+| 3 | `/telegram/chats` | `app/telegram/chats/page.tsx` | ✓ (mock-версия) |
+
+Перенесены: TelegramPage, Telegram2FAPage, TelegramChatsPage; подключены маршруты в `src/app/App.tsx`. Для `чата` использована упрощённая mock-реализация (без DnD/модалок), но с отображением сообщений через `FormattedText` и вводом через `RichTextInput`.
 
 ---
 
 ### Фаза 10 — Проекты
 
-| № | Путь | Файл |
-|---|------|------|
-| 1 | `/projects` | `app/projects/page.tsx` |
-| 2 | `/projects/[id]` | `app/projects/[id]/page.tsx` |
-| 3 | `/projects/teams` | `app/projects/teams/page.tsx` |
-| 4 | `/projects/resources` | `app/projects/resources/page.tsx` |
+| № | Путь | Файл | Статус |
+|---|------|------|--------|
+| 1 | `/projects` | `app/projects/page.tsx` | ✓ |
+| 2 | `/projects/[id]` | `app/projects/[id]/page.tsx` | ✓ |
+| 3 | `/projects/teams` | `app/projects/teams/page.tsx` | ✓ |
+| 4 | `/projects/resources` | `app/projects/resources/page.tsx` | ✓ |
+
+Перенесены: `ProjectsPage`, `ProjectDetailPage`, `ProjectsTeamsPage`, `ProjectsResourcesPage`; моки в `pages/projectsMocks.ts`; стили `pages/styles/ProjectsPage.module.css`; маршруты в `App.tsx`. Для `/projects/:id` заголовок шапки задаётся обёрткой `ProjectDetailAppLayout` (имя проекта или «Проект»). Навигация через `useRouter` из `@/router-adapter`. Порядок маршрутов: `/projects/teams` и `/projects/resources` **выше** `/projects/:id`, чтобы не перехватывались как id.
 
 ---
 
 ### Фаза 11 — Специализации (вложенный layout)
 
-1. Подключить **родительский** Route `path="/specializations"` с `element={<SpecializationsLayoutShell><Outlet /></SpecializationsLayoutShell>}`.
-2. Внутри — дочерние маршруты:
-   - `/specializations` — index
-   - `/specializations/:id` — возможно редирект на `.../info` как в Next
-   - `/specializations/:id/info`, `matrix`, `career`, `allocation`, `grades`, `preview`, `vacancies`
+| № | Путь | Файл | Статус |
+|---|------|------|--------|
+| 1 | `/specializations` | `app/specializations/page.tsx` | ✓ |
+| 2 | `/specializations/:id` | `app/specializations/[id]/page.tsx` | ✓ (редирект на `info`) |
+| 3 | `/specializations/:id/info` | `app/specializations/[id]/info/page.tsx` | ✓ |
+| 4 | `/specializations/:id/grades` | `app/specializations/[id]/grades/page.tsx` | ✓ |
+| 5 | `/specializations/:id/matrix` | `app/specializations/[id]/matrix/page.tsx` | ✓ |
+| 6 | `/specializations/:id/career` | `app/specializations/[id]/career/page.tsx` | ✓ |
+| 7 | `/specializations/:id/vacancies` | `app/specializations/[id]/vacancies/page.tsx` | ✓ |
+| 8 | `/specializations/:id/allocation` | `app/specializations/[id]/allocation/page.tsx` | ✓ |
+| 9 | `/specializations/:id/preview` | `app/specializations/[id]/preview/page.tsx` | ✓ |
 
-Каждый `page.tsx` из `app/specializations/...` — отдельный компонент страницы + Route.
+Перенесены layout-обёртки `SpecializationsLayoutShell` и `SpecializationIdLayoutShell`, подключены `SpecializationsProvider`, `TreeSidebar`, `PreviewSidebar`, стили `SpecializationsPage.module.css`, маршруты вкладок в `App.tsx`.
 
 ---
 
 ### Фаза 12 — Настройки компании
 
-Начать с `/company-settings` (корень), затем все подстраницы из `app/company-settings/**/page.tsx` (кроме уже перенесённых в фазе 6).
+Промежуточный результат:
+
+| № | Путь | Статус |
+|---|------|--------|
+| 1 | `/company-settings` | ✓ |
+| 2 | `/company-settings/grades` | ✓ |
+| 3 | `/company-settings/rating-scales` | ✓ |
+| 4 | `/company-settings/employee-lifecycle` | ✓ |
+| 5 | `/company-settings/finance` | ✓ (было ранее) |
+| 6 | `/company-settings/candidate-fields` | ✓ |
+| 7 | `/company-settings/scorecard` | ✓ |
+| 8 | `/company-settings/sla` | ✓ |
+| 9 | `/company-settings/vacancy-prompt` | ✓ |
+| 10 | `/company-settings/recruiting/stages` | ✓ |
+| 11 | `/company-settings/recruiting/commands` | ✓ |
+| 12 | `/company-settings/recruiting` | ✓ (редирект на rules) |
+| 13 | `/company-settings/org-structure` | ✓ |
+| 14 | `/company-settings/integrations` | ✓ |
+| 15 | `/company-settings/user-groups` | ✓ |
+| 16 | `/company-settings/users` | ✓ |
+| 17 | `/company-settings/recruiting/rules` | ✓ |
+| 18 | `/company-settings/recruiting/offer-template` | ✓ |
 
 **Список типичных путей:** `org-structure`, `grades`, `rating-scales`, `employee-lifecycle`, `integrations`, `user-groups`, `users`, `candidate-fields`, `scorecard`, `sla`, `vacancy-prompt`, `recruiting/stages`, `recruiting/rules`, `recruiting/commands`, `recruiting/offer-template`.
 
@@ -241,17 +283,35 @@
 1. Route `path="/admin"` с **AdminLayoutShell** из `app/admin/layout.tsx`.
 2. Дочерние: `/admin`, `/admin/users`, `/admin/groups` (и любые другие из `app/admin/**/page.tsx`).
 
+Статус: ✓ Выполнено (перенесены `AdminPage`, `AdminUsersPage`, `AdminGroupsPage`; маршруты подключены в `App.tsx`; сохранены редиректы `/admin-crm` -> `/admin`).
+
 ---
 
 ### Фаза 14 — ATS
 
 | № | Путь | Файл |
 |---|------|------|
-| 1 | `/ats` | `app/ats/page.tsx` |
-| 2 | `/ats/vacancy/:vacancyId/candidate/:candidateId` | nested `page.tsx` |
-| 3 | assessment new / view / edit | соответствующие `page.tsx` |
+| 1 | `/ats` | `app/ats/page.tsx` | ✓ |
+| 2 | `/ats/vacancy/:vacancyId/candidate/:candidateId` | nested `page.tsx` | ✓ |
+| 3 | assessment new / view / edit | соответствующие `page.tsx` | ✓ |
 
 Параметры: `useParams()` → `vacancyId`, `candidateId`, `assessmentId`.
+
+Статус: ✓ Выполнено (маршруты в `App.tsx`, страницы `AtsIndexPage`, `AtsCandidatePage`, `AtsAssessmentNewPage`, `AtsAssessmentViewPage`, `AtsAssessmentEditPage`, моки `atsMocks.ts`).
+
+---
+
+### Фаза 15 — Финальная приёмка
+
+**Цель:** убедиться, что все основные URL открываются на 3002 без неожиданных поломок; расхождения с **3001** при этом **не скрывать и не «лечить» без задачи** — только фиксировать.
+
+1. Пройти **часть F** (Sidebar / smoke / build).
+2. Использовать **`docs/MIGRATION_CHECK_URLS.md`** как единый список ссылок для ручной проверки (порт по умолчанию 3002).
+3. Все **намеренные и обнаруженные отличия** от эталона — в **`docs/MIGRATION_DIVERGENCES.md`** (раздел §9 — журнал при приёмке). **Не откатывать** изменения, уже описанные там или в `docs/UI_MIGRATION_PLAN.md` / таблице «Внесённые изменения» выше.
+4. По приоритету: **часть J** для ключевых разделов; **часть I** — для страниц с тяжёлой логикой (вики, workflow, company-settings).
+5. Проверить **`VITE_*`**: образец в `.env.example` в корне `fe_migration` (см. `src/lib/api.ts`).
+
+**Критерий готовности:** все пункты чеклиста H, относящиеся к перенесённым маршрутам, отмечены `[x]`; smoke-лист пройден или зафиксированы известные отличия в **`MIGRATION_DIVERGENCES.md`** (и при необходимости в заметках к части G).
 
 ---
 
@@ -330,14 +390,14 @@
 
 Отметь каждую строку после переноса:
 
-- [ ] `app/page.tsx` — уже в fe_migration как HomePage  
-- [ ] `app/workflow/page.tsx`  
-- [ ] `app/aichat/page.tsx`  
-- [ ] `app/huntflow/page.tsx`  
-- [ ] `app/calendar/page.tsx`  
-- [ ] `app/search/page.tsx`  
-- [ ] `app/interviewers/page.tsx`  
-- [ ] `app/candidate-responses/page.tsx`  
+- [x] `app/page.tsx` — уже в fe_migration как HomePage  
+- [x] `app/workflow/page.tsx`  
+- [x] `app/aichat/page.tsx`  
+- [x] `app/huntflow/page.tsx`  
+- [x] `app/calendar/page.tsx`  
+- [x] `app/search/page.tsx`  
+- [x] `app/interviewers/page.tsx`  
+- [x] `app/candidate-responses/page.tsx`  
 - [x] `app/vacancies/page.tsx`  
 - [x] `app/vacancies/[id]/page.tsx`  
 - [x] `app/vacancies/[id]/edit/page.tsx`  
@@ -347,66 +407,66 @@
 - [x] `app/invites/page.tsx`  
 - [x] `app/invites/[id]/page.tsx`  
 - [x] `app/invites/[id]/edit/page.tsx`  
-- [ ] `app/finance/page.tsx`  
-- [ ] `app/finance/benchmarks/page.tsx`  
-- [ ] `app/reporting/page.tsx`  
-- [ ] `app/reporting/company/page.tsx`  
-- [ ] `app/reporting/hiring-plan/page.tsx`  
-- [ ] `app/reporting/hiring-plan/yearly/page.tsx`  
-- [ ] `app/wiki/page.tsx`  
-- [ ] `app/wiki/[id]/page.tsx`  
-- [ ] `app/wiki/[id]/edit/page.tsx`  
-- [ ] `app/telegram/page.tsx`  
-- [ ] `app/telegram/2fa/page.tsx`  
-- [ ] `app/telegram/chats/page.tsx`  
-- [ ] `app/projects/page.tsx`  
-- [ ] `app/projects/[id]/page.tsx`  
-- [ ] `app/projects/teams/page.tsx`  
-- [ ] `app/projects/resources/page.tsx`  
-- [ ] `app/specializations/page.tsx`  
-- [ ] `app/specializations/[id]/page.tsx`  
-- [ ] `app/specializations/[id]/info/page.tsx`  
-- [ ] `app/specializations/[id]/matrix/page.tsx`  
-- [ ] `app/specializations/[id]/career/page.tsx`  
-- [ ] `app/specializations/[id]/allocation/page.tsx`  
-- [ ] `app/specializations/[id]/grades/page.tsx`  
-- [ ] `app/specializations/[id]/preview/page.tsx`  
-- [ ] `app/specializations/[id]/vacancies/page.tsx`  
-- [ ] `app/company-settings/page.tsx`  
-- [ ] `app/company-settings/org-structure/page.tsx`  
-- [ ] `app/company-settings/grades/page.tsx`  
-- [ ] `app/company-settings/rating-scales/page.tsx`  
-- [ ] `app/company-settings/employee-lifecycle/page.tsx`  
-- [ ] `app/company-settings/integrations/page.tsx`  
-- [ ] `app/company-settings/user-groups/page.tsx`  
-- [ ] `app/company-settings/users/page.tsx`  
-- [ ] `app/company-settings/finance/page.tsx`  
-- [ ] `app/company-settings/candidate-fields/page.tsx`  
-- [ ] `app/company-settings/scorecard/page.tsx`  
-- [ ] `app/company-settings/sla/page.tsx`  
-- [ ] `app/company-settings/vacancy-prompt/page.tsx`  
-- [ ] `app/company-settings/recruiting/stages/page.tsx`  
-- [ ] `app/company-settings/recruiting/rules/page.tsx`  
-- [ ] `app/company-settings/recruiting/commands/page.tsx`  
-- [ ] `app/company-settings/recruiting/offer-template/page.tsx`  
-- [ ] `app/admin/page.tsx`  
-- [ ] `app/admin/users/page.tsx`  
-- [ ] `app/admin/groups/page.tsx`  
-- [ ] `app/account/login/page.tsx`  
-- [ ] `app/account/forgot-password/page.tsx`  
-- [ ] `app/account/reset-password/page.tsx`  
-- [ ] `app/account/profile/page.tsx`  
-- [ ] `app/errors/401/page.tsx`  
-- [ ] `app/errors/402/page.tsx`  
-- [ ] `app/errors/403/page.tsx`  
-- [ ] `app/errors/404/page.tsx`  
-- [ ] `app/errors/500/page.tsx`  
-- [ ] `app/errors/forbidden/page.tsx`  
-- [ ] `app/ats/page.tsx`  
-- [ ] `app/ats/vacancy/[vacancyId]/candidate/[candidateId]/page.tsx`  
-- [ ] `app/ats/.../assessment/new/page.tsx`  
-- [ ] `app/ats/.../assessment/[assessmentId]/page.tsx`  
-- [ ] `app/ats/.../assessment/[assessmentId]/edit/page.tsx`  
+- [x] `app/finance/page.tsx` (редирект → `/company-settings/finance`)  
+- [x] `app/finance/benchmarks/page.tsx`  
+- [x] `app/reporting/page.tsx`  
+- [x] `app/reporting/company/page.tsx`  
+- [x] `app/reporting/hiring-plan/page.tsx`  
+- [x] `app/reporting/hiring-plan/yearly/page.tsx`  
+- [x] `app/wiki/page.tsx`  
+- [x] `app/wiki/[id]/page.tsx`  
+- [x] `app/wiki/[id]/edit/page.tsx`  
+- [x] `app/telegram/page.tsx`  
+- [x] `app/telegram/2fa/page.tsx`  
+- [x] `app/telegram/chats/page.tsx`  
+- [x] `app/projects/page.tsx`  
+- [x] `app/projects/[id]/page.tsx`  
+- [x] `app/projects/teams/page.tsx`  
+- [x] `app/projects/resources/page.tsx`  
+- [x] `app/specializations/page.tsx`  
+- [x] `app/specializations/[id]/page.tsx`  
+- [x] `app/specializations/[id]/info/page.tsx`  
+- [x] `app/specializations/[id]/matrix/page.tsx`  
+- [x] `app/specializations/[id]/career/page.tsx`  
+- [x] `app/specializations/[id]/allocation/page.tsx`  
+- [x] `app/specializations/[id]/grades/page.tsx`  
+- [x] `app/specializations/[id]/preview/page.tsx`  
+- [x] `app/specializations/[id]/vacancies/page.tsx`  
+- [x] `app/company-settings/page.tsx`
+- [x] `app/company-settings/org-structure/page.tsx`
+- [x] `app/company-settings/grades/page.tsx`
+- [x] `app/company-settings/rating-scales/page.tsx`
+- [x] `app/company-settings/employee-lifecycle/page.tsx`
+- [x] `app/company-settings/integrations/page.tsx`
+- [x] `app/company-settings/user-groups/page.tsx`
+- [x] `app/company-settings/users/page.tsx`
+- [x] `app/company-settings/finance/page.tsx`
+- [x] `app/company-settings/candidate-fields/page.tsx`
+- [x] `app/company-settings/scorecard/page.tsx`
+- [x] `app/company-settings/sla/page.tsx`
+- [x] `app/company-settings/vacancy-prompt/page.tsx`
+- [x] `app/company-settings/recruiting/stages/page.tsx`
+- [x] `app/company-settings/recruiting/rules/page.tsx`
+- [x] `app/company-settings/recruiting/commands/page.tsx`
+- [x] `app/company-settings/recruiting/offer-template/page.tsx`
+- [x] `app/admin/page.tsx`  
+- [x] `app/admin/users/page.tsx`  
+- [x] `app/admin/groups/page.tsx`  
+- [x] `app/account/login/page.tsx`  
+- [x] `app/account/forgot-password/page.tsx`  
+- [x] `app/account/reset-password/page.tsx`  
+- [x] `app/account/profile/page.tsx`  
+- [x] `app/errors/401/page.tsx`  
+- [x] `app/errors/402/page.tsx`  
+- [x] `app/errors/403/page.tsx`  
+- [x] `app/errors/404/page.tsx`  
+- [x] `app/errors/500/page.tsx`  
+- [x] `app/errors/forbidden/page.tsx`  
+- [x] `app/ats/page.tsx`  
+- [x] `app/ats/vacancy/[vacancyId]/candidate/[candidateId]/page.tsx`  
+- [x] `app/ats/.../assessment/new/page.tsx`  
+- [x] `app/ats/.../assessment/[assessmentId]/page.tsx`  
+- [x] `app/ats/.../assessment/[assessmentId]/edit/page.tsx`  
 
 Если в репозитории появятся новые `page.tsx` — дописать в конец списка по тому же циклу A1.
 
@@ -513,6 +573,7 @@
 | Документ | Назначение |
 |----------|------------|
 | **`MIGRATION_PLAN.md`** (этот файл) | Пошаговый перенос **frontend old → fe_migration** (3001 ↔ 3002), фазы A–K, таблица страниц. |
+| **`MIGRATION_PLAN_UPD.md`** | Нерешённые и отложенные задачи: приёмка F–J, хвосты D/L/E, улучшения из конца плана, админка/роли, ссылки на DIVERGENCES. |
 | **`docs/UI_MIGRATION_PLAN.md`** | Сводка UI-работ по **сверке с frontend :3000** (профиль, футер, плавающая панель, соцсети и т.д.). |
 | **`FRONTENDS_STACK_AND_STRUCTURE.md`** (корень репо) | Три приложения, порты, скрипты; ссылки на оба плана. |
 | **`fe_migration/src/components/logo/LOGO_README.md`** | **Обязательное правило:** логотип-робот — единый источник. Все места отображают лого только через `import { LogoRobot } from '@/components/logo'`. Не дублировать SVG, не создавать альтернативные компоненты логотипа. Улучшения лого — только в `LogoRobot.tsx` / `logoColors.ts`. |

@@ -7,15 +7,17 @@ import styles from './WikiDetailSidebar.module.css'
 interface WikiDetailSidebarProps {
   pageId: string
   sections: Array<{ title: string }>
+  /** Вызывается после клика по пункту (например, чтобы закрыть popover на мобильных) */
+  onSectionClick?: () => void
 }
 
-export default function WikiDetailSidebar({ pageId, sections }: WikiDetailSidebarProps) {
+export default function WikiDetailSidebar({ pageId, sections, onSectionClick }: WikiDetailSidebarProps) {
   const handleSectionClick = (sectionTitle: string) => {
-    // Прокрутка к разделу при клике
     const element = document.getElementById(`section-${sectionTitle.replace(/\s+/g, '-').toLowerCase()}`)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
+    onSectionClick?.()
   }
 
   return (

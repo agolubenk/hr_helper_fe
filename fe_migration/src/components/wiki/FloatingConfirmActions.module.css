@@ -1,0 +1,98 @@
+/* Плавающие кнопки: справа, над футером; без фона; расширяются при прокрутке (--expansion 0..1) */
+.floatingActions {
+  position: fixed;
+  bottom: 56px;
+  right: 24px; /* по умолчанию; переопределяется из JS по контейнеру контента */
+  left: auto;
+  z-index: 90;
+  padding: 0;
+  gap: 8px;
+  transition: right 0.2s ease;
+}
+
+/* Диаметр плавающих кнопок 38px; сплошной красный фон и белая иконка для хорошей читаемости */
+.floatingActions .floatingDelete {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 !important;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--red-9) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--red-9);
+}
+
+.floatingActions .floatingDelete svg {
+  color: #ffffff;
+}
+
+/* Капсула только вокруг «Отмена» и «Сохранить» */
+.floatingActionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  background: var(--color-background);
+  background: color-mix(in srgb, var(--color-background) 80%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--gray-a5);
+}
+
+.radix-themes[data-appearance="dark"] .floatingActionsGroup {
+  background: var(--gray-2);
+  background: color-mix(in srgb, var(--gray-2) 80%, transparent);
+}
+
+.floatingActions .floatingCancel {
+  min-width: 38px;
+  width: calc(38px + (72 * var(--expansion, 0)));
+  height: 38px;
+  padding: 0 calc(8px + (12 - 8) * var(--expansion, 0)) !important;
+  gap: calc(8px * var(--expansion, 0));
+  border-radius: 999px;
+  overflow: hidden;
+  transition: width 0.25s ease, padding 0.2s ease, gap 0.2s ease;
+}
+
+.floatingActions .floatingSave {
+  min-width: 38px;
+  width: calc(38px + (152 * var(--expansion, 0)));
+  height: 38px;
+  padding: 0 calc(8px + (16 - 8) * var(--expansion, 0)) !important;
+  gap: calc(8px * var(--expansion, 0));
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent-9) 80%, transparent) !important;
+  color: var(--accent-12) !important;
+  border: 1px solid var(--accent-a5);
+  transition: width 0.25s ease, padding 0.2s ease, gap 0.2s ease;
+}
+
+.radix-themes[data-appearance="dark"] .floatingActions .floatingSave {
+  background: color-mix(in srgb, var(--accent-9) 75%, transparent) !important;
+  color: var(--accent-12) !important;
+}
+
+.floatingIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.floatingLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: calc(140px * var(--expansion, 0));
+  opacity: var(--expansion, 0);
+  transition: max-width 0.25s ease, opacity 0.2s ease;
+}
+
+.floatingActions .floatingSave .floatingLabel {
+  max-width: calc(220px * var(--expansion, 0));
+}

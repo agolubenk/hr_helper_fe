@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from "react"
 import { Box, Flex, Text, Button, TextArea, TextField, Select, Checkbox, Switch, Dialog } from "@radix-ui/themes"
 import { ArrowLeftIcon, Pencil1Icon, TrashIcon, UploadIcon, FontBoldIcon, FontItalicIcon, CodeIcon, QuoteIcon, ListBulletIcon, HeadingIcon, InfoCircledIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons"
 import { useRouter } from "@/router-adapter"
+import { useToast } from "@/components/Toast/ToastContext"
 import WikiFileUploadModal from "./WikiFileUploadModal"
-import WikiDeleteConfirmPopover from "./WikiDeleteConfirmDialog"
 import WikiTagSelector from "./WikiTagSelector"
+import { FloatingConfirmActions } from "./FloatingConfirmActions"
 import styles from './WikiEditForm.module.css'
 
 interface WikiPageData {
@@ -79,7 +80,10 @@ const BLOCK_TEMPLATES = [
 
 export default function WikiEditForm({ initialData, isNew = false }: WikiEditFormProps) {
   const router = useRouter()
-  
+  const toast = useToast()
+  /** Мобильный режим по ширине блока карточки действий (задаётся из FloatingConfirmActions) */
+  const [isActionsCardNarrow, setIsActionsCardNarrow] = useState(false)
+
   const [formData, setFormData] = useState<WikiPageData>({
     id: initialData?.id || '',
     title: initialData?.title || '',
@@ -96,18 +100,13 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
   const [changeNote, setChangeNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [showSource, setShowSource] = useState(true)
   const [blockSelectValue, setBlockSelectValue] = useState('_')
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false)
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false)
-  const [actionsCardInView, setActionsCardInView] = useState(false)
-  const [expansionRatio, setExpansionRatio] = useState(0)
-  const [floatingBarRight, setFloatingBarRight] = useState(24)
   const contentRef = useRef<HTMLTextAreaElement>(null)
   const actionsCardRef = useRef<HTMLDivElement>(null)
-
-  const FLOATING_BAR_PADDING = 24
+  const [floatingBarVisible, setFloatingBarVisible] = useState(false)
 
   const helpContent = (
     <>
@@ -137,36 +136,6 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
       </ul>
     </>
   )
-
-  // Позиция плавающей панели: привязка к правому краю контента (при открытии меню контент сужается — кнопки смещаются)
-  useEffect(() => {
-    const contentEl = document.querySelector('[data-app-layout-content]') as HTMLElement | null
-    if (!contentEl) return
-    const updateRight = () => {
-      const rect = contentEl.getBoundingClientRect()
-      setFloatingBarRight(window.innerWidth - rect.right + FLOATING_BAR_PADDING)
-    }
-    updateRight()
-    const resizeObserver = new ResizeObserver(updateRight)
-    resizeObserver.observe(contentEl)
-    return () => resizeObserver.disconnect()
-  }, [])
-
-  // Видимость карточки с кнопками: ratio для анимации расширения, скрытие плавающих кнопок при полном входе карточки
-  useEffect(() => {
-    const el = actionsCardRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const ratio = entry.intersectionRatio
-        setExpansionRatio(ratio)
-        setActionsCardInView(ratio >= 0.99)
-      },
-      { rootMargin: '0px', threshold: [0, 0.25, 0.5, 0.75, 0.99, 1] }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
 
   // Автогенерация slug из title
   useEffect(() => {
@@ -227,16 +196,19 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
     }
   }
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDeleteDialogOpen(true)
-  }
-
   const handleDeleteConfirm = () => {
     // TODO: Удаление страницы
     console.log('Deleting wiki page:', formData.id)
     router.push('/wiki')
+  }
+
+  const showDeleteToast = () => {
+    toast.showWarning('Удалить страницу?', 'Вы уверены, что хотите удалить эту страницу?', {
+      actions: [
+        { label: 'Отмена', onClick: () => {}, variant: 'soft', color: 'gray' },
+        { label: 'Удалить', onClick: handleDeleteConfirm, variant: 'solid', color: 'red' },
+      ],
+    })
   }
 
   const handleFileUpload = (content: string, fileName: string) => {
@@ -614,36 +586,33 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
             </Box>
         {/* /optionsCard */}
 
-        {/* Карточка: кнопки действий (Удалить слева, Сохранить и Отмена справа) */}
-        <Box ref={actionsCardRef} className={`${styles.card} ${styles.actionsCard}`}>
-              <Flex justify="between" align="center" className={styles.actions}>
+        {/* Карточка: кнопки действий (Удалить слева, Отмена и Сохранить справа) — в одну строку, с иконками; на ≤800px скрыта, только плавающие кнопки */}
+        {/* Обёртка с ref: по её ширине определяется мобильный режим; сама карточка внутри скрывается при узкой ширине */}
+        <Box ref={actionsCardRef} className={styles.actionsCardWrapper}>
+          <Box
+            className={`${styles.card} ${styles.actionsCard} ${isActionsCardNarrow ? styles.actionsCardHiddenWhenNarrow : ''}`}
+          >
+              <Flex justify="between" align="center" wrap="nowrap" className={styles.actions}>
                 {!isNew ? (
-                  <WikiDeleteConfirmPopover
-                    isOpen={isDeleteDialogOpen}
-                    onClose={() => setIsDeleteDialogOpen(false)}
-                    onConfirm={handleDeleteConfirm}
-                    message="Вы уверены, что хотите удалить эту страницу?"
-                    trigger={
-                      <Button
-                        type="button"
-                        size="3"
-                        variant="soft"
-                        color="red"
-                        onClick={handleDeleteClick}
-                        disabled={isSubmitting}
-                      >
-                        <TrashIcon width={16} height={16} />
-                        Удалить
-                      </Button>
-                    }
-                  />
+                  <Button
+                    type="button"
+                    size="3"
+                    variant="soft"
+                    color="red"
+                    onClick={showDeleteToast}
+                    disabled={isSubmitting}
+                  >
+                    <TrashIcon width={16} height={16} />
+                    Удалить
+                  </Button>
                 ) : (
                   <Box />
                 )}
                 <Flex
                   gap="2"
-                  className={!actionsCardInView ? styles.actionsGroupHidden : undefined}
-                  aria-hidden={!actionsCardInView}
+                  wrap="nowrap"
+                  className={floatingBarVisible ? styles.actionsGroupHidden : undefined}
+                  aria-hidden={floatingBarVisible}
                 >
                   <Button
                     type="button"
@@ -652,6 +621,7 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                     onClick={handleCancel}
                     disabled={isSubmitting}
                   >
+                    <Cross2Icon width={16} height={16} />
                     Отмена
                   </Button>
                   <Button
@@ -663,59 +633,29 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                     }}
                     disabled={isSubmitting}
                   >
+                    <CheckIcon width={16} height={16} />
                     {isSubmitting ? 'Сохранение...' : (isNew ? 'Создать страницу' : 'Сохранить изменения')}
                   </Button>
                 </Flex>
               </Flex>
             </Box>
+          </Box>
         {/* /actionsCard */}
       </form>
 
-      {/* Плавающие кнопки (справа, как в карточке): круглые → расширяются до полноразмерных при прокрутке к карточке */}
-      {!actionsCardInView && (
-        <Flex
-          gap="2"
-          align="center"
-          justify="end"
-          className={styles.floatingActions}
-          style={{ '--expansion': expansionRatio, right: floatingBarRight } as React.CSSProperties}
-          aria-label="Быстрые действия"
-        >
-          <Button
-            type="button"
-            size="3"
-            variant="soft"
-            radius="full"
-            className={styles.floatingCancel}
-            onClick={handleCancel}
-            disabled={isSubmitting}
-            title="Отмена"
-            aria-label="Отмена"
-          >
-            <span className={styles.floatingIcon} aria-hidden>
-              <Cross2Icon width={22} height={22} />
-            </span>
-            <span className={styles.floatingLabel}>Отмена</span>
-          </Button>
-          <Button
-            type="submit"
-            form="wiki-edit-form"
-            size="3"
-            radius="full"
-            className={styles.floatingSave}
-            disabled={isSubmitting}
-            title={isNew ? 'Создать страницу' : 'Сохранить изменения'}
-            aria-label={isNew ? 'Создать страницу' : 'Сохранить изменения'}
-          >
-            <span className={styles.floatingIcon} aria-hidden>
-              {isSubmitting ? <Text size="1">…</Text> : <CheckIcon width={22} height={22} />}
-            </span>
-            <span className={styles.floatingLabel}>
-              {isSubmitting ? 'Сохранение...' : (isNew ? 'Создать страницу' : 'Сохранить изменения')}
-            </span>
-          </Button>
-        </Flex>
-      )}
+      <FloatingConfirmActions
+        formId="wiki-edit-form"
+        onCancel={handleCancel}
+        onDelete={showDeleteToast}
+        isNew={isNew}
+        isSubmitting={isSubmitting}
+        actionsCardRef={actionsCardRef}
+        onMobileModeChange={setIsActionsCardNarrow}
+        onVisibilityChange={setFloatingBarVisible}
+        saveLabel="Сохранить изменения"
+        createLabel="Создать страницу"
+        submittingLabel="Сохранение..."
+      />
 
       {/* Модальное окно загрузки файлов */}
       <WikiFileUploadModal
