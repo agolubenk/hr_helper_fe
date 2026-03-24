@@ -1,5 +1,6 @@
 .container {
   padding: 0 var(--page-padding);
+  padding-bottom: 32px;
   max-width: var(--content-max-width);
   margin: 0 auto;
 }

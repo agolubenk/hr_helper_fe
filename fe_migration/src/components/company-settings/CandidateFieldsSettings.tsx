@@ -1,8 +1,8 @@
 'use client'
 
-import { Box, Flex, Text, Button, Card, Table, TextField, Select, Dialog } from "@radix-ui/themes"
+import { Box, Flex, Text, Button, Card, Table, TextField, Select, Dialog, Switch, Callout } from "@radix-ui/themes"
 import { useState } from "react"
-import { PlusIcon, Pencil2Icon, TrashIcon, Cross2Icon, CheckIcon, ChevronUpIcon, ChevronDownIcon } from "@radix-ui/react-icons"
+import { PlusIcon, Pencil2Icon, TrashIcon, CheckIcon, ChevronUpIcon, ChevronDownIcon, EyeOpenIcon, InfoCircledIcon } from "@radix-ui/react-icons"
 import { useToast } from "@/components/Toast/ToastContext"
 import styles from './CandidateFieldsSettings.module.css'
 
@@ -69,6 +69,19 @@ const fieldTypes = [
   { value: 'url', label: 'Ссылка' },
 ]
 
+interface MockVacancy {
+  id: string
+  title: string
+}
+
+/** Вакансии, где поле может быть доступно (мок). */
+const mockVacancies: MockVacancy[] = [
+  { id: 'vac-1', title: 'Senior Frontend Developer' },
+  { id: 'vac-2', title: 'Product Manager' },
+  { id: 'vac-3', title: 'Аналитик данных' },
+  { id: 'vac-4', title: 'HR Business Partner' },
+]
+
 export default function CandidateFieldsSettings() {
   const toast = useToast()
   const [fields, setFields] = useState<CandidateField[]>(mockFields)
@@ -82,6 +95,33 @@ export default function CandidateFieldsSettings() {
     options: []
   })
   const [newOption, setNewOption] = useState('')
+  /** fieldId → vacancyId → видно ли поле в анкете/карточке по этой вакансии */
+  const [vacancyVisibilityByField, setVacancyVisibilityByField] = useState<
+    Record<string, Record<string, boolean>>
+  >({})
+  const [visibilityFieldId, setVisibilityFieldId] = useState<string | null>(null)
+
+  const openVisibilityModal = (field: CandidateField) => {
+    setVisibilityFieldId(field.id)
+    setVacancyVisibilityByField((prev) => {
+      if (prev[field.id]) return prev
+      const initial: Record<string, boolean> = {}
+      for (const v of mockVacancies) {
+        initial[v.id] = true
+      }
+      return { ...prev, [field.id]: initial }
+    })
+  }
+
+  const setVacancyVisible = (fieldId: string, vacancyId: string, visible: boolean) => {
+    setVacancyVisibilityByField((prev) => ({
+      ...prev,
+      [fieldId]: { ...prev[fieldId], [vacancyId]: visible },
+    }))
+  }
+
+  const visibilityField = visibilityFieldId ? fields.find((f) => f.id === visibilityFieldId) : undefined
+  const visibilityMap = visibilityFieldId ? vacancyVisibilityByField[visibilityFieldId] ?? {} : {}
 
   const handleAddField = () => {
     setEditingField(null)
@@ -193,6 +233,20 @@ export default function CandidateFieldsSettings() {
         </Button>
       </Flex>
 
+      <Callout.Root color="blue" mb="4">
+        <Callout.Icon>
+          <InfoCircledIcon width={16} height={16} />
+        </Callout.Icon>
+        <Callout.Text size="2">
+          Здесь задаётся <Text weight="bold" as="span">единый профиль полей</Text> для компании (общие правила для всех вакансий).
+          Индивидуальные настройки по конкретной вакансии — на карточке вакансии, вкладка «Дополнительные поля», например:{' '}
+          <Text as="span" style={{ fontFamily: 'var(--code-font-family, ui-monospace, monospace)', fontSize: '12px' }}>
+            /vacancies?vacancy=&lt;id&gt;&amp;mode=view&amp;tab=additionalFields
+          </Text>
+          . Подробнее: <Text weight="medium" as="span">fe_migration/docs/RECRUITING_SETTINGS_UX_PLAN_2026-03-24.md</Text> (раздел 4).
+        </Callout.Text>
+      </Callout.Root>
+
       <Card>
         <Table.Root>
           <Table.Header>
@@ -201,7 +255,7 @@ export default function CandidateFieldsSettings() {
               <Table.ColumnHeaderCell>Название</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Тип</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Обязательное</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell style={{ width: '200px' }}>Действия</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell style={{ width: '240px' }}>Действия</Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -255,6 +309,15 @@ export default function CandidateFieldsSettings() {
                     <Button
                       size="1"
                       variant="soft"
+                      color="gray"
+                      title="Видимость по вакансиям"
+                      onClick={() => openVisibilityModal(field)}
+                    >
+                      <EyeOpenIcon width={14} height={14} />
+                    </Button>
+                    <Button
+                      size="1"
+                      variant="soft"
                       onClick={() => handleEditField(field)}
                     >
                       <Pencil2Icon width={14} height={14} />
@@ -274,6 +337,48 @@ export default function CandidateFieldsSettings() {
           </Table.Body>
         </Table.Root>
       </Card>
+
+      <Dialog.Root
+        open={visibilityFieldId !== null}
+        onOpenChange={(open) => {
+          if (!open) setVisibilityFieldId(null)
+        }}
+      >
+        <Dialog.Content style={{ maxWidth: '520px' }}>
+          <Dialog.Title>Видимость поля по вакансиям</Dialog.Title>
+          <Text size="2" color="gray" mt="1" mb="3" style={{ display: 'block' }}>
+            {visibilityField
+              ? `Поле «${visibilityField.name}»: где показывать в контексте вакансий (мок-список вакансий).`
+              : ''}
+          </Text>
+          <Flex direction="column" gap="3">
+            {mockVacancies.map((vac) => (
+              <Flex key={vac.id} align="center" justify="between" gap="3">
+                <Text size="2" style={{ flex: 1 }}>
+                  {vac.title}
+                </Text>
+                <Flex align="center" gap="2">
+                  <Text size="1" color="gray">
+                    {visibilityMap[vac.id] ? 'Доступно' : 'Скрыто'}
+                  </Text>
+                  <Switch
+                    checked={visibilityMap[vac.id] !== false}
+                    onCheckedChange={(checked) =>
+                      visibilityFieldId && setVacancyVisible(visibilityFieldId, vac.id, checked)
+                    }
+                    size="2"
+                  />
+                </Flex>
+              </Flex>
+            ))}
+          </Flex>
+          <Flex justify="end" mt="4">
+            <Button variant="soft" onClick={() => setVisibilityFieldId(null)}>
+              Закрыть
+            </Button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
 
       <Dialog.Root open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <Dialog.Content style={{ maxWidth: '600px' }}>

@@ -1,0 +1,39 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.addFormPanel {
+  padding: 24px;
+  background-color: var(--color-panel);
+  border: 1px solid var(--gray-a6);
+  border-radius: 12px;
+}
+
+.loadingArea {
+  padding: 100px;
+}
+
+.emptyState {
+  padding: 100px 20px;
+}
+
+.tableWrap {
+  border: 1px solid var(--gray-a6);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.emptyCell {
+  text-align: center;
+  padding: 48px 16px !important;
+}
+
+.actionsCol {
+  width: 132px;
+  white-space: nowrap;
+}

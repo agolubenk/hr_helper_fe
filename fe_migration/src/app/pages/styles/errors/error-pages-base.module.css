@@ -1,15 +1,14 @@
 /* Общие стили страниц ошибок (оформление из новой версии приложения) */
 
 .container {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  right: 0;
-  bottom: 48px;
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 64px);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
 }
 
 .background {
@@ -68,6 +67,8 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+[data-theme="dark"] .content,
+.radix-theme[data-appearance="dark"] .content,
 .radix-themes[data-appearance="dark"] .content {
   background: rgba(28, 28, 31, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);

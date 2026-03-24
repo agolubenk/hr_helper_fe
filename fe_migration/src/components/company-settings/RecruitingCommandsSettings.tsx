@@ -33,7 +33,7 @@
 
 'use client'
 
-import { Box, Flex, Text, Button, Card, Table, TextField, Dialog, Select, Switch } from "@radix-ui/themes"
+import { Box, Flex, Text, Button, Card, Table, TextField, Dialog, Select, Switch, Checkbox } from "@radix-ui/themes"
 import { useState, useEffect } from "react"
 import { PlusIcon, Pencil2Icon, TrashIcon, CheckIcon } from "@radix-ui/react-icons"
 import { useToast } from "@/components/Toast/ToastContext"
@@ -289,6 +289,9 @@ export default function RecruitingCommandsSettings() {
     color: '#3B82F6',
     description: '',
   })
+
+  /** true — единый набор команд для компании; false — индивидуальные по рекрутерам (мок, до API). */
+  const [useUnifiedCommandSet, setUseUnifiedCommandSet] = useState(true)
 
   /**
    * Toast уведомления
@@ -694,6 +697,26 @@ export default function RecruitingCommandsSettings() {
 
   return (
     <Box>
+      <Card mb="4">
+        <Flex direction="column" gap="2">
+          <Flex align="center" gap="2">
+            <Checkbox
+              id="recruiting-commands-unified"
+              checked={useUnifiedCommandSet}
+              onCheckedChange={(c) => setUseUnifiedCommandSet(c === true)}
+            />
+            <Text size="2" weight="medium" as="label" htmlFor="recruiting-commands-unified" style={{ cursor: 'pointer' }}>
+              Единый набор команд для всех рекрутеров
+            </Text>
+          </Flex>
+          <Text size="2" color="gray" ml="6" style={{ marginTop: 0 }}>
+            {useUnifiedCommandSet
+              ? 'Команды workflow применяются ко всем рекрутерам одинаково.'
+              : 'Режим «индивидуальные»: команды можно будет задавать отдельно по рекрутерам (интеграция с API позже).'}
+          </Text>
+        </Flex>
+      </Card>
+
       {/* Заголовок и кнопка создания */}
       <Flex justify="between" align="center" mb="4">
         <Text size="3" color="gray">

@@ -1,0 +1,9 @@
+.dialogContent {
+  max-width: 560px;
+  width: 100%;
+  pointer-events: auto;
+}
+
+.scrollArea {
+  max-height: 420px;
+}

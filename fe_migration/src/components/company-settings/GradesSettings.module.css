@@ -18,3 +18,71 @@
   margin-left: 2px;
   margin-right: 2px;
 }
+
+.orderHeaderCell {
+  padding-left: 8px !important;
+  vertical-align: bottom;
+}
+
+.orderValueCell {
+  padding-left: 4px !important;
+}
+
+.orderCell {
+  flex-wrap: nowrap;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.dragHandle {
+  cursor: grab;
+  flex-shrink: 0;
+  margin-left: -4px;
+  margin-right: 2px;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  min-width: 22px !important;
+  color: var(--gray-11);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.rowDragging {
+  background: var(--gray-a3);
+}
+
+.columnOrderList {
+  margin-top: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.columnOrderRow {
+  padding: 8px 10px;
+  border: 1px solid var(--gray-a6);
+  border-radius: 8px;
+  background: var(--gray-2);
+  touch-action: none;
+}
+
+.columnOrderRowDragging {
+  opacity: 0.85;
+  box-shadow: var(--shadow-3);
+}
+
+.ratingScaleRow {
+  align-items: center;
+}
+
+.ratingScaleActions {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.ratingScaleActions button {
+  align-self: center;
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Text, Grid, Button, Switch, Select } from '@radix-ui/themes'
+import { Box, Flex, Text, Grid, Button, Switch, Select, Separator } from '@radix-ui/themes'
 import { ClockIcon, ChevronLeftIcon, CalendarIcon, CheckIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
 import FloatingLabelInput from '@/components/FloatingLabelInput'
@@ -67,6 +67,7 @@ export function ScheduleSettingsPage({ initialData, onCancel, onSave }: Schedule
   const [workStartTime, setWorkStartTime] = useState(initialData.workStartTime || defaultStart)
   const [workEndTime, setWorkEndTime] = useState(initialData.workEndTime || defaultEnd)
   const [meetingInterval, setMeetingInterval] = useState(initialData.meetingInterval || '15')
+  const [ignoreNonAcceptedMeetings, setIgnoreNonAcceptedMeetings] = useState(false)
   const [workTimeByDay, setWorkTimeByDay] = useState<WorkTimeByDay>(
     normalize(initialData.workTimeByDay)
   )
@@ -277,6 +278,23 @@ export function ScheduleSettingsPage({ initialData, onCancel, onSave }: Schedule
                 </Select.Root>
               </Box>
             )}
+            <Box style={{ marginTop: '16px', marginBottom: '8px' }}>
+              <Separator size="4" style={{ marginBottom: '12px' }} />
+              <Flex gap="2" align="center" wrap="wrap" style={{ marginBottom: '3px' }}>
+                <Switch
+                  checked={ignoreNonAcceptedMeetings}
+                  onCheckedChange={setIgnoreNonAcceptedMeetings}
+                />
+                <Text size="2" weight="medium" asChild>
+                  <label style={{ cursor: 'pointer' }}>
+                    Игнорировать не принятые встречи
+                  </label>
+                </Text>
+              </Flex>
+              <Text size="1" color="gray" style={{ display: 'block', paddingTop: '2px' }}>
+                Если включено, встречи без подтверждения не учитываются при расчёте занятости.
+              </Text>
+            </Box>
           </Box>
         </Box>
         <Flex justify="between" align="center" className={styles.actions}>

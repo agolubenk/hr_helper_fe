@@ -1,0 +1,5 @@
+.bar {
+  margin-bottom: var(--space-4, 16px);
+  padding-bottom: var(--space-3, 12px);
+  border-bottom: 1px solid var(--gray-a6);
+}

@@ -41,6 +41,7 @@ import { Box, Flex, Text, Button, Table, TextField, SegmentedControl, Dialog, Ca
 import { useState, useEffect } from 'react'
 import { useToast } from '@/components/Toast/ToastContext'
 import { MagnifyingGlassIcon, Pencil1Icon, TrashIcon, CalendarIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, DoubleArrowLeftIcon, DoubleArrowRightIcon, PersonIcon, EnvelopeClosedIcon, CopyIcon, BarChartIcon, GearIcon, PlusIcon, ArrowLeftIcon, CheckCircledIcon } from "@radix-ui/react-icons"
+import { RecruitingSubpageBackBar } from '@/components/company-settings/recruiting/RecruitingSubpageBackBar'
 import styles from './styles/InterviewersPage.module.css'
 
 /**
@@ -478,6 +479,7 @@ export function InterviewersPage() {
 
   return (
     <Box className={styles.container}>
+        <RecruitingSubpageBackBar />
         {/* Поиск и фильтры */}
         <Flex gap="3" align="center" wrap="wrap">
           <Card className={styles.searchCard} style={{ flex: 1 }}>

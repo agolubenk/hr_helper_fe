@@ -3,7 +3,6 @@ import { HomeIcon, ReloadIcon, ExclamationTriangleIcon } from '@radix-ui/react-i
 import { useRouter } from '@/router-adapter'
 import AppLayout from '@/components/AppLayout'
 import { FloatingIconsBackground } from '@/components/errors/FloatingIconsBackground'
-import baseStyles from '@/app/pages/styles/errors/error-pages-base.module.css'
 import styles from '@/app/pages/styles/errors/error-500.module.css'
 
 export function Error500Page() {
@@ -11,17 +10,17 @@ export function Error500Page() {
 
   return (
     <AppLayout pageTitle="500 - Ошибка сервера">
-      <Box className={baseStyles.container}>
-        <Box className={baseStyles.background}>
-          <FloatingIconsBackground className={baseStyles.floatingIcon} />
+      <Box className={styles.container}>
+        <Box className={styles.background}>
+          <FloatingIconsBackground className={styles.floatingIcon} />
         </Box>
-        <Flex direction="column" align="center" justify="center" className={baseStyles.content}>
+        <Flex direction="column" align="center" justify="center" className={styles.content}>
           <Text size="9" weight="bold" className={styles.errorCode}>
             500
           </Text>
           <Flex align="center" gap="2" mt="4">
             <ExclamationTriangleIcon width={32} height={32} className={styles.errorIcon} />
-            <Text size="6" weight="bold" className={baseStyles.title}>
+            <Text size="6" weight="bold" className={styles.title}>
               Ошибка сервера
             </Text>
           </Flex>

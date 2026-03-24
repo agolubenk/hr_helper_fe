@@ -10,6 +10,7 @@
 | **`fe_migration/docs/MIGRATION_CHECK_URLS.md`** | URL для smoke (фаза 14) |
 | **`fe_migration/docs/MOCK_SERVICES.md`** | Единый слой моков до API (фаза 13) |
 | **`fe_migration/docs/MIGRATION_STATE_ARCHITECTURE_2026-03-18.md`** | Зафиксированный baseline: текущее состояние, структура и полнота миграции до фазы 15 |
+| **`fe_migration/docs/COMPANY_SETTINGS_FOLLOWUP_2026-03-24.md`** | **Отдельная** очередь по интеграциям / группам пользователей (не про стили и не дубли мастер-плана) |
 
 ---
 
@@ -67,7 +68,7 @@
 | **6.1** Кнопка «Добавить бенчмарк** | Выполнено | `BenchmarksPage` |
 | **6.2** Бенчмарки: графики, интервалы, список | **Выполнено (UI + моки)** | Дашборд: `BenchmarkChartsSection`, `BenchmarkFinanceSettingsCard`, `benchmarkChartUtils`. Список `/finance/benchmarks/all`: таблица, пагинация, просмотр/редактирование. Данные — моки; **API — фаза 13** |
 | **7** Wiki / wiki-new | Вне полного паритета | `MIGRATION_DIVERGENCES.md` §11 |
-| **8** company-settings | Ручная сверка командой | URL → `MIGRATION_CHECK_URLS.md`; расхождения → §9 DIVERGENCES |
+| **8** company-settings | Ручная сверка командой | URL → `MIGRATION_CHECK_URLS.md`; расхождения → **§12** `MIGRATION_DIVERGENCES.md` |
 | **9** ATS | UI в `features/ats/` | Моки в `mocks.ts`; API — фаза **13** |
 | **10–11** Новое / Invites | Проверка маршрутов `/invites/*` | По плану |
 
@@ -89,7 +90,7 @@
 | Фича / раздел | Откуда смотреть | Что делаем в fe_migration | Фаза | Статус |
 |---------------|-----------------|---------------------------|------|--------|
 | Бенчмарки (6.2) | `frontend old/components/finance/`, экран бенчмарков, `/company-settings/finance` | Графики, интервалы, настройки сбора, согласование с настройками финансов (моки) | **6.2** | 🟢 Выполнено (моки); API — **13** |
-| Настройки компании | `frontend old/components/company-settings/` | Автосверка каталога + **`COMPANY_SETTINGS_PHASE8.md`**; ручной проход URL, новые находки → **`§9`** | **8** | 🟡 Авточасть готова; smoke вручную |
+| Настройки компании | `frontend old/components/company-settings/` | Автосверка каталога + **`COMPANY_SETTINGS_PHASE8.md`**; ручной проход URL, новые находки → **`§12`**; follow-up интеграций / user-groups → **`COMPANY_SETTINGS_FOLLOWUP_2026-03-24.md`** | **8** | 🟡 Авточасть готова |
 | Роли | `docs/admin-roles.md` + продукт | Матрица роль → разделы/действия, клиентские ограничения UI; API — отдельно | **12** | 🟡 В процессе |
 | API вместо моков | Контракт бэкенда | Профиль, quick buttons, соцсети, интеграции; единый слой — **`MOCK_SERVICES.md`**; `quickButtonsStorage` как fallback | **13** | 🟡 В процессе |
 | Вакансии, модалки | Diff old ↔ `VacancyEditModal` / `AddVacancyModal` | Построчно при расхождениях; опора на **`VACANCIES_MODALS_AUDIT.md`** | **5.1** | 🟡 По запросу |
@@ -119,13 +120,14 @@
 
 | Область | Файлы / суть |
 |---------|----------------|
+| **Company-settings (2026-03-24)** | Отдельная очередь: **`COMPANY_SETTINGS_FOLLOWUP_2026-03-24.md`**; **user-groups**: `UserGroupsSettings` + CSS; **§12.2–12.3** в **`MIGRATION_DIVERGENCES.md`** |
 | **ATS** | См. предыдущие записи: опыт, версии, моки, табы — в `AtsCandidatePage`, `mocks.ts`, `ATS_MIGRATION_SCOPE.md` |
 | **Бенчмарки — 6.2** | `BenchmarkChartsSection`, `BenchmarkFinanceSettingsCard`, `benchmarkChartUtils`, дашборд `/finance/benchmarks` |
 | **Бенчмарки — список /all** | `BenchmarksPage`: моки, пагинация, таблица, просмотр/редактирование, `useMemo` без лишней загрузки |
 | **Вакансии — 5.3** | `SalaryRanges*`, `TransferStages*`: `BarChartIcon` вместо 💰 |
 | **Вакансии — 5.1/5.3 (2026-03-18)** | `VACANCIES_MODALS_AUDIT.md`: `AddVacancyModal` идентичен old, `VacancyEditModal` подтверждён по блокам; `VacancyEditModal.tsx`: `⚠` → `ExclamationTriangleIcon` |
 | **Планы (март 2026)** | Мастер-план: **6.2** закрыт, **§13** расширен (единый слой моков), таблица объёмных фич + два параллельных направления; добавлен **`MOCK_SERVICES.md`** |
-| **Фаза 8** | `COMPANY_SETTINGS_PHASE8.md`: `diff -rq` по `components/company-settings/` — 4 ожидаемых отличия; интеграции — упрощённый экран в `CompanySettingsPages.tsx` (**DIVERGENCES §12.2**) |
+| **Фаза 8** | `COMPANY_SETTINGS_PHASE8.md`: `diff -rq` по `components/company-settings/` — 4 ожидаемых отличия; **интеграции** — модуль `integrations/` + доработка в очереди (**§12.2**); **user-groups** — `UserGroupsSettings` (**§12.3**, 2026-03-24) |
 | **Исключения (2026-03-18)** | В мастер-план и UPD внесены жёсткие исключения: `Sidebar`, `Header`, `Footer`, `FloatingActions`; для `FloatingActions` в коде зафиксирован `left: 12px` |
 | **Фаза 12 (2026-03-18)** | Добавлены `roles.ts` + `useRoleAccess.ts`; `AdminLayoutShell` с guard (`/errors/403`), фильтрация пунктов в `AdminSidebar` и `AdminPage`, отображение прав в `AdminUsersPage`/`AdminGroupsPage` |
 | **Фаза 13 (2026-03-18)** | Добавлены profile API-switch (`VITE_USE_PROFILE_API`) и функции `saveProfile`/`saveProfileSocialLinks` в `app/api/profile.ts`; `ProfilePage` подключён к сервису сохранения; добавлены `services/profile/quickButtonsService.ts` и `services/profile/integrationsService.ts` |
@@ -134,6 +136,6 @@
 
 ---
 
-*Последнее обновление: 2026-03-18 — frontend-фазы 12/13 закрыты (API-first role access, унифицированные API-ошибки профиля, Vitest тесты), без smoke-тестов.*
+*Последнее обновление: 2026-03-24 — очередь company-settings вынесена в **`COMPANY_SETTINGS_FOLLOWUP_2026-03-24.md`** (отдельно от этого файла); §12 в DIVERGENCES обновлён.*
 
-*Предыдущая запись: март 2026 — фаза 8: инвентаризация company-settings + §12 в DIVERGENCES.*
+*Ранее (2026-03-18): фазы 12/13 на FE; март 2026: фаза 8 company-settings + §12 DIVERGENCES.*

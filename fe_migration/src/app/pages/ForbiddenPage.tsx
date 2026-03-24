@@ -3,7 +3,6 @@ import { HomeIcon, LockClosedIcon, ReloadIcon } from '@radix-ui/react-icons'
 import { useRouter } from '@/router-adapter'
 import AppLayout from '@/components/AppLayout'
 import { FloatingIconsBackground } from '@/components/errors/FloatingIconsBackground'
-import baseStyles from '@/app/pages/styles/errors/error-pages-base.module.css'
 import styles from '@/app/pages/styles/errors/error-403.module.css'
 
 export function ForbiddenPage() {
@@ -11,17 +10,17 @@ export function ForbiddenPage() {
 
   return (
     <AppLayout pageTitle="403 - Доступ запрещен">
-      <Box className={baseStyles.container}>
-        <Box className={baseStyles.background}>
-          <FloatingIconsBackground className={baseStyles.floatingIcon} />
+      <Box className={styles.container}>
+        <Box className={styles.background}>
+          <FloatingIconsBackground className={styles.floatingIcon} />
         </Box>
-        <Flex direction="column" align="center" justify="center" className={baseStyles.content}>
+        <Flex direction="column" align="center" justify="center" className={styles.content}>
           <Text size="9" weight="bold" className={styles.errorCode}>
             403
           </Text>
           <Flex align="center" gap="2" mt="4">
             <LockClosedIcon width={32} height={32} className={styles.lockIcon} />
-            <Text size="6" weight="bold" className={baseStyles.title}>
+            <Text size="6" weight="bold" className={styles.title}>
               Доступ запрещен
             </Text>
           </Flex>

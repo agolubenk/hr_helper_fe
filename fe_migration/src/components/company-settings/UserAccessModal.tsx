@@ -4,6 +4,7 @@ import { Fragment } from 'react'
 import { Dialog, Flex, Text, Button, Checkbox, ScrollArea, Table } from '@radix-ui/themes'
 import { Cross2Icon } from '@radix-ui/react-icons'
 import { useState, useEffect } from 'react'
+import styles from './UserAccessModal.module.css'
 
 export type AccessRights = Record<string, { view: boolean; edit: boolean }>
 
@@ -126,7 +127,7 @@ export default function UserAccessModal({
           Возможность просмотра и редактирования по модулям приложения
         </Dialog.Description>
 
-        <ScrollArea type="auto" style={{ maxHeight: 420 }}>
+        <ScrollArea type="auto" className={styles.scrollArea}>
           <Table.Root size="1">
             <Table.Header>
               <Table.Row>

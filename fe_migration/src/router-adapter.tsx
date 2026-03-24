@@ -30,15 +30,18 @@ export { useLocation, useNavigate, useParams, useSearchParams }
 
 interface LinkProps extends Omit<RouterLinkProps, 'to'> {
   href: string
+  /** Состояние location при переходе (например, для «Обратно» с хаба рекрутинга). */
+  linkState?: RouterLinkProps['state']
   children?: ReactNode
 }
 
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  { href, children, ...rest },
+  { href, children, linkState, ...rest },
   ref
 ) {
+  const to = linkState !== undefined ? { pathname: href, state: linkState } : href
   return (
-    <RouterLink ref={ref} to={href} {...rest}>
+    <RouterLink ref={ref} to={to} {...rest}>
       {children}
     </RouterLink>
   )

@@ -10,6 +10,7 @@ import { ChatBubbleIcon, StarIcon, CalendarIcon } from '@radix-ui/react-icons'
 import GeneralTemplatesTab from '@/components/candidate-responses/GeneralTemplatesTab'
 import GradeTemplatesTab from '@/components/candidate-responses/GradeTemplatesTab'
 import SlotsTab from '@/components/candidate-responses/SlotsTab'
+import { RecruitingSubpageBackBar } from '@/components/company-settings/recruiting/RecruitingSubpageBackBar'
 import styles from './styles/CandidateResponsesPage.module.css'
 
 function CandidateResponsesPageContent() {
@@ -34,6 +35,7 @@ function CandidateResponsesPageContent() {
   return (
     <Box className={styles.container}>
       <Flex direction="column" gap="4">
+        <RecruitingSubpageBackBar />
         <Text size="6" weight="bold">Ответы кандидатам</Text>
         <Tabs.Root value={activeTab} onValueChange={handleTabChange} className={styles.tabs}>
           <Tabs.List className={styles.tabList}>

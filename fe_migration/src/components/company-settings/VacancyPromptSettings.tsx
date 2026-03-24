@@ -1,8 +1,8 @@
 'use client'
 
-import { Box, Flex, Text, TextArea, Button, Card, Table, Switch, Badge, Separator } from "@radix-ui/themes"
+import { Box, Flex, Text, TextArea, Button, Card, Table, Switch, Badge, Separator, Dialog } from "@radix-ui/themes"
 import { useState, useEffect } from "react"
-import { CheckIcon, ClockIcon, InfoCircledIcon } from "@radix-ui/react-icons"
+import { CheckIcon, ClockIcon, InfoCircledIcon, EyeOpenIcon } from "@radix-ui/react-icons"
 import styles from './VacancyPromptSettings.module.css'
 
 interface PromptHistory {
@@ -51,6 +51,7 @@ export default function VacancyPromptSettings() {
   const [isActive, setIsActive] = useState(mockPromptData.isActive)
   const [history, setHistory] = useState<PromptHistory[]>(mockHistory)
   const [hasChanges, setHasChanges] = useState(false)
+  const [historyDetail, setHistoryDetail] = useState<PromptHistory | null>(null)
 
   useEffect(() => {
     // Проверяем, есть ли изменения
@@ -71,9 +72,6 @@ export default function VacancyPromptSettings() {
     
     setHistory(prev => [newHistoryEntry, ...prev])
     setHasChanges(false)
-    
-    // Здесь будет вызов API для сохранения
-    console.log('Сохранение промпта:', { prompt, isActive })
   }
 
   const handleCancel = () => {
@@ -205,6 +203,7 @@ export default function VacancyPromptSettings() {
                     <Table.ColumnHeaderCell>Обновил</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Статус</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Промпт</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell style={{ width: '120px' }}>Действия</Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -237,6 +236,18 @@ export default function VacancyPromptSettings() {
                             : item.prompt}
                         </Text>
                       </Table.Cell>
+                      <Table.Cell>
+                        <Button
+                          type="button"
+                          size="1"
+                          variant="soft"
+                          color="gray"
+                          onClick={() => setHistoryDetail(item)}
+                        >
+                          <EyeOpenIcon width={14} height={14} />
+                          Полный текст
+                        </Button>
+                      </Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>
@@ -245,6 +256,44 @@ export default function VacancyPromptSettings() {
           )}
         </Flex>
       </Card>
+
+      <Dialog.Root open={historyDetail !== null} onOpenChange={(open) => !open && setHistoryDetail(null)}>
+        <Dialog.Content style={{ maxWidth: '640px', maxHeight: '85vh' }}>
+          <Dialog.Title>Версия промпта</Dialog.Title>
+          {historyDetail && (
+            <>
+              <Flex wrap="wrap" gap="3" mt="2" mb="3">
+                <Text size="2" color="gray">
+                  {formatDate(historyDetail.updatedAt)} · {historyDetail.updatedBy}
+                </Text>
+                <Badge color={historyDetail.isActive ? 'green' : 'gray'}>
+                  {historyDetail.isActive ? 'Активен' : 'Неактивен'}
+                </Badge>
+              </Flex>
+              <Box
+                p="3"
+                style={{
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--gray-2)',
+                  maxHeight: '50vh',
+                  overflowY: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'var(--default-font-family, ui-monospace, monospace)',
+                  fontSize: '13px',
+                  lineHeight: 1.5,
+                }}
+              >
+                {historyDetail.prompt}
+              </Box>
+            </>
+          )}
+          <Flex justify="end" mt="4">
+            <Button variant="soft" onClick={() => setHistoryDetail(null)}>
+              Закрыть
+            </Button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
     </Box>
   )
 }

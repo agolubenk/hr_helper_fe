@@ -91,6 +91,7 @@ import {
   CompanySettingsRecruitingOfferTemplatePage,
 } from '@/app/pages/CompanySettingsPages'
 import { ModulePlaceholderPage } from '@/app/pages/ModulePlaceholderPage'
+import { RecruitingSettingsHub } from '@/components/company-settings/recruiting/RecruitingSettingsHub'
 
 const layoutProps = {
   pageTitle: 'HR Helper',
@@ -164,7 +165,14 @@ export function App() {
             <Route path="/company-settings/integrations" element={<AppLayout {...layoutProps} pageTitle="Интеграции"><CompanySettingsIntegrationsPage /></AppLayout>} />
             <Route path="/company-settings/user-groups" element={<AppLayout {...layoutProps} pageTitle="Группы пользователей"><CompanySettingsUserGroupsPage /></AppLayout>} />
             <Route path="/company-settings/users" element={<AppLayout {...layoutProps} pageTitle="Пользователи"><CompanySettingsUsersPage /></AppLayout>} />
-            <Route path="/company-settings/recruiting" element={<Navigate to="/company-settings/recruiting/rules" replace />} />
+            <Route
+              path="/company-settings/recruiting"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Рекрутинг">
+                  <RecruitingSettingsHub />
+                </AppLayout>
+              }
+            />
             <Route path="/company-settings/recruiting/rules" element={<AppLayout {...layoutProps} pageTitle="Правила привлечения"><CompanySettingsRecruitingRulesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/stages" element={<AppLayout {...layoutProps} pageTitle="Этапы найма и причины отказа"><CompanySettingsRecruitingStagesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/commands" element={<AppLayout {...layoutProps} pageTitle="Команды workflow"><CompanySettingsRecruitingCommandsPage /></AppLayout>} />
@@ -264,7 +272,7 @@ export function App() {
             <Route path="/errors/401" element={<Error401Page />} />
             <Route path="/errors/402" element={<Error402Page />} />
             <Route path="/errors/403" element={<ForbiddenPage />} />
-            <Route path="/errors/forbidden" element={<ForbiddenPage />} />
+            <Route path="/errors/forbidden" element={<Navigate to="/errors/403" replace />} />
             <Route path="/errors/500" element={<Error500Page />} />
             <Route path="*" element={<Error404Page />} />
           </Routes>

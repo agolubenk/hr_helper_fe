@@ -31,7 +31,9 @@
   background: var(--green-3);
   color: var(--green-11);
   border-radius: 4px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .actionButton {
@@ -49,4 +51,62 @@
   background: var(--gray-2);
   border-radius: 4px;
   font-style: italic;
+}
+
+.generalSettingsRow {
+  flex-wrap: wrap;
+}
+
+.generalSettingsFormColumn {
+  min-width: 200px;
+}
+
+.officeCardRow {
+  flex-wrap: wrap;
+}
+
+.officeCardActions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .generalSettingsRow {
+    flex-direction: column;
+  }
+
+  .generalSettingsFormColumn {
+    width: 100%;
+  }
+
+  .officeCardRow {
+    flex-direction: column;
+  }
+
+  .officeCardActions {
+    align-self: flex-end;
+  }
+
+  .buttonTextMobile {
+    display: none;
+  }
+
+  .buttonIconMobile {
+    margin: 0 !important;
+  }
+
+  .mainBadgeText {
+    display: none;
+  }
+
+  .mainBadgeIcon {
+    display: inline-flex !important;
+  }
+
+  .mainBadge {
+    padding: 6px;
+  }
+}
+
+.mainBadgeIcon {
+  display: none;
 }

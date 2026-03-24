@@ -131,7 +131,11 @@
 
 ### 12.2 Экран `/company-settings/integrations`
 
-В Next используются **`IntegrationScopeModal`** и **`GoogleServicesModal`** (`frontend old/app/company-settings/integrations/`). В fe_migration — **упрощённая реализация** в **`CompanySettingsPages.tsx`** (`CompanySettingsIntegrationsPage`) на базе **Radix `Dialog`**. Полный паритет с 3001 по полям и сценариям **не заявлен**; при необходимости — отдельная задача на перенос/расширение модалок.
+Карточки, фильтр по группам, **`IntegrationScopeModal`**, **`GoogleServicesModal`** и localStorage вынесены в **`fe_migration/src/components/company-settings/integrations/`** (паритет с `frontend old copy/app/company-settings/integrations/page.tsx`). **Нужна более глубокая доработка:** сценарии с реальным API, согласование ключей/состояний с бэкендом, финальный UX-полиш и smoke — очередь в **`COMPANY_SETTINGS_FOLLOWUP_2026-03-24.md`** (отдельно от мастер-плана и без учёта прочих стилевых задач).
+
+### 12.3 Экран `/company-settings/user-groups`
+
+Перенос с эталона **`frontend old copy/app/company-settings/user-groups/page.tsx`**: **`UserGroupsSettings`** + **`UserGroupsSettings.module.css`** — загрузка/таблица, поиск, форма добавления, inline-редактирование, **`GroupAccessModal`**, toasts, мок-данные. Дальнейшая работа — подключение API по контракту (фаза 13).
 
 ---
 

@@ -130,10 +130,12 @@ export default function RatingScalesSettings() {
               key={scale.id}
               align="center"
               justify="between"
+              gap="3"
               p="3"
+              className={styles.ratingScaleRow}
               style={{ border: '1px solid var(--gray-a6)', borderRadius: 8 }}
             >
-              <Flex align="center" gap="2">
+              <Flex align="center" gap="2" wrap="wrap" style={{ minWidth: 0 }}>
                 <Text size="2" weight="medium">
                   {scale.name}
                 </Text>
@@ -142,11 +144,8 @@ export default function RatingScalesSettings() {
                     (по умолчанию)
                   </Text>
                 )}
-                <Text size="1" color="gray">
-                  {scale.options.map((o) => o.label).join(' · ')}
-                </Text>
               </Flex>
-              <Flex gap="2">
+              <Flex gap="2" align="center" wrap="nowrap" className={styles.ratingScaleActions}>
                 {!scale.isDefault && (
                   <Button size="1" variant="soft" onClick={() => setDefault(scale.id)}>
                     Сделать по умолчанию
