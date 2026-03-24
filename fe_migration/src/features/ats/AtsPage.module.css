@@ -1,0 +1,1311 @@
+/* 48px — высота футера; контент не должен заходить под футер */
+.container {
+  display: flex;
+  height: 100%;
+  gap: 16px;
+  padding: 12px 16px;
+  background-color: var(--gray-2);
+  overflow: hidden;
+  border-top: 1px solid var(--gray-a4);
+}
+
+.leftColumn {
+  flex: 1;
+  max-width: 650px;
+  min-width: 380px;
+  background-color: var(--color-surface, var(--gray-1));
+  border: 1px solid var(--gray-a6);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabSwitcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-a6) transparent;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+}
+
+.tabSwitcher::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabSwitcher::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabSwitcher::-webkit-scrollbar-thumb {
+  background: var(--gray-a6);
+  border-radius: 2px;
+}
+
+.tabSwitcher::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-a8);
+}
+
+.tabButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Счётчик на solid-вкладке Candidates — светлый soft-стиль как у бейджа Chat */
+.tabSwitcherCandidatesCountBadgeOnAccent:global(.rt-Badge) {
+  background: color-mix(in srgb, #fff 32%, transparent) !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 42%, transparent) !important;
+}
+
+/* Кнопка «+» слева, визуально слита с вкладкой Candidates */
+.tabSwitcherGroupCandidates {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--gray-a6);
+}
+
+.tabSwitcherAddBtn {
+  border-radius: 0 !important;
+  border: none !important;
+  /* Чёткий разделитель в цвете акцента (как у solid-вкладки Candidates) */
+  box-shadow: none !important;
+  border-right: 1px solid var(--accent-9) !important;
+  min-width: 36px;
+  padding-left: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+.tabSwitcherGroupCandidates .tabSwitcherCandidatesBtn {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.workflowStripWrapper {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.leftTabContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Хост для портала сайдбара настроек вакансии (ATS) */
+.vacancySettingsSidebarHost {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.candidatesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.candidateItem {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-a6);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--color-surface, var(--gray-1));
+  flex-shrink: 0;
+}
+
+.candidateItem:hover {
+  background-color: rgba(33, 128, 160, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateX(2px);
+}
+
+.candidateItem.selected {
+  background-color: rgba(33, 128, 160, 0.12);
+  border-left: 3px solid #2180a0;
+}
+
+.unviewedDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  cursor: pointer;
+}
+
+.candidateHeaderBadgeScroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  scrollbar-width: thin;
+}
+
+.candidateHeaderBadgeScroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.candidateHeaderBadgeScroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--gray-a8);
+}
+
+.candidateHeaderBadgeRow {
+  flex-wrap: nowrap;
+  min-width: min-content;
+}
+
+.candidateHeaderBadgeUnified {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Статус: селект + «→» как одна кнопка; под ними — «Подтвердить» */
+.statusControlMerged {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--gray-a6);
+}
+
+.statusControlMerged :global(.rt-SelectTrigger) {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.statusControlNextBtn {
+  flex-shrink: 0;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.35) !important;
+  min-width: 36px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* Offer: селект заявки + дата — одна склеенная строка (без текстовых подписей) */
+.offerFieldsMerged {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  border: 1px solid var(--gray-a6);
+  background-color: var(--gray-2);
+  box-shadow: none;
+}
+
+.offerFieldsMerged :global(.rt-SelectTrigger) {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  height: auto;
+  border-radius: 0;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none;
+  background-color: var(--gray-2);
+}
+
+.offerFieldsMerged .offerDateField {
+  flex: 0 0 auto;
+  width: 102px;
+  min-width: 102px;
+  max-width: 102px;
+  min-height: 32px;
+  border-radius: 0;
+  border: none !important;
+  box-shadow: none !important;
+  border-left: 1px solid var(--gray-a6) !important;
+  background-color: var(--gray-2);
+}
+
+.offerDateField :global(.rt-TextFieldInput) {
+  border-radius: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-height: 30px;
+  padding: 5px 4px 5px 6px;
+  box-shadow: none !important;
+  outline: none;
+  background-color: transparent;
+}
+
+/* WebKit: сдвигаем индикатор календаря ближе к тексту даты */
+.offerDateField :global(.rt-TextFieldInput)::-webkit-calendar-picker-indicator {
+  margin-left: -22px;
+  margin-right: -2px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+/* Кнопка «открыть в новой вкладке» — по ширине контента */
+.resumeToolbarIconBtn {
+  width: auto !important;
+  min-width: 32px !important;
+  max-width: none;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 8px !important;
+  box-sizing: border-box;
+}
+
+/* Кнопка «Скачать PDF» — ширина по содержимому (иконка + подпись) */
+.resumeToolbarActionBtn {
+  width: auto !important;
+  min-width: 32px !important;
+  max-width: none;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 10px !important;
+  box-sizing: border-box;
+}
+
+/* Вкладка resume.pdf — карточка превью файла */
+.resumeFilePreviewCard {
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-4);
+  background-color: var(--gray-2);
+  padding: 16px;
+}
+
+.resumeFilePreviewCard > .resumeFilePreviewHeader:last-child {
+  margin-bottom: 0;
+}
+
+.resumeFilePreviewHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.resumeFilePreviewActions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.resumeFilePreviewSub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.resumeFilePreviewMeta {
+  padding: 10px 12px;
+  border-radius: var(--radius-3);
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-a5);
+  margin-bottom: 14px;
+}
+
+.resumeFilePreviewHint {
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+/* Верхняя полоса вкладки «Профиль кандидата»: строка действий + превью, затем разделитель */
+.resumeProfileTopBar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--gray-a6);
+}
+
+/* Кнопка «редактировать» в шапке профиля — видна при наведении; отступ до группы «открыть | PDF» */
+.resumeProfileToolbarEditBtn {
+  opacity: 0;
+  margin-right: 10px;
+  transition: opacity 0.14s ease;
+}
+
+.resumeProfileTopBar:hover .resumeProfileToolbarEditBtn,
+.resumeProfileTopBar:focus-within .resumeProfileToolbarEditBtn {
+  opacity: 1;
+}
+
+.resumeProfileTopBarHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 0;
+}
+
+/* Тулбар профиля: отступ от заголовка + группа «открыть | PDF» */
+.resumeProfileToolbarActionsWrap {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+}
+
+/* Две отдельные кнопки: «Открыть» и «Скачать PDF» — без общего контейнера */
+.resumeProfileToolbarActionsGroup {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.resumeProfileToolbarOpenBtn {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+.resumeProfileToolbarPdfBtn {
+  width: auto !important;
+  min-width: 76px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+.experienceTabsBar {
+  width: 100%;
+  align-items: center;
+}
+
+/* Кнопки «расхождения» и «инфо» справа от подвкладок */
+.experienceTabsBarActions {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0;
+  margin-right: 1px;
+}
+
+/* Строка: только прокрутка чипов версий */
+.experienceVersionHistoryBar {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 0 8px;
+  padding: 0 0 6px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--gray-a5);
+}
+
+.experienceVersionHistoryScroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+}
+
+.experienceVersionHistoryTrack {
+  flex-wrap: nowrap !important;
+  width: max-content;
+  max-width: none;
+  min-height: 28px;
+  align-items: center;
+  padding: 4px 8px 2px 0;
+  box-sizing: border-box;
+}
+
+.experienceVersionHistoryEmpty {
+  min-height: 28px;
+  min-width: 8px;
+}
+
+.experienceVersionHistoryChip {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: var(--font-size-1, 12px);
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-3);
+  cursor: pointer;
+  background: color-mix(in srgb, var(--gray-9) 8%, transparent);
+  color: var(--gray-11);
+  box-shadow: inset 0 0 0 1px var(--gray-a6);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.experienceVersionHistoryChipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--gray-10);
+}
+
+.experienceVersionHistoryChipMain {
+  white-space: nowrap;
+}
+
+.experienceVersionHistoryChip:hover {
+  background: color-mix(in srgb, var(--violet-9) 12%, transparent);
+  color: var(--gray-12);
+  box-shadow: inset 0 0 0 1px var(--violet-a7);
+}
+
+.experienceVersionHistoryChipActive {
+  background: color-mix(in srgb, var(--violet-9) 22%, transparent);
+  color: var(--violet-12);
+  box-shadow: inset 0 0 0 1px var(--violet-9);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.experienceVersionHistorySep {
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.experienceTabsList {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border-bottom: none;
+}
+
+.experienceTabsList:global(.rt-TabsList),
+.experienceTabsList:global(.rt-BaseTabList) {
+  width: fit-content !important;
+  max-width: 100% !important;
+  flex: 0 1 auto !important;
+}
+
+.experienceTabsList.subTabs {
+  border-bottom: 1px solid var(--gray-6);
+  padding-bottom: 2px;
+  margin-bottom: 0;
+  width: fit-content !important;
+  max-width: 100% !important;
+}
+
+.experienceTabTrigger {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  width: auto !important;
+  min-width: 0;
+  max-width: fit-content;
+}
+
+.experienceTabTrigger:global(.rt-TabsTrigger),
+.experienceTabTrigger:global(.rt-BaseTabListTrigger) {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  width: auto !important;
+  max-width: fit-content !important;
+}
+
+.experienceTabTrigger :global(.rt-TabsTriggerInner),
+.experienceTabTrigger :global(.rt-BaseTabListTriggerInner) {
+  width: auto !important;
+  max-width: 100% !important;
+  justify-content: flex-start !important;
+}
+
+.experienceTabTriggerInner {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
+}
+
+.experienceTabTriggerTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.experienceTabsInfoBtn {
+  flex-shrink: 0;
+  width: 31px !important;
+  min-width: 31px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  margin: 0 0 0 1px;
+  color: var(--violet-11);
+}
+
+.experienceTabsWarningBtn {
+  flex-shrink: 0;
+  width: 31px !important;
+  min-width: 31px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  color: var(--amber-11);
+}
+
+.experienceTabsWarningBtn:hover {
+  background: color-mix(in srgb, var(--amber-9) 14%, transparent) !important;
+}
+
+.resumeProfileOriginalToggle {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--font-size-4, 16px);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: 1.25;
+  color: var(--gray-12);
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.resumeProfileOriginalToggle:hover {
+  color: var(--accent-11);
+}
+
+.resumeProfileOriginalToggle:focus-visible {
+  outline: 2px solid var(--accent-8);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.resumeProfilePreviewPane {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Портрет A4: 210×297 мм → высота от ширины контейнера; метка формата — в углу, контент по центру */
+.resumeProfilePreviewFrame {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 210 / 297;
+  min-height: 0;
+  border-radius: var(--radius-4);
+  border: 1px dashed var(--gray-a7);
+  background: linear-gradient(165deg, var(--gray-2) 0%, var(--gray-3) 100%);
+  overflow: hidden;
+}
+
+.resumeProfilePreviewKindBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+}
+
+.resumeProfilePreviewFrameBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 40px 16px 16px;
+  text-align: center;
+}
+
+.resumeProfilePreviewFrameIcon {
+  flex-shrink: 0;
+  color: var(--gray-9);
+}
+
+/* Подтверждение статуса — цвет темы (accent) */
+.confirmAccentButton {
+  width: 100% !important;
+  background-color: var(--accent-9) !important;
+  color: var(--accent-contrast) !important;
+  border: none !important;
+}
+
+.confirmAccentButton:hover {
+  background-color: var(--accent-10) !important;
+  color: var(--accent-contrast) !important;
+}
+
+/* Вкладка Info → Опыт: макет резюме (две колонки, секции) */
+.resumeProfileRoot {
+  width: 100%;
+  min-width: 0;
+}
+
+.resumeLabelValueRow {
+  display: grid;
+  grid-template-columns: minmax(88px, 24%) 1fr;
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.resumeLabelCol {
+  padding-top: 2px;
+}
+
+.resumeValueCol {
+  min-width: 0;
+}
+
+.resumeWorkGrid {
+  display: grid;
+  grid-template-columns: minmax(96px, 26%) 1fr;
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.resumeWorkAside {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.resumeCompanyLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.resumeCompanyLink:hover {
+  color: var(--accent-11);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.resumeWorkMain {
+  min-width: 0;
+}
+
+.resumeWorkEntry + .resumeWorkEntry {
+  border-top: 1px solid var(--gray-4);
+  padding-top: 16px;
+}
+
+.resumeDashList {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resumeDashList li {
+  position: relative;
+  padding-left: 14px;
+  margin-bottom: 6px;
+}
+
+.resumeDashList li::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+  color: var(--gray-11);
+}
+
+.resumePortfolioLink {
+  color: var(--accent-11);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.resumePortfolioLink:hover {
+  color: var(--accent-12);
+}
+
+/* Сворачиваемые блоки Info: Контакты, Application Details, Опыт — без отдельного фона, в пределах карточки */
+.candidateInfoSection {
+  margin-bottom: 12px;
+  min-width: 0;
+  max-width: 100%;
+  /* не hidden: иначе обрезаются первые буквы заголовков-кнопок (ghost + вложенный текст) */
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.candidateInfoSectionTrigger {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
+  align-items: center;
+  /* горизонтальные отступы: без них текст визуально упирается в край и «съедается» при overflow у предков */
+  padding: 8px 10px;
+  margin: 0;
+  margin-inline: 0;
+  height: auto;
+  min-height: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  /* Разделитель под заголовком только когда блок свёрнут; при раскрытии линия убирается */
+  border-bottom: 1px solid var(--gray-6);
+}
+
+.candidateInfoSectionTrigger:hover {
+  background: transparent;
+}
+
+.candidateInfoSectionTriggerOpen {
+  border-bottom-color: transparent;
+}
+
+.candidateInfoSectionBody {
+  padding: 8px 2px 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+.rightColumn {
+  flex: 2;
+  min-width: 340px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Без padding-right: скроллбар у правой границы карточки; отступ контента — в .candidateCardScrollBody */
+.candidateCard {
+  padding: 24px 0 24px 24px;
+  background-color: var(--color-surface, var(--gray-1));
+  border: 1px solid var(--gray-a6);
+  border-radius: 8px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: none !important;
+}
+
+/* Резерв под скролл справа от полосы контента; на macOS overlay — доп. отступ у тела */
+.candidateCardScroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
+}
+
+.candidateCardScrollBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 16px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.cardSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Workflow strip */
+.workflowButtonsContainer {
+  padding: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.quickButton {
+  width: 44px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+}
+
+.quickButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.workflowToggle {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workflowButton {
+  position: relative;
+  padding: 0 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #1e40af;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.workflowButton[data-selected="true"] {
+  background-color: #10b981;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.workflowButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.workflowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selectedBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+.slotsButtonText {
+  display: inline;
+}
+
+@media (max-width: 600px) {
+  .slotsButtonText {
+    display: none;
+  }
+}
+
+/* Application Details table */
+.applicationDetailsTable {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.applicationDetailsTable :global(.rt-TableRoot) {
+  width: 100%;
+  max-width: 100%;
+}
+
+.applicationDetailsTable :global(.rt-TableRoot table) {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+.applicationDetailsTable :global(.rt-TableRoot table tbody tr td) {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Первая строка Application Details: три колонки без влияния на строки label/value ниже */
+.applicationDetailsMetaRow :global(td) {
+  width: 33.33%;
+  min-width: 0;
+  vertical-align: top;
+}
+
+.applicationDetailsFieldRow :global(td:first-child) {
+  width: 35%;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.applicationDetailsFieldRow :global(td:last-child) {
+  width: 65%;
+  max-width: none;
+}
+
+/* Контейнер чата */
+.chatContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chatContainer > * {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Настройки вакансии */
+.vacancySettings {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.subTabs {
+  border-bottom: 1px solid var(--gray-6);
+}
+
+.interviewOptionsPanel {
+  background: color-mix(in srgb, var(--gray-2) 50%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--gray-6);
+}
+
+.formatButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-6);
+}
+
+.formatButton[data-selected="true"] {
+  background-color: var(--accent-9);
+  border-color: var(--accent-9);
+  color: #fff;
+}
+
+.officeToggle {
+  flex-shrink: 0;
+}
+
+.officeButton {
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  background: transparent;
+}
+
+.officeButton[data-selected="true"] {
+  border-color: var(--accent-9);
+  background-color: var(--accent-3);
+}
+
+/* Список диалогов (вкладка Chat) — как в old */
+.conversationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.conversationItem {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-a6);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--color-surface, var(--gray-1));
+}
+
+.conversationItem:hover {
+  background-color: rgba(33, 128, 160, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Соцсети и мессенджеры в карточке кандидата — как в old */
+.socialButtonWrapper {
+  position: relative;
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.socialButton {
+  transition: all 0.2s ease-in-out;
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+  aspect-ratio: 1 / 1;
+  overflow: visible;
+}
+
+.socialButton:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.socialEditButton {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
+}
+
+.socialButtonWrapper:hover .socialEditButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.socialMessageBadge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-surface, white);
+  z-index: 5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.socialButtonWrapper:hover .socialMessageBadge {
+  opacity: 0;
+}
+
+.socialEditContainer {
+  animation: expandSocial 0.3s ease-in-out;
+  height: 35px !important;
+  box-sizing: border-box;
+}
+
+.socialEditInput :global(.rt-TextFieldRoot) {
+  height: 35px !important;
+  min-height: 35px !important;
+  max-height: 35px !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  position: relative !important;
+  margin: 0 !important;
+}
+
+.socialEditInput :global(.rt-TextFieldInput) {
+  height: 35px !important;
+  min-height: 35px !important;
+  max-height: 35px !important;
+  padding-top: 12px !important;
+  padding-bottom: 2px !important;
+  padding-left: calc(0.5rem + 1px) !important;
+  padding-right: calc(0.5rem + 1px) !important;
+  font-size: calc(0.875rem + 1px) !important;
+  line-height: calc(0.875rem + 1px) !important;
+  box-sizing: border-box;
+  vertical-align: middle !important;
+  margin: 0 !important;
+  border: none !important;
+  position: relative !important;
+  top: -12px !important;
+}
+
+.socialEditInput :global(.rt-TextFieldSlot) {
+  padding: calc(0.25rem + 1px) calc(0.5rem + 1px) !important;
+  width: calc(1rem + 2px) !important;
+  height: calc(1rem + 2px) !important;
+}
+
+.socialEditInput :global(.rt-TextFieldSlot svg),
+.socialEditInput :global(.rt-TextFieldSlot *) {
+  width: calc(0.875rem + 1px) !important;
+  height: calc(0.875rem + 1px) !important;
+}
+
+@keyframes expandSocial {
+  from {
+    width: 48px;
+    opacity: 0.8;
+  }
+  to {
+    width: auto;
+    opacity: 1;
+  }
+}
+
+/* История в карточке кандидата */
+.historyItem {
+  padding: 12px 0;
+}
+
+@media (max-width: 799px) {
+  .container {
+    flex-direction: column;
+    position: relative;
+  }
+
+  .leftColumn {
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    max-height: calc(100vh - 112px - 48px);
+  }
+
+  .modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
+    backdrop-filter: blur(2px);
+  }
+
+  .rightColumn {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    width: 100%;
+    min-width: unset;
+    max-width: 100%;
+    background-color: var(--color-surface, var(--gray-1));
+    padding: 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .rightColumn.open {
+    transform: translateX(0);
+  }
+
+  /* Один скролл на оверлее колонки, без вложенного в карточке */
+  .rightColumn .candidateCard {
+    flex: 0 0 auto;
+    min-height: min-content;
+  }
+
+  .rightColumn .candidateCardScroll {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+  }
+
+  .tabSwitcher {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabButton {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+}

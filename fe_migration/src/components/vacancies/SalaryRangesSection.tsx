@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Flex, Text, Table } from "@radix-ui/themes"
+import { BarChartIcon } from "@radix-ui/react-icons"
 import styles from './SalaryRangesSection.module.css'
 
 interface SalaryRangesSectionProps {
@@ -18,7 +19,9 @@ export default function SalaryRangesSection({ salaryRanges }: SalaryRangesSectio
   return (
     <Box id="salary-ranges" className={styles.sectionCard}>
       <Flex align="center" gap="2" mb="3" className={styles.sectionHeader}>
-        <Box style={{ fontSize: '20px', lineHeight: 1 }}>💰</Box>
+        <Box style={{ lineHeight: 1, color: 'var(--gray-11)' }} aria-hidden>
+          <BarChartIcon width={22} height={22} />
+        </Box>
         <Text size="5" weight="bold">Зарплатные вилки</Text>
       </Flex>
       <Box className={styles.tableContainer}>

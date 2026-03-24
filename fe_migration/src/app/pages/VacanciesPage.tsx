@@ -1,16 +1,22 @@
 /**
  * VacanciesPage — список вакансий, фильтры, карточки/список, модальное окно просмотра/редактирования.
  * Без AppLayout (обёртка в App.tsx). useSearchParams в Suspense.
+ * Открытая модалка отражается в URL: vacancy, mode (view|edit), tab.
+ * При tab=text дополнительно: textCountry (ключ страны, напр. by|pl), textOffice (id офиса внутри страны).
  */
 
 import { Box, Flex, Text, Button } from '@radix-ui/themes'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback, useMemo } from 'react'
 import { useSearchParams } from '@/router-adapter'
 import VacanciesSearchFilters from '@/components/vacancies/VacanciesSearchFilters'
 import VacanciesStats from '@/components/vacancies/VacanciesStats'
 import VacancyCard from '@/components/vacancies/VacancyCard'
 import VacancyListItem from '@/components/vacancies/VacancyListItem'
-import VacancyEditModal from '@/components/vacancies/VacancyEditModal'
+import VacancyEditModal, {
+  parseVacancySettingsTab,
+  parseVacancyTextCountryKey,
+  parseVacancyTextOfficeId,
+} from '@/components/vacancies/VacancyEditModal'
 import { GridIcon, ListBulletIcon, HamburgerMenuIcon } from '@radix-ui/react-icons'
 import styles from './styles/VacanciesPage.module.css'
 
@@ -55,30 +61,140 @@ const mockVacancies: VacancyItem[] = [
   { id: 4090048, title: 'Backend Engineer', status: 'inactive', recruiter: 'Andrei Golubenko', recruiterExtraCount: 1, locations: ['Варшава', 'Удалённо'], interviewers: 0, date: '20.10.2025', hasWarning: true, incompleteSections: ['Вопросы и ссылки', 'Зарплатные вилки'] },
 ]
 
+function clearVacancyModalParams(prev: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(prev)
+  next.delete('vacancy')
+  next.delete('mode')
+  next.delete('tab')
+  next.delete('edit')
+  next.delete('textCountry')
+  next.delete('textOffice')
+  return next
+}
+
 function VacanciesPageContent() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [vacancies, setVacancies] = useState<VacancyItem[]>(() => [...mockVacancies])
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRecruiter, setSelectedRecruiter] = useState('all')
-  const [selectedStatus, setSelectedStatus] = useState('all')
-  const [viewVacancyId, setViewVacancyId] = useState<number | null>(null)
-  const [editVacancyId, setEditVacancyId] = useState<number | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [statusOverrides, setStatusOverrides] = useState<Record<number, 'active' | 'inactive'>>({})
+
+  useEffect(() => {
+    const editLegacy = searchParams.get('edit')
+    const hasVacancy = searchParams.get('vacancy')
+    if (editLegacy && !hasVacancy) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('vacancy', editLegacy)
+          next.set('mode', 'edit')
+          next.delete('edit')
+          return next
+        },
+        { replace: true }
+      )
+    }
+  }, [searchParams, setSearchParams])
+
+  const modalVacancyId = useMemo(() => {
+    const raw = searchParams.get('vacancy')
+    if (raw == null || raw === '') return null
+    const n = parseInt(raw, 10)
+    return Number.isNaN(n) ? null : n
+  }, [searchParams])
+
+  const modalMode = searchParams.get('mode') === 'edit' ? 'edit' : 'view'
+  const settingsTab = useMemo(() => parseVacancySettingsTab(searchParams.get('tab')), [searchParams])
+  const modalOpen = modalVacancyId != null
+
+  const setModalSearch = useCallback(
+    (mutate: (p: URLSearchParams) => void) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          mutate(next)
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
+
+  const openVacancyModal = useCallback(
+    (id: number, mode: 'view' | 'edit') => {
+      setModalSearch((p) => {
+        p.set('vacancy', String(id))
+        p.set('mode', mode)
+        p.delete('tab')
+        p.delete('textCountry')
+        p.delete('textOffice')
+      })
+    },
+    [setModalSearch]
+  )
+
+  const handleTextTabCountryKeyChange = useCallback(
+    (countryKey: string) => {
+      setModalSearch((p) => {
+        if (modalVacancyId != null) p.set('vacancy', String(modalVacancyId))
+        p.set('mode', modalMode)
+        p.set('tab', 'text')
+        p.set('textCountry', countryKey)
+        const firstOffice = parseVacancyTextOfficeId(countryKey, null)
+        if (firstOffice) p.set('textOffice', firstOffice)
+        else p.delete('textOffice')
+      })
+    },
+    [setModalSearch, modalVacancyId, modalMode]
+  )
+
+  const handleTextTabOfficeIdChange = useCallback(
+    (officeId: string | null) => {
+      setModalSearch((p) => {
+        if (modalVacancyId != null) p.set('vacancy', String(modalVacancyId))
+        p.set('mode', modalMode)
+        p.set('tab', 'text')
+        const c = p.get('textCountry') ?? parseVacancyTextCountryKey(null)
+        p.set('textCountry', c)
+        if (officeId) p.set('textOffice', officeId)
+        else p.delete('textOffice')
+      })
+    },
+    [setModalSearch, modalVacancyId, modalMode]
+  )
+
+  useEffect(() => {
+    if (!modalOpen || modalMode !== 'edit' || settingsTab !== 'text') return
+    const hasCo = searchParams.get('textCountry')
+    const co = parseVacancyTextCountryKey(hasCo)
+    const ofDef = parseVacancyTextOfficeId(co, searchParams.get('textOffice'))
+    const needsCo = !hasCo
+    const needsOf = ofDef != null && !searchParams.get('textOffice')
+    if (!needsCo && !needsOf) return
+    setModalSearch((p) => {
+      const next = new URLSearchParams(p)
+      if (modalVacancyId != null) next.set('vacancy', String(modalVacancyId))
+      next.set('mode', 'edit')
+      if (needsCo) next.set('textCountry', co)
+      if (needsOf && ofDef) next.set('textOffice', ofDef)
+      return next
+    })
+  }, [modalOpen, modalMode, settingsTab, modalVacancyId, setModalSearch, searchParams])
+
+  const closeVacancyModal = useCallback(() => {
+    setSearchParams((prev) => clearVacancyModalParams(prev), { replace: true })
+  }, [setSearchParams])
 
   const getStatus = (v: VacancyItem) => statusOverrides[v.id] ?? v.status
 
-  useEffect(() => {
-    const id = searchParams.get('edit')
-    if (!id) return
-    const n = parseInt(id, 10)
-    if (!isNaN(n)) { setEditVacancyId(n); setViewVacancyId(null) }
-  }, [searchParams])
+  const totalVacancies = vacancies.length
+  const activeVacancies = vacancies.filter(v => getStatus(v) === 'active').length
+  const inactiveVacancies = vacancies.filter(v => getStatus(v) === 'inactive').length
 
-  const totalVacancies = mockVacancies.length
-  const activeVacancies = mockVacancies.filter(v => getStatus(v) === 'active').length
-  const inactiveVacancies = mockVacancies.filter(v => getStatus(v) === 'inactive').length
-
-  const filteredVacancies = mockVacancies.filter(vacancy => {
+  const filteredVacancies = vacancies.filter(vacancy => {
     const status = getStatus(vacancy)
     const matchesSearch = !searchQuery ||
       vacancy.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,6 +204,12 @@ function VacanciesPageContent() {
     return matchesSearch && matchesRecruiter && matchesStatus
   })
 
+  const handleStatCardClick = useCallback((status: 'all' | 'active' | 'inactive') => {
+    setSelectedStatus(status)
+  }, [])
+
+  const activeModalVacancy = modalVacancyId != null ? vacancies.find(x => x.id === modalVacancyId) : undefined
+
   return (
     <Box data-tour="vacancies-page" className={styles.vacanciesContainer}>
       <VacanciesSearchFilters
@@ -96,9 +218,15 @@ function VacanciesPageContent() {
         selectedRecruiter={selectedRecruiter}
         onRecruiterChange={setSelectedRecruiter}
         selectedStatus={selectedStatus}
-        onStatusChange={setSelectedStatus}
+        onStatusChange={(v) => setSelectedStatus(v as 'all' | 'active' | 'inactive')}
       />
-      <VacanciesStats total={totalVacancies} active={activeVacancies} inactive={inactiveVacancies} />
+      <VacanciesStats
+        total={totalVacancies}
+        active={activeVacancies}
+        inactive={inactiveVacancies}
+        selectedStatus={selectedStatus}
+        onStatusCardClick={handleStatCardClick}
+      />
       <Flex data-tour="vacancies-toolbar" justify="between" align="center" className={styles.sectionHeader}>
         <Flex align="center" gap="2">
           <HamburgerMenuIcon width={20} height={20} />
@@ -122,8 +250,8 @@ function VacanciesPageContent() {
             <VacancyCard
               key={vacancy.id}
               vacancy={{ ...vacancy, status: getStatus(vacancy), warningText: getVacancyWarningText(vacancy) }}
-              onClick={() => { setViewVacancyId(vacancy.id); setEditVacancyId(null) }}
-              onEditClick={() => { setEditVacancyId(vacancy.id); setViewVacancyId(null) }}
+              onClick={() => openVacancyModal(vacancy.id, 'view')}
+              onEditClick={() => openVacancyModal(vacancy.id, 'edit')}
               onStatusClick={() => { const s = getStatus(vacancy); setStatusOverrides(prev => ({ ...prev, [vacancy.id]: s === 'active' ? 'inactive' : 'active' })) }}
             />
           ))}
@@ -134,23 +262,56 @@ function VacanciesPageContent() {
             <VacancyListItem
               key={vacancy.id}
               vacancy={{ ...vacancy, status: getStatus(vacancy), warningText: getVacancyWarningText(vacancy) }}
-              onClick={() => { setViewVacancyId(vacancy.id); setEditVacancyId(null) }}
-              onEditClick={() => { setEditVacancyId(vacancy.id); setViewVacancyId(null) }}
+              onClick={() => openVacancyModal(vacancy.id, 'view')}
+              onEditClick={() => openVacancyModal(vacancy.id, 'edit')}
               onStatusClick={() => { const s = getStatus(vacancy); setStatusOverrides(prev => ({ ...prev, [vacancy.id]: s === 'active' ? 'inactive' : 'active' })) }}
             />
           ))}
         </Box>
       )}
       <VacancyEditModal
-        open={!!(editVacancyId || viewVacancyId)}
-        onOpenChange={(open) => { if (!open) { setEditVacancyId(null); setViewVacancyId(null) } }}
-        vacancyId={editVacancyId ?? viewVacancyId}
-        mode={viewVacancyId ? 'view' : 'edit'}
-        vacancy={(() => { const id = editVacancyId ?? viewVacancyId; const v = id != null ? mockVacancies.find(x => x.id === id) : undefined; return v ? { ...v, status: statusOverrides[v.id] ?? v.status, warningText: getVacancyWarningText(v) } : null })()}
-        vacancyStatus={(() => { const id = editVacancyId ?? viewVacancyId; const v = id != null ? mockVacancies.find(x => x.id === id) : undefined; return v ? (statusOverrides[v.id] ?? v.status) : undefined })()}
-        onVacancyStatusChange={(status) => { const id = editVacancyId ?? viewVacancyId; if (id != null) setStatusOverrides(prev => ({ ...prev, [id]: status })) }}
-        onSwitchToEdit={viewVacancyId != null ? () => { setEditVacancyId(viewVacancyId); setViewVacancyId(null) } : undefined}
-        vacancyTitle={mockVacancies.find(v => v.id === (editVacancyId ?? viewVacancyId))?.title}
+        open={modalOpen}
+        onOpenChange={(open) => { if (!open) closeVacancyModal() }}
+        vacancyId={modalVacancyId}
+        mode={modalMode}
+        vacancy={activeModalVacancy ? { ...activeModalVacancy, status: statusOverrides[activeModalVacancy.id] ?? activeModalVacancy.status, warningText: getVacancyWarningText(activeModalVacancy) } : null}
+        vacancyStatus={activeModalVacancy ? (statusOverrides[activeModalVacancy.id] ?? activeModalVacancy.status) : undefined}
+        onVacancyStatusChange={(status) => {
+          if (modalVacancyId == null) return
+          setStatusOverrides(prev => ({ ...prev, [modalVacancyId]: status }))
+        }}
+        onSwitchToEdit={modalMode === 'view' && modalVacancyId != null ? () => {
+          setModalSearch((p) => {
+            p.set('vacancy', String(modalVacancyId))
+            p.set('mode', 'edit')
+          })
+        } : undefined}
+        vacancyTitle={activeModalVacancy?.title}
+        settingsTab={settingsTab}
+        onSettingsTabChange={(tab) => {
+          setModalSearch((p) => {
+            if (modalVacancyId != null) p.set('vacancy', String(modalVacancyId))
+            p.set('mode', modalMode)
+            p.set('tab', tab)
+            if (tab !== 'text') {
+              p.delete('textCountry')
+              p.delete('textOffice')
+            }
+          })
+        }}
+        textTabCountryKey={modalMode === 'edit' ? searchParams.get('textCountry') : null}
+        onTextTabCountryKeyChange={modalMode === 'edit' ? handleTextTabCountryKeyChange : undefined}
+        textTabOfficeId={modalMode === 'edit' ? searchParams.get('textOffice') : null}
+        onTextTabOfficeIdChange={modalMode === 'edit' ? handleTextTabOfficeIdChange : undefined}
+        onDelete={(id) => {
+          setVacancies((prev) => prev.filter((v) => v.id !== id))
+          setStatusOverrides((prev) => {
+            const next = { ...prev }
+            delete next[id]
+            return next
+          })
+          closeVacancyModal()
+        }}
       />
     </Box>
   )

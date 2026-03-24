@@ -4,10 +4,37 @@
   margin: 0 auto;
 }
 
+.dashboardHeader {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.dashboardHeaderTitle {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.dashboardHeaderActions {
+  flex: 0 0 auto;
+}
+
 .statsGrid {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Планшет и десктоп: 4 карточки в ряд; мобильные: 2×2 (две строки по два столбца) */
+@media (max-width: 640px) {
+  .statsRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .statCard {
@@ -41,6 +68,61 @@
   border-bottom: 2px solid var(--blue-10);
 }
 
+.statCard[data-border="avg-mid"] {
+  border-top: 2px solid var(--amber-9);
+  border-bottom: 2px solid var(--amber-10);
+}
+
+.statCard[data-border="salary-growth"] {
+  border-top: 2px solid var(--violet-9);
+  border-bottom: 2px solid var(--violet-10);
+}
+
+.statCard[data-border="vacancy-growth"] {
+  border-top: 2px solid var(--cyan-9);
+  border-bottom: 2px solid var(--cyan-10);
+}
+
+.statLabelAmber {
+  color: var(--amber-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statLabelViolet {
+  color: var(--violet-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statLabelCyan {
+  color: var(--cyan-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statCard[data-border="market-index"] {
+  border-top: 2px solid var(--orange-9);
+  border-bottom: 2px solid var(--orange-10);
+}
+
+.statCard[data-border="candidate-growth"] {
+  border-top: 2px solid var(--green-9);
+  border-bottom: 2px solid var(--green-10);
+}
+
+.statLabelOrange {
+  color: var(--orange-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statLabelGrowthCandidates {
+  color: var(--green-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .statLabel,
 .statLabelCandidates {
   color: var(--gray-11);
@@ -62,6 +144,25 @@
 
 .filtersCard {
   padding: 20px;
+}
+
+.filtersRow {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+.filtersRow > * {
+  flex-shrink: 0;
+}
+
+.pageSizeActions {
+  flex-shrink: 0;
 }
 
 .additionalFields {
@@ -89,12 +190,69 @@
   font-size: 12px;
 }
 
+.viewDialogBody {
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .tableContainer {
   overflow-x: auto;
   width: 100%;
 }
 
-.pagination {
+/* Одна строка текста в ячейке; ширина таблицы по содержимому + скролл у контейнера */
+.tableNowrap table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.tableNowrap table :global(thead th),
+.tableNowrap table :global(tbody td) {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.tableNowrap table :global(tbody td) :global(.rt-Flex) {
+  flex-wrap: nowrap;
+}
+
+/* Клики по кнопкам в ячейке действий (ScrollArea / наложения) */
+.actionsCell {
+  position: relative;
+  z-index: 1;
+}
+
+.actionsCell button {
+  pointer-events: auto;
+}
+
+.statusBadgeClickable {
+  display: inline-flex;
+  cursor: pointer;
+  vertical-align: middle;
+  outline-offset: 2px;
+  border-radius: var(--radius-2, 4px);
+}
+
+.tableNowrap :global(.rt-ScrollAreaViewport) {
+  pointer-events: auto;
+}
+
+.searchFieldWrap {
+  flex: 0 0 auto;
+  max-width: 172px;
+  width: 100%;
+  min-width: 0;
+}
+
+.paginationRow {
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.paginationButtonGroup {
   gap: 0;
   border: 1px solid var(--gray-6);
   border-radius: 6px;
@@ -102,7 +260,7 @@
   display: inline-flex;
 }
 
-.pagination button {
+.paginationButtonGroup button {
   border-radius: 0;
 }
 

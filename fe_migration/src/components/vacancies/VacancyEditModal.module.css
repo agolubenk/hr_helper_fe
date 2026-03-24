@@ -1,3 +1,12 @@
+.embeddedRoot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
 .dialogContent {
   max-width: 94vw;
   width: 960px;
@@ -17,11 +26,44 @@
   width: 220px;
 }
 
+/* Сайдбар в левой колонке ATS (портал): на всю ширину колонки */
+.sidebarInAtsLeft {
+  width: 100%;
+  max-width: 100%;
+}
+
 .content {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
   padding-right: 8px;
+}
+
+/* Табы стран в «Текст вакансии»: одна строка, горизонтальный скролл */
+.tabListScroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
+}
+
+.tabListScroll :global(.rt-TabsTrigger) {
+  flex-shrink: 0;
+}
+
+/* Выбранные локации — одна строка со скроллом */
+.locationChipsRow {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
 }
 
 @media (max-width: 768px) {
@@ -62,4 +104,15 @@
   table-layout: fixed;
   width: max-content;
   max-width: 100%;
+}
+
+/* Опубликовано: зелёная кнопка, при наведении — снять публикацию (красная) */
+.publishTogglePublished:global(.rt-Button) {
+  background-color: var(--green-9) !important;
+  color: #fff !important;
+}
+
+.publishTogglePublished:global(.rt-Button):hover {
+  background-color: var(--red-9) !important;
+  color: #fff !important;
 }

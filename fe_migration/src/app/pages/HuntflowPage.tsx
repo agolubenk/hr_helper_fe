@@ -81,7 +81,7 @@ const QUICK_LINKS = [
   { label: 'Вакансии', href: '/vacancies', icon: FileTextIcon },
   { label: 'Грейды', href: '/company-settings/grades', icon: StarIcon },
   { label: 'Этапы найма и причины отказа', href: '/company-settings/recruiting/stages', icon: MixerHorizontalIcon },
-  { label: 'Дополнительные поля кандидатов', href: '/company-settings/candidate-fields', icon: PersonIcon },
+  { label: 'Дополнительные поля кандидатов', href: '/company-settings/recruiting/candidate-fields', icon: PersonIcon },
 ] as const
 
 const NONE = '__none__'

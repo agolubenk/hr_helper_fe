@@ -2,12 +2,14 @@ import { Flex, Text, Button, Box, Separator } from '@radix-ui/themes'
 import { SunIcon, MoonIcon, PersonIcon, LockClosedIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
 import { useRouter } from '@/router-adapter'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 import { useTheme } from '@/components/ThemeProvider'
 import FloatingLabelInput from '@/components/FloatingLabelInput'
 import { LogoRobot } from '@/components/logo'
 import styles from '@/app/pages/styles/LoginPage.module.css'
 
 export function LoginPage() {
+  useDocumentTitle('Вход — HR Helper')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)

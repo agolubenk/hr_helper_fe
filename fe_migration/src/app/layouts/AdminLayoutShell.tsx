@@ -5,16 +5,19 @@
 
 import { Box } from '@radix-ui/themes'
 import { useState, useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { HamburgerMenuIcon } from '@radix-ui/react-icons'
 import AppLayout from '@/components/AppLayout'
 import AdminSidebar from '@/app/admin/AdminSidebar'
+import { useRoleAccess } from '@/app/admin/useRoleAccess'
 import styles from '@/app/admin/admin.module.css'
 
 const ADMIN_SIDEBAR_STORAGE_KEY = 'adminSidebarOpen'
 const DESKTOP_BREAKPOINT = 768
 
 export function AdminLayoutShell() {
+  const location = useLocation()
+  const { canAccessPath } = useRoleAccess()
   const [adminSidebarOpen, setAdminSidebarOpen] = useState(() => {
     if (typeof window === 'undefined') return true
     if (window.innerWidth < DESKTOP_BREAKPOINT) return false
@@ -54,6 +57,10 @@ export function AdminLayoutShell() {
       <HamburgerMenuIcon width={16} height={16} style={{ color: 'var(--gray-12)' }} />
     </Box>
   )
+
+  if (!canAccessPath(location.pathname)) {
+    return <Navigate to="/errors/403" replace />
+  }
 
   return (
     <AppLayout pageTitle="Admin" leftHeaderContent={burgerButton}>

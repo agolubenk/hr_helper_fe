@@ -5,12 +5,41 @@
    подтянутся на все страницы.
    ========================================================================== */
 
+/* Типографика как во frontend (Inter + масштаб) */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+}
+
 /* Отступы и размеры контента (использовать в модулях: var(--page-padding) и т.д.) */
 :root {
   --page-padding: 24px;
   --page-padding-mobile: 16px;
   --content-max-width: 1200px;
   --content-gap: 16px;
+}
+
+/* Токены как во frontend/src/shared/styles/variables.css (Sidebar, ReminderPage и др.) */
+:root {
+  --space-1: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --duration-normal: 200ms;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .page-content-container {
@@ -40,7 +69,13 @@ body {
 }
 
 body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body[data-theme="light"],
@@ -57,6 +92,8 @@ body.dark-theme {
 
 .radix-themes[data-is-root-theme='true'] {
   min-height: auto;
+  /* Как во frontend: единый Inter для Radix Text / кнопок */
+  --default-font-family: var(--font-sans);
 }
 
 body[data-theme="dark"] .radix-themes,

@@ -14,12 +14,24 @@ import {
   BiLogoGithub,
   BiLogoInstagram,
   BiLogoFacebook,
-  BiLogoTwitter,
   BiLogoYoutube,
   BiCodeAlt,
 } from 'react-icons/bi'
-import { SiViber, SiKaggle, SiDiscord, SiGitlab, SiBitbucket, SiStackoverflow } from 'react-icons/si'
+import {
+  SiViber,
+  SiKaggle,
+  SiDiscord,
+  SiGitlab,
+  SiBitbucket,
+  SiStackoverflow,
+  SiOdnoklassniki,
+  SiHabr,
+  SiX,
+  SiWechat,
+} from 'react-icons/si'
 import { FaReddit, FaMedium } from 'react-icons/fa'
+import { TbBrandTeams, TbBrandYandex } from 'react-icons/tb'
+import { PikabuBrandIcon, VcRuBrandIcon } from '@/lib/socialBrandIcons'
 
 /** Ключи платформ (camelCase для совместимости с API) */
 export const SOCIAL_PLATFORM_KEYS = [
@@ -28,7 +40,7 @@ export const SOCIAL_PLATFORM_KEYS = [
   'viber',
   'telegram',
   'wechat',
-  'skype',
+  'teams',
   // Соцсети СНГ
   'vk',
   'odnoklassniki',
@@ -49,7 +61,6 @@ export const SOCIAL_PLATFORM_KEYS = [
   // Дизайн и креатив
   'dribbble',
   'behance',
-  'figma',
   'pinterest',
   // Общие соцсети
   'instagram',
@@ -85,7 +96,8 @@ export const getSocialUrl = (platform: SocialPlatformKey, value: string): string
     viber: (v) => `viber://chat?number=${v.replace(/[^\d]/g, '')}`,
     telegram: (v) => `https://t.me/${clean}`,
     wechat: (v) => `https://weixin.qq.com/`,
-    skype: (v) => `skype:${clean}?chat`,
+    teams: (v) =>
+      v.startsWith('http') ? v : `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(v)}`,
     vk: (v) => `https://vk.com/${clean}`,
     odnoklassniki: (v) => `https://ok.ru/${clean}`,
     habr: (v) => `https://habr.com/ru/users/${clean}`,
@@ -105,11 +117,11 @@ export const getSocialUrl = (platform: SocialPlatformKey, value: string): string
     kaggle: (v) => `https://kaggle.com/${clean}`,
     dribbble: (v) => `https://dribbble.com/${clean}`,
     behance: (v) => `https://behance.net/${clean}`,
-    figma: (v) => `https://figma.com/@${clean}`,
     pinterest: (v) => `https://pinterest.com/${clean}`,
     instagram: (v) => `https://instagram.com/${clean}`,
     facebook: (v) => `https://facebook.com/${clean}`,
-    twitter: (v) => `https://twitter.com/${clean}`,
+    twitter: (v) =>
+      v.startsWith('http') ? v : `https://x.com/${clean.replace(/^@/, '')}`,
     youtube: (v) =>
       v.startsWith('http') ? v : `https://youtube.com/${v.startsWith('@') ? v : 'channel/' + v}`,
     medium: (v) => `https://medium.com/@${clean}`,
@@ -166,14 +178,14 @@ export const SOCIAL_PLATFORMS: Record<
   wechat: {
     label: 'WeChat',
     color: '#09BB07',
-    icon: <BiLogoWhatsapp size={iconSize} />, // Нет иконки WeChat в react-icons/bi, используем похожую
+    icon: <SiWechat size={iconSize} />,
     urlPattern: (v) => getSocialUrl('wechat', v),
   },
-  skype: {
-    label: 'Skype',
-    color: '#00AFF0',
-    icon: <BiLogoTelegram size={iconSize} />,
-    urlPattern: (v) => getSocialUrl('skype', v),
+  teams: {
+    label: 'Microsoft Teams',
+    color: '#6264A7',
+    icon: <TbBrandTeams size={iconSize} />,
+    urlPattern: (v) => getSocialUrl('teams', v),
   },
   vk: {
     label: 'VK',
@@ -184,37 +196,37 @@ export const SOCIAL_PLATFORMS: Record<
   odnoklassniki: {
     label: 'Одноклассники',
     color: '#EE8208',
-    icon: <BiLogoVk size={iconSize} />,
+    icon: <SiOdnoklassniki size={iconSize} />,
     urlPattern: (v) => getSocialUrl('odnoklassniki', v),
   },
   habr: {
     label: 'Хабр',
     color: '#2A7DE1',
-    icon: <BiCodeAlt size={iconSize} />,
+    icon: <SiHabr size={iconSize} />,
     urlPattern: (v) => getSocialUrl('habr', v),
   },
   habrCareer: {
     label: 'Хабр Карьера',
-    color: '#2A7DE1',
-    icon: <BiCodeAlt size={iconSize} />,
+    color: '#6CBF20',
+    icon: <SiHabr size={iconSize} />,
     urlPattern: (v) => getSocialUrl('habrCareer', v),
   },
   vcRu: {
     label: 'VC.ru',
     color: '#00B1FF',
-    icon: <BiCodeAlt size={iconSize} />,
+    icon: <VcRuBrandIcon size={iconSize} />,
     urlPattern: (v) => getSocialUrl('vcRu', v),
   },
   zen: {
     label: 'Яндекс Дзен',
     color: '#000000',
-    icon: <BiCodeAlt size={iconSize} />,
+    icon: <TbBrandYandex size={iconSize} />,
     urlPattern: (v) => getSocialUrl('zen', v),
   },
   pikabu: {
     label: 'Pikabu',
     color: '#314358',
-    icon: <BiCodeAlt size={iconSize} />,
+    icon: <PikabuBrandIcon size={iconSize} />,
     urlPattern: (v) => getSocialUrl('pikabu', v),
   },
   linkedin: {
@@ -279,12 +291,6 @@ export const SOCIAL_PLATFORMS: Record<
     icon: <BiLogoBehance size={iconSize} />,
     urlPattern: (v) => getSocialUrl('behance', v),
   },
-  figma: {
-    label: 'Figma',
-    color: '#F24E1E',
-    icon: <BiLogoDribbble size={iconSize} />,
-    urlPattern: (v) => getSocialUrl('figma', v),
-  },
   pinterest: {
     label: 'Pinterest',
     color: '#BD081C',
@@ -304,9 +310,9 @@ export const SOCIAL_PLATFORMS: Record<
     urlPattern: (v) => getSocialUrl('facebook', v),
   },
   twitter: {
-    label: 'Twitter',
-    color: '#1DA1F2',
-    icon: <BiLogoTwitter size={iconSize} />,
+    label: 'X (ex. Twitter)',
+    color: '#000000',
+    icon: <SiX size={iconSize} />,
     urlPattern: (v) => getSocialUrl('twitter', v),
   },
   youtube: {
@@ -365,7 +371,6 @@ export const RECR_CHAT_SOCIAL_PLATFORMS: SocialPlatformKey[] = [
   'zen',
   'xing',
   'wechat',
-  'skype',
-  'figma',
+  'teams',
   'pikabu',
 ]

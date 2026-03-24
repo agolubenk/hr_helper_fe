@@ -61,6 +61,21 @@
   overflow-x: hidden;
 }
 
+.dropdownFullWidth.dropdown {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 64px;
+  bottom: 0;
+  width: auto;
+  max-height: none;
+  margin-left: 0;
+  margin-top: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
 .section {
   padding: 8px 0;
 }

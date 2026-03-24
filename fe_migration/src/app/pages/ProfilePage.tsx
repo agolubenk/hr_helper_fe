@@ -4,7 +4,7 @@ import { useSearchParams } from '@/router-adapter'
 import UserCard from '@/components/profile/UserCard'
 import { ProfileNavigation, type ProfileTabType } from '@/components/profile/ProfileNavigation'
 import ProfileInfo from '@/components/profile/ProfileInfo'
-import ProfileEditForm from '@/components/profile/ProfileEditForm'
+import ProfileEditForm, { type ProfileEditFormSaveData } from '@/components/profile/ProfileEditForm'
 import { ScheduleSettingsPage } from '@/components/profile/ScheduleSettingsPage'
 import IntegrationsPage from '@/components/profile/IntegrationsPage'
 import QuickButtonsPage from '@/components/profile/QuickButtonsPage'
@@ -22,22 +22,16 @@ import {
   getStoredSchedule,
   setStoredSchedule,
   mergeScheduleIntoProfileData,
+  saveProfile,
+  saveProfileSocialLinks,
   type ProfileData,
 } from '@/app/api/profile'
 import styles from '@/app/pages/styles/ProfilePage.module.css'
-
-const VALID_TABS: ProfileTabType[] = [
-  'profile',
-  'edit',
-  'schedule',
-  'theme',
-  'integrations',
-  'quick-buttons',
-  'reminder',
-  'requests',
-  'documents',
-]
-const TAB_STORAGE_KEY = 'profileActiveTab'
+import {
+  isValidProfileTab,
+  PROFILE_TAB_STORAGE_KEY,
+  resolveInitialProfileTab,
+} from '@/components/profile/profileTabsStorage'
 
 const INITIAL_USER: ProfileData = {
   firstName: 'Андрей',
@@ -75,10 +69,8 @@ export function ProfilePage() {
   const getInitialTab = useCallback((): ProfileTabType => {
     if (typeof window === 'undefined') return 'profile'
     const tab = searchParams.get('tab')
-    if (tab && VALID_TABS.includes(tab as ProfileTabType)) return tab as ProfileTabType
-    const saved = localStorage.getItem(TAB_STORAGE_KEY)
-    if (saved && VALID_TABS.includes(saved as ProfileTabType)) return saved as ProfileTabType
-    return 'profile'
+    const saved = localStorage.getItem(PROFILE_TAB_STORAGE_KEY)
+    return resolveInitialProfileTab(tab, saved)
   }, [searchParams])
 
   const [activeTab, setActiveTabState] = useState<ProfileTabType>(getInitialTab)
@@ -87,14 +79,14 @@ export function ProfilePage() {
     (tab: ProfileTabType) => {
       setActiveTabState(tab)
       if (typeof window !== 'undefined') {
-        localStorage.setItem(TAB_STORAGE_KEY, tab)
+        localStorage.setItem(PROFILE_TAB_STORAGE_KEY, tab)
         setSearchParams((prev) => {
           const next = new URLSearchParams(prev)
           next.set('tab', tab)
           return next
         })
         window.dispatchEvent(
-          new CustomEvent('localStorageChange', { detail: { key: TAB_STORAGE_KEY, value: tab } })
+          new CustomEvent('localStorageChange', { detail: { key: PROFILE_TAB_STORAGE_KEY, value: tab } })
         )
       }
     },
@@ -103,7 +95,7 @@ export function ProfilePage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && VALID_TABS.includes(tab as ProfileTabType) && tab !== activeTab) {
+    if (isValidProfileTab(tab) && tab !== activeTab) {
       setActiveTabState(tab as ProfileTabType)
     }
   }, [searchParams])
@@ -111,22 +103,21 @@ export function ProfilePage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === TAB_STORAGE_KEY && e.newValue && VALID_TABS.includes(e.newValue as ProfileTabType)) {
+      if (e.key === PROFILE_TAB_STORAGE_KEY && isValidProfileTab(e.newValue)) {
         setActiveTabState(e.newValue as ProfileTabType)
       }
     }
     const handleCustomChange = (e: CustomEvent) => {
       if (
-        e.detail?.key === TAB_STORAGE_KEY &&
-        e.detail?.value &&
-        VALID_TABS.includes(e.detail.value as ProfileTabType)
+        e.detail?.key === PROFILE_TAB_STORAGE_KEY &&
+        isValidProfileTab(e.detail?.value)
       ) {
         setActiveTabState(e.detail.value as ProfileTabType)
       }
     }
     const syncFromStorage = () => {
-      const saved = localStorage.getItem(TAB_STORAGE_KEY)
-      if (saved && VALID_TABS.includes(saved as ProfileTabType)) setActiveTabState(saved as ProfileTabType)
+      const saved = localStorage.getItem(PROFILE_TAB_STORAGE_KEY)
+      if (isValidProfileTab(saved)) setActiveTabState(saved as ProfileTabType)
     }
     window.addEventListener('storage', handleStorageChange)
     window.addEventListener('localStorageChange', handleCustomChange as EventListener)
@@ -155,17 +146,46 @@ export function ProfilePage() {
               socialLinks: userData.socialLinks,
             }}
             onCancel={() => setActiveTab('profile')}
-            onSave={(data: { firstName: string; lastName: string; email: string; phone?: string; socialLinks?: SocialLink[] }) => {
+            onSave={async (data: ProfileEditFormSaveData) => {
               const telegramLink = (data.socialLinks ?? []).find((l: SocialLink) => l.platform === 'telegram')
               const telegram = telegramLink?.value ?? ''
               setUserData((prev) => ({
                 ...prev,
-                ...data,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
                 phone: data.phone ?? prev.phone,
                 telegram,
                 socialLinks: data.socialLinks ?? prev.socialLinks,
               }))
-              toast.showSuccess('Профиль сохранён', 'Изменения успешно применены')
+              const [profileSaved, socialsSaved] = await Promise.all([
+                saveProfile({
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  email: data.email,
+                  phone: data.phone,
+                }),
+                saveProfileSocialLinks(data.socialLinks ?? []),
+              ])
+              if (profileSaved.ok && socialsSaved.ok) {
+                toast.showSuccess('Профиль сохранён', 'Изменения успешно применены')
+              } else if (profileSaved.code === 'API_DISABLED' || socialsSaved.code === 'API_DISABLED') {
+                toast.showWarning(
+                  'Сохранено локально',
+                  'API отключен, изменения оставлены в локальном состоянии.'
+                )
+              } else if (profileSaved.code === 'UNAUTHORIZED' || socialsSaved.code === 'UNAUTHORIZED') {
+                toast.showError('Ошибка авторизации', 'Сессия истекла. Войдите в систему повторно.')
+              } else if (profileSaved.code === 'FORBIDDEN' || socialsSaved.code === 'FORBIDDEN') {
+                toast.showError('Недостаточно прав', 'Недостаточно прав для сохранения профиля.')
+              } else if (profileSaved.code === 'VALIDATION' || socialsSaved.code === 'VALIDATION') {
+                toast.showWarning('Проверьте поля', 'Часть полей не прошла валидацию на сервере.')
+              } else {
+                toast.showWarning(
+                  'Ошибка API',
+                  'Сохранение на сервере не выполнено. Локальные изменения оставлены.'
+                )
+              }
               setActiveTab('profile')
             }}
           />

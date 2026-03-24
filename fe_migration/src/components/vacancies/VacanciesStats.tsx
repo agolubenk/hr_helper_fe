@@ -41,10 +41,16 @@ import styles from './VacanciesStats.module.css'
  * - active: количество активных вакансий
  * - inactive: количество неактивных вакансий
  */
+type VacancyStatusFilter = 'all' | 'active' | 'inactive'
+
 interface VacanciesStatsProps {
   total: number
   active: number
   inactive: number
+  /** Текущий фильтр по статусу (синхронно с фильтром страницы) */
+  selectedStatus: VacancyStatusFilter
+  /** Клик по карточке задаёт фильтр списка */
+  onStatusCardClick: (status: VacancyStatusFilter) => void
 }
 
 /**
@@ -54,33 +60,63 @@ interface VacanciesStatsProps {
  * - Отображает 3 карточки со статистикой по вакансиям
  * - Каждая карточка содержит число и иконку
  */
-export default function VacanciesStats({ total, active, inactive }: VacanciesStatsProps) {
+export default function VacanciesStats({
+  total,
+  active,
+  inactive,
+  selectedStatus,
+  onStatusCardClick,
+}: VacanciesStatsProps) {
   return (
     <Flex data-tour="vacancies-stats" gap="3" className={styles.statsContainer}>
-      {/* Карточка "Всего вакансий"
-          - Отображает общее количество всех вакансий
-          - Иконка: FileTextIcon */}
-      <Box className={styles.statCard}>
+      <Box
+        role="button"
+        tabIndex={0}
+        className={`${styles.statCard} ${selectedStatus === 'all' ? styles.statCardActive : ''}`}
+        onClick={() => onStatusCardClick('all')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onStatusCardClick('all')
+          }
+        }}
+      >
         <Flex align="center" justify="between">
           <Text size="3" weight="bold">{total} Всего вакансий</Text>
           <FileTextIcon width={20} height={20} />
         </Flex>
       </Box>
-      
-      {/* Карточка "Активных"
-          - Отображает количество активных вакансий
-          - Иконка: CheckIcon (зеленого цвета) */}
-      <Box className={styles.statCard}>
+
+      <Box
+        role="button"
+        tabIndex={0}
+        className={`${styles.statCard} ${selectedStatus === 'active' ? styles.statCardActive : ''}`}
+        onClick={() => onStatusCardClick('active')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onStatusCardClick('active')
+          }
+        }}
+      >
         <Flex align="center" justify="between">
           <Text size="3" weight="bold">{active} Активных</Text>
           <CheckIcon width={20} height={20} style={{ color: '#10b981' }} />
         </Flex>
       </Box>
-      
-      {/* Карточка "Неактивных"
-          - Отображает количество неактивных вакансий
-          - Иконка: StopwatchIcon */}
-      <Box className={styles.statCard}>
+
+      <Box
+        role="button"
+        tabIndex={0}
+        className={`${styles.statCard} ${selectedStatus === 'inactive' ? styles.statCardActive : ''}`}
+        onClick={() => onStatusCardClick('inactive')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onStatusCardClick('inactive')
+          }
+        }}
+      >
         <Flex align="center" justify="between">
           <Text size="3" weight="bold">{inactive} Неактивных</Text>
           <StopwatchIcon width={20} height={20} />

@@ -7,6 +7,7 @@ import { Flex, Box, Text } from '@radix-ui/themes'
 import { Link, usePathname } from '@/router-adapter'
 import { useTheme } from '@/components/ThemeProvider'
 import { ADMIN_MODULES } from './config'
+import { useRoleAccess } from './useRoleAccess'
 import sidebarStyles from '@/components/Sidebar.module.css'
 import styles from './admin.module.css'
 
@@ -20,6 +21,7 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen }: AdminSidebarProps) {
   const pathname = usePathname()
   const { theme } = useTheme()
+  const { canAccessPath } = useRoleAccess()
 
   const isActive = (href: string) =>
     pathname === href || (pathname?.startsWith(href + '/') ?? false)
@@ -62,7 +64,10 @@ export default function AdminSidebar({ isOpen }: AdminSidebarProps) {
           <Text size="2">Главная</Text>
         </Link>
 
-        {ADMIN_MODULES.map((module) => (
+        {ADMIN_MODULES.map((module) => {
+          const allowedItems = module.items.filter((item) => canAccessPath(item.href))
+          if (allowedItems.length === 0) return null
+          return (
           <Box key={module.id} mt="2">
             <Text
               size="1"
@@ -73,7 +78,7 @@ export default function AdminSidebar({ isOpen }: AdminSidebarProps) {
               {module.label}
             </Text>
             <Flex direction="column" gap="1">
-              {module.items.map((item) => {
+              {allowedItems.map((item) => {
                 const active = isActive(item.href)
                 return (
                   <Link
@@ -105,7 +110,8 @@ export default function AdminSidebar({ isOpen }: AdminSidebarProps) {
               })}
             </Flex>
           </Box>
-        ))}
+          )
+        })}
       </Flex>
     </Box>
   )

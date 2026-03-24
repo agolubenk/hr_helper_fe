@@ -2,11 +2,13 @@ import { Flex, Text, Button, Box } from '@radix-ui/themes'
 import { SunIcon, MoonIcon, EnvelopeClosedIcon, ArrowLeftIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
 import { useRouter } from '@/router-adapter'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 import { useTheme } from '@/components/ThemeProvider'
 import FloatingLabelInput from '@/components/FloatingLabelInput'
 import styles from '@/app/pages/styles/LoginPage.module.css'
 
 export function ForgotPasswordPage() {
+  useDocumentTitle('Восстановление пароля — HR Helper')
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)

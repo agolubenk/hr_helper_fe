@@ -1,8 +1,12 @@
 # Фаза 12 — ссылки для проверки
 
-**Полный smoke-лист всех основных маршрутов:** [MIGRATION_CHECK_URLS.md](./MIGRATION_CHECK_URLS.md) (Фаза 15).
+**Мастер-план остатка и статус фаз:** корень репо → `Детальный план остаточной миграции hr_helper_fe.md`, `fe_migration/docs/DETAILED_PLAN_STATUS.md`.
+
+**Полный smoke-лист всех основных маршрутов:** [MIGRATION_CHECK_URLS.md](./MIGRATION_CHECK_URLS.md) (фаза **14** мастер-плана).
 
 **Расхождения с эталоном (не править без задачи):** [MIGRATION_DIVERGENCES.md](./MIGRATION_DIVERGENCES.md).
+
+**Очередь задач:** корень репо → `MIGRATION_PLAN_UPD.md`.
 
 База для ручной проверки:
 
@@ -33,7 +37,8 @@
 
 - [http://localhost:3002/company-settings/finance/benchmarks](http://localhost:3002/company-settings/finance/benchmarks)
 - [http://localhost:3002/finance](http://localhost:3002/finance)
-- [http://localhost:3002/finance/benchmarks](http://localhost:3002/finance/benchmarks)
+- [http://localhost:3002/finance/benchmarks](http://localhost:3002/finance/benchmarks) (дашборд)
+- [http://localhost:3002/finance/benchmarks/all](http://localhost:3002/finance/benchmarks/all) (список)
 
 ## Рекомендованный порядок smoke-check
 

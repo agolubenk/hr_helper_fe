@@ -104,6 +104,7 @@ import {
 } from "@radix-ui/react-icons"
 import { useState, useEffect, useMemo } from "react"
 import { useTheme } from "@/components/ThemeProvider"
+import { useToast } from "@/components/Toast/ToastContext"
 import styles from './QuickButtonModal.module.css'
 
 interface QuickButtonData {
@@ -121,6 +122,8 @@ interface QuickButtonModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (data: QuickButtonData) => void
+  /** Удаление существующей кнопки (по id из initialData); подтверждение — через toast */
+  onDelete?: (id: string) => void
   initialData?: QuickButtonData | null
 }
 
@@ -330,9 +333,11 @@ export default function QuickButtonModal({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   initialData
 }: QuickButtonModalProps) {
   const { theme } = useTheme()
+  const toast = useToast()
   
   const [formData, setFormData] = useState<QuickButtonData>({
     name: '',
@@ -430,6 +435,29 @@ export default function QuickButtonModal({
     }
 
     onSave(saveData)
+  }
+
+  const canDelete = Boolean(initialData?.id && onDelete)
+
+  const handleDeleteClick = () => {
+    const id = initialData?.id
+    if (!id || !onDelete) return
+    toast.showWarning('Удалить кнопку?', 'Это действие нельзя отменить. Продолжить?', {
+      duration: 60_000,
+      actions: [
+        { label: 'Отмена', onClick: () => {}, variant: 'soft', color: 'gray' },
+        {
+          label: 'Удалить',
+          onClick: () => {
+            onDelete(id)
+            onClose()
+            toast.showSuccess('Удалено', 'Быстрая кнопка удалена')
+          },
+          variant: 'solid',
+          color: 'red',
+        },
+      ],
+    })
   }
 
   // Получаем подсказку для поля "Значение" в зависимости от типа
@@ -660,23 +688,39 @@ export default function QuickButtonModal({
             </Box>
           </Box>
 
-          {/* Кнопки */}
-          <Flex 
-            justify="end" 
-            gap="3" 
+          {/* Кнопки: удалить слева (редактирование), отмена и сохранить справа */}
+          <Flex
+            justify="between"
+            align="center"
+            gap="3"
+            wrap="wrap"
             className={styles.modalFooter}
-            style={{ flexShrink: 0 }}
+            style={{ flexShrink: 0, width: '100%' }}
           >
-            <Button variant="soft" type="button" onClick={onClose}>
-              Отмена
-            </Button>
-            <Button
-              variant="solid"
-              type="submit"
-              style={{ backgroundColor: 'var(--accent-9)' }}
-            >
-              Сохранить
-            </Button>
+            <Box style={{ minWidth: 0 }}>
+              {canDelete ? (
+                <Button
+                  type="button"
+                  variant="soft"
+                  color="red"
+                  onClick={handleDeleteClick}
+                >
+                  Удалить
+                </Button>
+              ) : null}
+            </Box>
+            <Flex justify="end" gap="3" wrap="wrap" style={{ marginLeft: 'auto' }}>
+              <Button variant="soft" type="button" onClick={onClose}>
+                Отмена
+              </Button>
+              <Button
+                variant="solid"
+                type="submit"
+                style={{ backgroundColor: 'var(--accent-9)' }}
+              >
+                Сохранить
+              </Button>
+            </Flex>
           </Flex>
         </form>
       </Box>

@@ -6,10 +6,12 @@ import { PlusIcon, Cross2Icon, Pencil1Icon } from '@radix-ui/react-icons'
 import type { SocialLink } from '@/lib/types/social-links'
 import { createSocialLink } from '@/lib/types/social-links'
 import type { SocialPlatformKey } from '@/lib/socialPlatforms'
-import { SOCIAL_PLATFORM_KEYS, SOCIAL_PLATFORMS, getPlatformInfo } from '@/lib/socialPlatforms'
+import { SOCIAL_PLATFORMS, getPlatformInfo } from '@/lib/socialPlatforms'
+import {
+  getAvailableSocialPlatforms,
+  MAX_SOCIAL_LINKS_PER_PLATFORM,
+} from '@/components/profile/socialLinksUtils'
 import styles from './SocialLinksManager.module.css'
-
-const MAX_LINKS_PER_PLATFORM = 3
 
 const PLATFORM_PLACEHOLDERS: Partial<Record<SocialPlatformKey, string>> = {
   whatsapp: '+375291234567',
@@ -43,11 +45,7 @@ export default function SocialLinksManager({ links, onUpdate }: SocialLinksManag
     return counts
   }, [links])
 
-  const availablePlatforms = SOCIAL_PLATFORM_KEYS.filter((p) => {
-    const count = platformUsageCount[p] || 0
-    if (editingLink?.platform === p) return true
-    return count < MAX_LINKS_PER_PLATFORM
-  })
+  const availablePlatforms = getAvailableSocialPlatforms(links, editingLink?.platform)
 
   const handleAdd = () => {
     setEditingLink(null)
@@ -163,7 +161,7 @@ export default function SocialLinksManager({ links, onUpdate }: SocialLinksManag
             {editingLink ? 'Редактировать ссылку' : 'Добавить социальную сеть'}
           </Dialog.Title>
           <Dialog.Description size="2" color="gray" mb="4">
-            До {MAX_LINKS_PER_PLATFORM} аккаунтов на одну платформу. Выберите платформу и введите username или URL.
+            До {MAX_SOCIAL_LINKS_PER_PLATFORM} аккаунтов на одну платформу. Выберите платформу и введите username или URL.
           </Dialog.Description>
 
           <Flex direction="column" gap="3">
@@ -174,7 +172,7 @@ export default function SocialLinksManager({ links, onUpdate }: SocialLinksManag
                 </Text>
                 {selectedPlatform && (
                   <Text size="1" color="gray" as="div">
-                    {platformUsageCount[selectedPlatform] || 0} / {MAX_LINKS_PER_PLATFORM}
+                    {platformUsageCount[selectedPlatform] || 0} / {MAX_SOCIAL_LINKS_PER_PLATFORM}
                   </Text>
                 )}
               </Flex>
@@ -235,7 +233,7 @@ export default function SocialLinksManager({ links, onUpdate }: SocialLinksManag
                             <span>{cfg.label}</span>
                           </Flex>
                           <Text size="1" color="gray">
-                            {count}/{MAX_LINKS_PER_PLATFORM}
+                            {count}/{MAX_SOCIAL_LINKS_PER_PLATFORM}
                           </Text>
                         </Flex>
                       </Select.Item>

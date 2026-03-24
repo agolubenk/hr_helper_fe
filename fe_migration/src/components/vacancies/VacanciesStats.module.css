@@ -13,11 +13,22 @@
   border: 1px solid var(--gray-6);
   transition: all 0.2s ease-in-out;
   box-shadow: 0 1px 3px var(--gray-a3);
+  cursor: pointer;
 }
 
 .statCard:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--gray-a4);
+}
+
+.statCard:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
+.statCardActive {
+  border-color: var(--accent-9);
+  box-shadow: 0 0 0 1px var(--accent-a7);
 }
 
 @media (max-width: 768px) {

@@ -4,7 +4,13 @@
 
 **Отличия от эталона не правим втихую** — заносим в **[MIGRATION_DIVERGENCES.md](./MIGRATION_DIVERGENCES.md)** (журнал §9 при поштучной приёмке).
 
-**Общая очередь задач после переноса маршрутов:** **[../MIGRATION_PLAN_UPD.md](../MIGRATION_PLAN_UPD.md)**.
+**Мастер-план остатка (фазы 1–15):** **[../../Детальный план остаточной миграции hr_helper_fe.md](../../Детальный%20план%20остаточной%20миграции%20hr_helper_fe.md)**.  
+**Статус по фазам:** **[./DETAILED_PLAN_STATUS.md](./DETAILED_PLAN_STATUS.md)**.  
+**Общая очередь (smoke, хвосты):** **[../../MIGRATION_PLAN_UPD.md](../../MIGRATION_PLAN_UPD.md)** (корень репозитория).
+
+**Исключения из доработок в рамках миграции:** `Sidebar`, `Header`, `Footer`, `FloatingActions` (позиция `left: 12px`). При smoke проверяем только отсутствие регресса.
+
+**Дерево пунктов сайдбара (все `href`, вложенность):** **[sidebar.md](./sidebar.md)** (§2.5–§2.9).
 
 Полный перечень маршрутов из `src/app/App.tsx`. Отмечайте галочками при smoke-тесте.
 
@@ -43,9 +49,12 @@
 ## Финансы (редиректы и бенчмарки)
 
 - [http://localhost:3002/finance](http://localhost:3002/finance) → `/company-settings/finance`
-- [http://localhost:3002/finance/benchmarks](http://localhost:3002/finance/benchmarks)
+- [http://localhost:3002/finance/benchmarks](http://localhost:3002/finance/benchmarks) (дашборд)
+- [http://localhost:3002/finance/benchmarks/all](http://localhost:3002/finance/benchmarks/all) (список)
 
 ## Настройки компании
+
+> **Статус фазы 8:** автоматическая сверка каталога **`components/company-settings/`** зафиксирована в **[COMPANY_SETTINGS_PHASE8.md](./COMPANY_SETTINGS_PHASE8.md)** и **`MIGRATION_DIVERGENCES.md` §12**. Ручной проход URL ниже — **обязателен** для закрытия приёмки; новые находки — в **`MIGRATION_DIVERGENCES.md` §9**.
 
 См. также детальный список: [PHASE12_CHECK_LINKS.md](./PHASE12_CHECK_LINKS.md) (раздел «Фаза 12»).
 
@@ -62,7 +71,7 @@
 - [http://localhost:3002/company-settings/recruiting/rules](http://localhost:3002/company-settings/recruiting/rules)
 - [http://localhost:3002/company-settings/recruiting/stages](http://localhost:3002/company-settings/recruiting/stages)
 - [http://localhost:3002/company-settings/recruiting/commands](http://localhost:3002/company-settings/recruiting/commands)
-- [http://localhost:3002/company-settings/candidate-fields](http://localhost:3002/company-settings/candidate-fields)
+- [http://localhost:3002/company-settings/recruiting/candidate-fields](http://localhost:3002/company-settings/recruiting/candidate-fields) (старый `/company-settings/candidate-fields` редиректит сюда)
 - [http://localhost:3002/company-settings/scorecard](http://localhost:3002/company-settings/scorecard)
 - [http://localhost:3002/company-settings/sla](http://localhost:3002/company-settings/sla)
 - [http://localhost:3002/company-settings/vacancy-prompt](http://localhost:3002/company-settings/vacancy-prompt)
@@ -70,6 +79,8 @@
 - [http://localhost:3002/company-settings/finance/benchmarks](http://localhost:3002/company-settings/finance/benchmarks)
 
 ## Wiki
+
+> **Приёмка:** по решению продукта полный проход этого блока **не обязателен** для текущей волны миграции (`MIGRATION_DIVERGENCES.md` §11). Ссылки оставлены для опционального smoke.
 
 - [http://localhost:3002/wiki](http://localhost:3002/wiki)
 - [http://localhost:3002/wiki/1](http://localhost:3002/wiki/1) (пример id из моков — подставьте актуальный)
@@ -97,8 +108,11 @@
 - [http://localhost:3002/projects/1](http://localhost:3002/projects/1) (id из моков)
 - [http://localhost:3002/projects/teams](http://localhost:3002/projects/teams)
 - [http://localhost:3002/projects/resources](http://localhost:3002/projects/resources)
+- [http://localhost:3002/projects/hr](http://localhost:3002/projects/hr) (заглушка HR‑проектов)
 
 ## ATS
+
+> **Объём:** ATS планируется **пересобрать полностью** под новую спецификацию — см. `docs/ATS_MIGRATION_SCOPE.md`. Smoke ниже — проверка, что маршруты живы на моках, а не критерий паритета с 3001.
 
 - [http://localhost:3002/ats](http://localhost:3002/ats)
 - [http://localhost:3002/ats/vacancy/1/candidate/1](http://localhost:3002/ats/vacancy/1/candidate/1)
@@ -135,10 +149,33 @@
 - [http://localhost:3002/errors/500](http://localhost:3002/errors/500)
 - Несуществующий путь → 404 (wildcard в `App.tsx`)
 
+## Сайдбар: заглушки модулей (`ModulePlaceholderPage`)
+
+Маршруты ниже не дублируют всё меню: это **репрезентативная выборка** для smoke (ожидается экран «Раздел в разработке» и корректный `document.title` из `AppLayout`). Непокрытые ветки смотрите в **[sidebar.md](./sidebar.md)** и обходите по пунктам меню на 3002.
+
+- [http://localhost:3002/tasks](http://localhost:3002/tasks)
+- [http://localhost:3002/onboarding/programs](http://localhost:3002/onboarding/programs)
+- [http://localhost:3002/hr-services/documents](http://localhost:3002/hr-services/documents)
+- [http://localhost:3002/employees](http://localhost:3002/employees)
+- [http://localhost:3002/internal-vacancies](http://localhost:3002/internal-vacancies)
+- [http://localhost:3002/learning/courses](http://localhost:3002/learning/courses)
+- [http://localhost:3002/performance/goals](http://localhost:3002/performance/goals)
+- [http://localhost:3002/compensation/benefits](http://localhost:3002/compensation/benefits)
+- [http://localhost:3002/internal-site](http://localhost:3002/internal-site)
+- [http://localhost:3002/hr-pr/events](http://localhost:3002/hr-pr/events)
+- [http://localhost:3002/analytics](http://localhost:3002/analytics)
+- [http://localhost:3002/settings/workflows](http://localhost:3002/settings/workflows)
+- [http://localhost:3002/integrations/hh](http://localhost:3002/integrations/hh)
+- [http://localhost:3002/reporting/employees](http://localhost:3002/reporting/employees) (подстраница отчётности — заглушка)
+- [http://localhost:3002/company-settings/legal-entities](http://localhost:3002/company-settings/legal-entities) (настройки компании — заглушка)
+
+**В UI:** пункты, ведущие на заглушку или 404, в сайдбаре отображаются **красным текстом** (см. §3 в [sidebar.md](./sidebar.md)).
+
 ---
 
 ## Рекомендуемый порядок
 
 1. `npm run build` в `fe_migration`.
-2. Пройти блоки сверху вниз или по разделам Sidebar на 3002.
-3. Для каждого расхождения с 3001 — заметка в трекере (часть G плана миграции).
+2. Пройти блоки сверху вниз или по разделам сайдбара на 3002 (структура — [sidebar.md](./sidebar.md)).
+3. Отдельно пройти раздел **«Сайдбар: заглушки модулей»** выше.
+4. Для каждого расхождения с 3001 — заметка в трекере (часть G плана миграции) и при необходимости §9 [MIGRATION_DIVERGENCES.md](./MIGRATION_DIVERGENCES.md).

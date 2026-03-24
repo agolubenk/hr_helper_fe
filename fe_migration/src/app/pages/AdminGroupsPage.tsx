@@ -2,6 +2,7 @@ import { Box, Button, Callout, Card, Flex, Section, Table, Text } from '@radix-u
 import { useEffect, useState } from 'react'
 import { ReloadIcon, GearIcon } from '@radix-ui/react-icons'
 import { getApiUrl } from '@/lib/api'
+import { useRoleAccess } from '@/app/admin/useRoleAccess'
 
 interface ApiGroup {
   id: number
@@ -9,6 +10,7 @@ interface ApiGroup {
 }
 
 export function AdminGroupsPage() {
+  const { role, canCreate, canEdit, canRemove } = useRoleAccess()
   const [groups, setGroups] = useState<ApiGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -67,9 +69,15 @@ export function AdminGroupsPage() {
   return (
     <Section size="2">
       <Flex justify="between" align="center" mb="4" wrap="wrap" gap="3">
-        <Text size="6" weight="bold">
-          Группы
-        </Text>
+        <Box>
+          <Text size="6" weight="bold">
+            Группы
+          </Text>
+          <Text size="1" color="gray">
+            Роль: {role} • create: {canCreate ? 'yes' : 'no'} • edit: {canEdit ? 'yes' : 'no'} • remove:{' '}
+            {canRemove ? 'yes' : 'no'}
+          </Text>
+        </Box>
         <Button variant="soft" size="2" onClick={loadGroups}>
           <ReloadIcon /> Обновить
         </Button>

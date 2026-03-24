@@ -67,6 +67,19 @@ export interface Benchmark {
   date_added: string
   created_at: string
   updated_at: string
+
+  /** Мок/расширение: ID кандидата в базе (для ссылки в ATS) */
+  linked_candidate_id?: number | null
+  /** Мок: суммарный опыт, лет */
+  total_experience_years?: number | null
+  /** Мок: регионы / где работал (текст) */
+  work_regions_display?: string | null
+  /** Мок: формулировка ожиданий по ЗП (дополнительно к вилке) */
+  salary_expectations_note?: string | null
+  /** Мок: краткое описание вакансии (для типа vacancy) */
+  vacancy_description?: string | null
+  /** Мок: источник вакансии (HeadHunter, реферал и т.д.) */
+  vacancy_source_display?: string | null
 }
 
 export interface BenchmarkSettings {

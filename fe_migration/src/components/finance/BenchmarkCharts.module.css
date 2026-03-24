@@ -1,0 +1,110 @@
+.chartsBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.chartCard {
+  padding: 16px;
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-3);
+  background: var(--color-background);
+}
+
+.chartTitle {
+  font-size: var(--font-size-2, 13px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--gray-12);
+}
+
+.chartCard > .chartTitle {
+  margin-bottom: 12px;
+}
+
+.chartTitleRow {
+  margin-bottom: 12px;
+}
+
+.chartTitleRow .chartTitle {
+  margin-bottom: 0;
+}
+
+.trendChartWrap {
+  width: 100%;
+  min-height: 220px;
+}
+
+.svgChart {
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+  display: block;
+}
+
+.barLabel {
+  font-size: 11px;
+  fill: var(--gray-11);
+}
+
+.barValue {
+  font-size: 11px;
+  fill: var(--gray-12);
+  font-weight: 500;
+}
+
+.axisLine {
+  stroke: var(--gray-a6);
+  stroke-width: 1;
+}
+
+.trendLine {
+  fill: none;
+  stroke: var(--accent-9);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trendFill {
+  fill: color-mix(in srgb, var(--accent-9) 18%, transparent);
+}
+
+.trendDot {
+  fill: var(--accent-9);
+}
+
+.trendDotRing {
+  fill: var(--color-background);
+  stroke: var(--accent-9);
+  stroke-width: 2;
+}
+
+.trendGridLine {
+  stroke: var(--gray-a4);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.trendAxisY {
+  font-size: 10px;
+  fill: var(--gray-10);
+}
+
+.trendXLabel {
+  font-size: 10px;
+  fill: var(--gray-11);
+}

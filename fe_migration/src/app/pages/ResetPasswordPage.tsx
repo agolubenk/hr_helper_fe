@@ -3,11 +3,13 @@ import { Flex, Text, Button, Box } from '@radix-ui/themes'
 import { SunIcon, MoonIcon, LockClosedIcon, CheckIcon } from '@radix-ui/react-icons'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from '@/router-adapter'
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle'
 import { useTheme } from '@/components/ThemeProvider'
 import FloatingLabelInput from '@/components/FloatingLabelInput'
 import styles from '@/app/pages/styles/LoginPage.module.css'
 
 function ResetPasswordPageContent() {
+  useDocumentTitle('Новый пароль — HR Helper')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)

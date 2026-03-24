@@ -1,11 +1,12 @@
+/* Точная копия AtsStatusBar.module.css из frontend */
 .statusBar {
   position: fixed;
   top: 64px;
   left: 0;
   right: 0;
   height: 48px;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--gray-a6);
+  background-color: var(--color-surface, var(--gray-1));
+  border-bottom: 1px solid var(--gray-6);
   z-index: 999;
   padding: 0;
   display: flex;
@@ -19,22 +20,24 @@
   top: 0;
   bottom: 0;
   flex-shrink: 0;
-  width: 200px;
+  width: 250px;
   z-index: 3;
-  background-color: var(--color-surface);
-  padding: 0 16px;
-  border-right: 1px solid var(--gray-a6);
+  background-color: var(--color-surface, var(--gray-1));
+  padding: 0 12px;
+  border-right: 1px solid var(--gray-6);
   display: flex;
   align-items: center;
+  gap: 8px;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
 .selectTrigger {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 .addVacancyItemFirst {
-  border-bottom: 1px solid var(--gray-a6);
+  border-bottom: 1px solid var(--gray-6);
   margin-top: 8px;
   margin-bottom: 4px;
   padding-top: 8px;
@@ -61,7 +64,7 @@
 }
 
 .allVacanciesItem {
-  border-top: 1px solid var(--gray-a6);
+  border-top: 1px solid var(--gray-6);
   margin-top: 4px;
   padding-top: 8px;
 }
@@ -74,13 +77,13 @@
 }
 
 .mySwitchItem {
-  border-top: 1px solid var(--gray-a6);
+  border-top: 1px solid var(--gray-6);
   margin-top: 4px;
   padding-top: 8px;
 }
 
 .generalSettingsItem {
-  border-top: 1px solid var(--gray-a6);
+  border-top: 1px solid var(--gray-6);
   margin-top: 4px;
   margin-bottom: 8px;
   padding-top: 8px;
@@ -89,11 +92,11 @@
 
 .statusesScroll {
   flex: 1;
-  margin-left: 200px;
+  margin-left: 250px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--gray-a6) transparent;
+  scrollbar-color: var(--gray-6) transparent;
   padding: 0 16px;
   height: 100%;
   display: flex;
@@ -109,12 +112,12 @@
 }
 
 .statusesScroll::-webkit-scrollbar-thumb {
-  background: var(--gray-a6);
+  background: var(--gray-6);
   border-radius: 2px;
 }
 
 .statusesScroll::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-a8);
+  background: var(--gray-8);
 }
 
 .statusesContainer {
@@ -144,15 +147,14 @@
   cursor: not-allowed !important;
 }
 
-/* Темная тема */
 [data-theme="dark"] .statusBar {
   background-color: var(--gray-2);
-  border-bottom-color: var(--gray-a6);
+  border-bottom-color: var(--gray-6);
 }
 
 [data-theme="dark"] .vacancySelector {
   background-color: var(--gray-2);
-  border-right-color: var(--gray-a6);
+  border-right-color: var(--gray-6);
 }
 
 [data-theme="dark"] .statusItem:hover {

@@ -348,6 +348,8 @@ export interface GlobalSearchProps {
   shortcutHint?: string
   /** Тема для правого слота (не передаём — не показываем) */
   dark?: boolean
+  /** Выпадающий список на всю ширину экрана (мобильный полноэкранный поиск) */
+  dropdownFullWidth?: boolean
   /** Выполнить поиск (запрос + опциональный скоуп) */
   onSearch?: (query: string, scope: ScopeType | null) => void
   /** Переход по сущности (вакансия/кандидат/компания) */
@@ -401,6 +403,7 @@ export default function GlobalSearch({
   placeholder = 'Поиск...',
   shortcutHint,
   dark = false,
+  dropdownFullWidth = false,
   onSearch,
   onEntityClick,
 }: GlobalSearchProps) {
@@ -781,7 +784,10 @@ export default function GlobalSearch({
           - Показывается только если showDropdown === true
           - role="listbox" для доступности */}
       {showDropdown && (
-        <div className={styles.dropdown} role="listbox">
+        <div
+          className={`${styles.dropdown} ${dropdownFullWidth ? styles.dropdownFullWidth : ''}`}
+          role="listbox"
+        >
           {/* Секция сущностей (вакансии, кандидаты, компании)
               - Показывается только если есть предложения сущностей
               - Каждая сущность имеет иконку, заголовок, подзаголовок и мета-информацию */}

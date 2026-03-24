@@ -2,6 +2,7 @@ import { Box, Button, Callout, Card, Flex, Section, Table, Text, Badge } from '@
 import { useEffect, useState } from 'react'
 import { ReloadIcon, PersonIcon } from '@radix-ui/react-icons'
 import { getApiUrl } from '@/lib/api'
+import { useRoleAccess } from '@/app/admin/useRoleAccess'
 
 interface ApiUser {
   id: number
@@ -18,6 +19,7 @@ interface ApiUser {
 }
 
 export function AdminUsersPage() {
+  const { role, canCreate, canEdit, canRemove } = useRoleAccess()
   const [users, setUsers] = useState<ApiUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,12 +87,20 @@ export function AdminUsersPage() {
   return (
     <Section size="2">
       <Flex justify="between" align="center" mb="4" wrap="wrap" gap="3">
-        <Text size="6" weight="bold">
-          Пользователи
-        </Text>
-        <Button variant="soft" size="2" onClick={loadUsers}>
-          <ReloadIcon /> Обновить
-        </Button>
+        <Box>
+          <Text size="6" weight="bold">
+            Пользователи
+          </Text>
+          <Text size="1" color="gray">
+            Роль: {role} • create: {canCreate ? 'yes' : 'no'} • edit: {canEdit ? 'yes' : 'no'} • remove:{' '}
+            {canRemove ? 'yes' : 'no'}
+          </Text>
+        </Box>
+        <Flex align="center" gap="2">
+          <Button variant="soft" size="2" onClick={loadUsers}>
+            <ReloadIcon /> Обновить
+          </Button>
+        </Flex>
       </Flex>
       <Card size="2">
         {users.length === 0 ? (

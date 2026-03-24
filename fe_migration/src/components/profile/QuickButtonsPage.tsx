@@ -112,11 +112,11 @@ import QuickButtonModal from "./QuickButtonModal"
 import styles from './QuickButtonsPage.module.css'
 
 import {
-  getQuickButtons,
-  saveQuickButtons,
+  QUICK_BUTTONS_KEY,
   QUICK_BUTTONS_ENABLED_KEY,
   type QuickButton,
 } from '@/lib/quickButtonsStorage'
+import { loadQuickButtons, persistQuickButtons } from '@/services/profile/quickButtonsService'
 
 /**
  * Константы ключей localStorage для настроек быстрых кнопок
@@ -272,10 +272,10 @@ export default function QuickButtonsPage() {
   const toast = useToast()
   
   // Состояние: массив быстрых кнопок пользователя
-  const [buttons, setButtons] = useState<QuickButton[]>(() => getQuickButtons())
+  const [buttons, setButtons] = useState<QuickButton[]>(() => loadQuickButtons())
 
   useEffect(() => {
-    saveQuickButtons(buttons)
+    persistQuickButtons(buttons)
   }, [buttons])
   
   // Состояние: флаг открытости модального окна создания/редактирования кнопки
@@ -479,6 +479,21 @@ export default function QuickButtonsPage() {
    * - Для синхронизации в той же вкладке используется кастомное событие 'localStorageChange'
    * - Другие вкладки синхронизируются автоматически через storage event
    */
+  /**
+   * Список кнопок `quickButtons`: другая вкладка меняет localStorage → нативное `storage`
+   * (в той же вкладке не срабатывает; там состояние уже обновлено через setButtons).
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === QUICK_BUTTONS_KEY) {
+        setButtons(loadQuickButtons())
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -1051,6 +1066,7 @@ export default function QuickButtonsPage() {
         isOpen={isModalOpen}
         onClose={handleClose}
         onSave={handleSave}
+        onDelete={(id) => setButtons((prev) => prev.filter((btn) => btn.id !== id))}
         initialData={editingButton}
       />
     </Box>

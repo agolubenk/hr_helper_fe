@@ -182,29 +182,19 @@
   - `IN_DEVELOPMENT_IDS`: множество ID пунктов меню, которые находятся в разработке
 - **Используется в**: `AppLayout.tsx`
 
-### 7. StatusBar
-- **Файл**: `StatusBar.tsx`, `StatusBar.module.css`
-- **Назначение**: Статусная панель для страницы recr-chat
+### 7. StatusBar (AtsStatusBar)
+- **Файлы**: `StatusBar.tsx` (реэкспорт), `layout/StatusBar/AtsStatusBar.tsx`, `layout/StatusBar/AtsStatusBar.module.css` — как в приложении `frontend`.
+- **Назначение**: Статусная панель для страницы `/ats`
 - **Пропсы**:
-  - `vacancies`: массив вакансий для выбора (Array<{ id: string; title: string }>, опционально)
-  - `myVacancyIds`: ID вакансий в блоке "Мои" (string[], опционально)
-  - `statuses`: массив статусов кандидатов (Array<{ id: string; label: string; color: string; count?: number }>, опционально)
-  - `onGeneralSettingsClick`: обработчик клика на "Общие настройки" (() => void, опционально)
-  - `onAddVacancy`: обработчик добавления новой вакансии ((data: AddVacancyFormData) => void, опционально)
+  - `selectedStatus`: выбранный фильтр по статусу (string | null, опционально; иначе внутреннее состояние)
+  - `onStatusChange`: смена фильтра ((status: string | null) => void, опционально; иначе событие `ATS_STATUS_CHANGE_EVENT`)
+  - `statusCounts`: счётчики по статусам (Record<string, number>, опционально; иначе внутреннее состояние / событие `ATS_STATUS_COUNTS_EVENT`)
 - **Функциональность**: 
-  - Отображение статусов кандидатов по выбранной вакансии
-  - Фильтрация кандидатов по статусам
-  - Выбор вакансии для отображения статусов
-  - Группировка неактивных статусов (без кандидатов)
-  - Раскрытие/сворачивание групп статусов
-  - Добавление новой вакансии
+  - Выбор вакансии (Мои / Все / конкретная), пиллы этапов с числами, группа «N этапов без кандидатов», раскрытие группы
 - **Состояние**:
-  - `selectedVacancy`: выбранная вакансия (string)
-  - `viewMode`: режим просмотра вакансий ('my' | 'all')
-  - `expandedGroups`: множество ID раскрытых групп статусов (Set<string>)
-  - `addVacancyOpen`: флаг открытия модального окна добавления вакансии (boolean)
+  - `selectedVacancy`, `viewMode`, `expandedGroups`, локальный выбранный статус и счётчики (или из пропсов)
 - **Особенности**: 
-  - Показывается только на странице /recr-chat
+  - Показывается только на странице `/ats` (см. `AppLayout`)
   - Фиксированная позиция под Header (top: 64px)
   - Высота 48px
   - Горизонтальный скролл со статусами
@@ -212,9 +202,8 @@
   - Раскрытие групп для просмотра всех статусов
   - Статус "Все" показывает всех кандидатов независимо от статуса
 - **Моковые данные**:
-  - `defaultStatuses`: статусы кандидатов по умолчанию
-  - `defaultVacancies`: вакансии по умолчанию
-- **Используется в**: `AppLayout.tsx` (только на странице recr-chat)
+  - `DEFAULT_VACANCIES`, демо-счётчики `DEMO_STATUS_COUNTS` (до API)
+- **Используется в**: `AppLayout.tsx` (только на странице `/ats`)
 
 ### 8. ThemeProvider
 - **Файл**: `ThemeProvider.tsx`
@@ -651,9 +640,9 @@ interface ThemeContextType {
 - `.menuItemActive`: стили для активного пункта меню (подсветка, сдвиг)
 - Адаптивные стили для мобильных устройств (@media max-width: 767px)
 
-### StatusBar.module.css
+### AtsStatusBar.module.css
 - `.statusBar`: стили для статусной панели (фиксированная позиция, высота 48px)
-- `.vacancySelector`: стили для выпадающего списка вакансий (фиксированная ширина 200px)
+- `.vacancySelector`: стили для выпадающего списка вакансий (фиксированная ширина 250px)
 - `.selectTrigger`: стили для кнопки выбора вакансии
 - `.addVacancyItemFirst`: стили для пункта "Добавить вакансию"
 - `.sectionLabel`: стили для заголовка секции

@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Flex, Text } from '@radix-ui/themes'
@@ -30,6 +28,7 @@ const ICON_MAP = {
   module: BoxIcon,
 } as const
 
+// 24 примера задач и элементов для демонстрации
 const EXAMPLE_ITEMS: TrayItem[] = [
   { id: '1', type: 'task', text: 'Проверить резюме кандидата' },
   { id: '2', type: 'meeting', text: 'Интервью: Frontend разработчик' },
@@ -119,6 +118,7 @@ export function Footer() {
     setItems((prev) => prev.filter((item) => item.id !== id))
   }, [])
 
+  // Выравнивание правого края dropdown с правым краем кнопки +N
   useLayoutEffect(() => {
     if (!dropdownOpen || !moreBtnRef.current) return
     const rect = moreBtnRef.current.getBoundingClientRect()
@@ -145,7 +145,11 @@ export function Footer() {
 
   return (
     <footer className={styles.footer}>
-      <Flex align="center" justify="between" className={styles.footerContent}>
+      <Flex
+        align="center"
+        justify="between"
+        className={styles.footerContent}
+      >
         <Text size="1" color="gray" className={styles.copyright}>
           © HR Helper, {year}
         </Text>
@@ -207,38 +211,35 @@ export function Footer() {
                         style={{ right: dropdownRight }}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {hiddenItems
-                          .slice()
-                          .reverse()
-                          .map((item) => {
-                            const Icon = ICON_MAP[item.type]
-                            return (
-                              <div
-                                key={item.id}
-                                role="button"
-                                tabIndex={0}
-                                className={`${styles.trayDropdownItem} ${styles[`type_${item.type}`]}`}
-                                title={item.text}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
+                        {hiddenItems.slice().reverse().map((item) => {
+                          const Icon = ICON_MAP[item.type]
+                          return (
+                            <div
+                              key={item.id}
+                              role="button"
+                              tabIndex={0}
+                              className={`${styles.trayDropdownItem} ${styles[`type_${item.type}`]}`}
+                              title={item.text}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
+                              }}
+                            >
+                              <Icon width={14} height={14} className={styles.trayDropdownIcon} />
+                              <span className={styles.trayDropdownText}>{item.text}</span>
+                              <button
+                                type="button"
+                                className={styles.trayDropdownRemove}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removeItem(item.id)
                                 }}
+                                title="Удалить"
                               >
-                                <Icon width={14} height={14} className={styles.trayDropdownIcon} />
-                                <span className={styles.trayDropdownText}>{item.text}</span>
-                                <button
-                                  type="button"
-                                  className={styles.trayDropdownRemove}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    removeItem(item.id)
-                                  }}
-                                  title="Удалить"
-                                >
-                                  <Cross2Icon width={12} height={12} />
-                                </button>
-                              </div>
-                            )
-                          })}
+                                <Cross2Icon width={12} height={12} />
+                              </button>
+                            </div>
+                          )
+                        })}
                       </div>,
                       document.body
                     )}

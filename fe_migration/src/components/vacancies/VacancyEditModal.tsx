@@ -1,15 +1,27 @@
 'use client'
 
 import { Box, Flex, Text, Button, Dialog, Separator, TextField, TextArea, Card, Table, Select, Checkbox, Switch, DropdownMenu, Badge, Tabs } from "@radix-ui/themes"
-import { useState, useEffect } from "react"
-import { Cross2Icon, GlobeIcon, PersonIcon, UploadIcon, FileTextIcon, GearIcon, PlusIcon, TrashIcon, ChevronDownIcon, Pencil1Icon } from "@radix-ui/react-icons"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { createPortal } from "react-dom"
+import { Cross2Icon, GlobeIcon, PersonIcon, UploadIcon, FileTextIcon, GearIcon, PlusIcon, TrashIcon, ChevronDownIcon, Pencil1Icon, ArrowTopRightIcon, ExclamationTriangleIcon } from "@radix-ui/react-icons"
+import { Link } from "react-router-dom"
 import { useToast } from "@/components/Toast/ToastContext"
 import styles from './VacancyEditModal.module.css'
 
-type SettingTab = 'text' | 'recruiters' | 'customers' | 'questions' | 'integrations' | 'statuses' | 'salary' | 'interviews' | 'scorecard' | 'dataProcessing' | 'history'
+/** Справочник доп. полей кандидата (компания); настройка списка — на отдельной странице */
+export const COMPANY_CANDIDATE_FIELDS_SETTINGS_PATH = '/company-settings/recruiting/candidate-fields'
+
+const CANDIDATE_ADDITIONAL_FIELD_ROWS = [
+  { id: 'grade', label: 'Грейд', typeLabel: 'Выбор из списка' },
+  { id: 'relocation', label: 'Готовность к релокации', typeLabel: 'Да / Нет' },
+  { id: 'recruiter_note', label: 'Заметка рекрутера', typeLabel: 'Текст' },
+] as const
+
+export type SettingTab = 'text' | 'locations' | 'recruiters' | 'customers' | 'questions' | 'integrations' | 'statuses' | 'salary' | 'interviews' | 'scorecard' | 'dataProcessing' | 'additionalFields' | 'automations' | 'history'
 
 const SECTIONS: { key: SettingTab; label: string }[] = [
   { key: 'text', label: 'Текст вакансии' },
+  { key: 'locations', label: 'Локации' },
   { key: 'recruiters', label: 'Рекрутеры' },
   { key: 'customers', label: 'Заказчики и интервьюеры' },
   { key: 'questions', label: 'Вопросы и ссылки' },
@@ -19,11 +31,156 @@ const SECTIONS: { key: SettingTab; label: string }[] = [
   { key: 'interviews', label: 'Встречи и интервью' },
   { key: 'scorecard', label: 'Scorecard' },
   { key: 'dataProcessing', label: 'Обработка данных' },
+  { key: 'additionalFields', label: 'Дополнительные поля' },
+  { key: 'automations', label: 'Автоматизации' },
   { key: 'history', label: 'История правок' },
 ]
 
-// Константы как в ats
-const questionLinkOffices = [{ id: 'by', name: 'Беларусь' }, { id: 'pl', name: 'Польша' }]
+export const VACANCY_SETTINGS_TAB_KEYS: readonly SettingTab[] = SECTIONS.map(s => s.key)
+
+export function parseVacancySettingsTab(raw: string | null | undefined): SettingTab {
+  if (raw && (VACANCY_SETTINGS_TAB_KEYS as readonly string[]).includes(raw)) return raw as SettingTab
+  return 'text'
+}
+
+/** Офис (площадка) внутри страны — для моков и синхронизации URL textOffice */
+export interface VacancyTextTabOfficeLocation {
+  id: string
+  name: string
+}
+
+/** Страна/регион вкладки «Текст вакансии» + числовой countryId и офисы */
+export interface VacancyTextTabCountry {
+  id: string
+  name: string
+  countryId: number
+  offices: VacancyTextTabOfficeLocation[]
+}
+
+// Константы как в ats (мок: id страны и офисов для детализации в UI и query string)
+const questionLinkOffices: VacancyTextTabCountry[] = [
+  {
+    id: 'by',
+    name: 'Беларусь',
+    countryId: 112,
+    offices: [
+      { id: 'of-by-msq-101', name: 'Минск, центр' },
+      { id: 'of-by-gml-102', name: 'Гомель' },
+    ],
+  },
+  {
+    id: 'pl',
+    name: 'Польша',
+    countryId: 616,
+    offices: [{ id: 'of-pl-waw-201', name: 'Варшава' }],
+  },
+]
+
+/** Отдельная «страница» текста для локации All world remote (индивидуальный режим) */
+export const GLOBAL_REMOTE_TEXT_TAB: VacancyTextTabCountry = {
+  id: 'all-world-remote',
+  name: 'All world remote',
+  countryId: 0,
+  offices: [{ id: 'of-all-world-remote', name: 'Глобально' }],
+}
+
+export function getVacancyTextTabCountryByKey(key: string): VacancyTextTabCountry | undefined {
+  if (key === GLOBAL_REMOTE_TEXT_TAB.id) return GLOBAL_REMOTE_TEXT_TAB
+  return questionLinkOffices.find((o) => o.id === key)
+}
+
+/** Экспорт для страницы /vacancies (дефолты в URL); включает all-world-remote для textCountry= */
+export const VACANCY_TEXT_TAB_COUNTRIES: readonly VacancyTextTabCountry[] = [...questionLinkOffices, GLOBAL_REMOTE_TEXT_TAB]
+
+export function parseVacancyTextCountryKey(raw: string | null | undefined): string {
+  const valid = new Set<string>([...questionLinkOffices.map((o) => o.id), GLOBAL_REMOTE_TEXT_TAB.id])
+  if (raw && valid.has(raw)) return raw
+  return questionLinkOffices[0]?.id ?? 'by'
+}
+
+/** Валидный officeId для страны или первый офис страны; null если у страны нет офисов */
+export function parseVacancyTextOfficeId(countryKey: string, raw: string | null | undefined): string | null {
+  const c = getVacancyTextTabCountryByKey(countryKey)
+  if (!c?.offices?.length) return null
+  if (raw && c.offices.some((o) => o.id === raw)) return raw
+  return c.offices[0]?.id ?? null
+}
+
+/** Справочник локаций для раздела «Локации» (мок). countryCode: привязка к вкладке страны; null — без привязки / глобально */
+const LOCATION_CATALOG: { id: string; label: string; countryCode: 'by' | 'pl' | null }[] = [
+  { id: 'all-world-remote', label: 'All world remote', countryCode: null },
+  { id: 'loc-msk', label: 'Минск', countryCode: 'by' },
+  { id: 'loc-gom', label: 'Гомель', countryCode: 'by' },
+  { id: 'loc-waw', label: 'Варшава', countryCode: 'pl' },
+  { id: 'loc-remote', label: 'Удалённо', countryCode: null },
+  { id: 'loc-hybrid', label: 'Гибрид', countryCode: null },
+]
+
+/** Страны для табов «Текст вакансии» / «Вопросы»: если есть города с countryCode — только они; иначе все (в т.ч. только All world remote) */
+function getVisibleCountryKeysFromLocationRows(rows: { id: string }[]): string[] {
+  const codes = new Set<string>()
+  for (const r of rows) {
+    const cat = LOCATION_CATALOG.find((c) => c.id === r.id)
+    if (cat?.countryCode === 'by' || cat?.countryCode === 'pl') codes.add(cat.countryCode)
+  }
+  if (codes.size > 0) {
+    return questionLinkOffices.filter((o) => codes.has(o.id)).map((o) => o.id)
+  }
+  return questionLinkOffices.map((o) => o.id)
+}
+
+/** Порядок вкладок «Текст вакансии» в индивидуальном режиме — по строкам локаций; All world remote отдельно */
+function buildOrderedIndividualTextTabCountries(
+  rows: { id: string }[],
+  fallbackCountryKeys: string[]
+): VacancyTextTabCountry[] {
+  const seen = new Set<string>()
+  const out: VacancyTextTabCountry[] = []
+  for (const row of rows) {
+    if (row.id === GLOBAL_REMOTE_TEXT_TAB.id) {
+      if (!seen.has(GLOBAL_REMOTE_TEXT_TAB.id)) {
+        seen.add(GLOBAL_REMOTE_TEXT_TAB.id)
+        out.push(GLOBAL_REMOTE_TEXT_TAB)
+      }
+      continue
+    }
+    const cat = LOCATION_CATALOG.find((c) => c.id === row.id)
+    if (cat?.countryCode === 'by' || cat?.countryCode === 'pl') {
+      const co = questionLinkOffices.find((o) => o.id === cat.countryCode)
+      if (co && !seen.has(co.id)) {
+        seen.add(co.id)
+        out.push(co)
+      }
+    }
+  }
+  if (out.length > 0) return out
+  return questionLinkOffices.filter((o) => fallbackCountryKeys.includes(o.id))
+}
+
+/** Разделитель countryKey::officeId для единой полоски вкладок «Текст вакансии» */
+const VACANCY_TEXT_SEGMENT_SEP = '::' as const
+
+export interface VacancyTextFlatSegment {
+  key: string
+  label: string
+  countryKey: string
+  officeId: string
+}
+
+/** Одна горизонтальная полоска: при нескольких офисах в стране — по вкладке на офис; иначе — одна вкладка на страну */
+function buildFlatTextTabSegments(countries: VacancyTextTabCountry[]): VacancyTextFlatSegment[] {
+  const out: VacancyTextFlatSegment[] = []
+  for (const c of countries) {
+    const multiOffice = c.offices.length > 1
+    for (const o of c.offices) {
+      const key = `${c.id}${VACANCY_TEXT_SEGMENT_SEP}${o.id}`
+      const label = multiOffice ? o.name : c.name
+      out.push({ key, label, countryKey: c.id, officeId: o.id })
+    }
+  }
+  return out
+}
+
 const questionLinkColors = [
   { id: 'blue', hex: '#3B82F6', label: 'Синий' }, { id: 'green', hex: '#10B981', label: 'Зелёный' },
   { id: 'amber', hex: '#F59E0B', label: 'Янтарный' }, { id: 'red', hex: '#EF4444', label: 'Красный' },
@@ -137,6 +294,26 @@ interface VacancyEditModalProps {
   onVacancyStatusChange?: (status: 'active' | 'inactive') => void
   onSwitchToEdit?: () => void
   onSave?: (data: unknown) => void
+  /** Удаление вакансии (мок): подтверждение через toast в модалке */
+  onDelete?: (vacancyId: number) => void
+  /** Рендер без Dialog (ATS и т.п.) */
+  embedded?: boolean
+  /** Контролируемая вкладка настроек (синхронизация с URL) */
+  settingsTab?: SettingTab
+  onSettingsTabChange?: (tab: SettingTab) => void
+  /** Доп. действие при «Отмена» во встроенном режиме (например navigate назад) */
+  onEmbeddedCancel?: () => void
+  /** Поиск разделов с родителя (ATS): поле в левой колонке, без дубля в сайдбаре */
+  vacancySettingsSearchExternal?: string
+  onVacancySettingsSearchExternalChange?: (value: string) => void
+  /** Контейнер в левой колонке ATS: сайдбар разделов рендерится через портал */
+  settingsSidebarHostEl?: HTMLElement | null
+  /** Синхронизация вкладки страны в «Текст вакансии» с URL (/vacancies: textCountry) */
+  textTabCountryKey?: string | null
+  onTextTabCountryKeyChange?: (countryKey: string) => void
+  /** Синхронизация выбранного офиса с URL (textOffice), только при нескольких офисах в стране */
+  textTabOfficeId?: string | null
+  onTextTabOfficeIdChange?: (officeId: string | null) => void
 }
 
 interface HistoryItem {
@@ -179,7 +356,37 @@ type InterviewMeeting = { id: string; stage: string; duration: number; title: st
 
 type SalaryRangesMap = Record<string, Record<string, { from: number | null; to: number | null }>>
 
-export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacancyTitle, vacancy, mode = 'edit', vacancyStatus, onVacancyStatusChange, onSwitchToEdit, onSave }: VacancyEditModalProps) {
+function createDefaultFieldSettingsForVacancyCountry(): Record<string, { active: boolean; visible: boolean }> {
+  return {
+    title: { active: true, visible: true },
+    department: { active: true, visible: true },
+    header: { active: true, visible: true },
+    responsibilities: { active: true, visible: true },
+    requirements: { active: true, visible: true },
+    niceToHave: { active: true, visible: true },
+    conditions: { active: true, visible: true },
+    closing: { active: true, visible: true },
+    link: { active: true, visible: true },
+    attachment: { active: true, visible: true },
+  }
+}
+
+function createDefaultVacancyFieldsByCountryEntry() {
+  return {
+    title: '',
+    department: '',
+    header: '',
+    responsibilities: '',
+    requirements: '',
+    niceToHave: '',
+    conditions: '',
+    closing: '',
+    link: '',
+    fieldSettings: createDefaultFieldSettingsForVacancyCountry(),
+  }
+}
+
+export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacancyTitle, vacancy, mode = 'edit', vacancyStatus, onVacancyStatusChange, onSwitchToEdit, onSave, onDelete, embedded = false, settingsTab, onSettingsTabChange, onEmbeddedCancel, vacancySettingsSearchExternal, onVacancySettingsSearchExternalChange, settingsSidebarHostEl, textTabCountryKey, onTextTabCountryKeyChange, textTabOfficeId, onTextTabOfficeIdChange }: VacancyEditModalProps) {
   const toast = useToast()
   const showToast = (msg: string, t: 'success' | 'warning' | 'error' | 'info' = 'info') => {
     const titles = { info: 'Информация', warning: 'Внимание', error: 'Ошибка', success: 'Успешно' }
@@ -189,8 +396,63 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
     else toast.showSuccess(titles.success, msg)
   }
 
-  const [selectedSettingTab, setSelectedSettingTab] = useState<SettingTab>('text')
-  const [vacancySettingsSearch, setVacancySettingsSearch] = useState('')
+  const [internalSettingsTab, setInternalSettingsTab] = useState<SettingTab>('text')
+  const activeTab = settingsTab ?? internalSettingsTab
+  const setTab = useCallback(
+    (tab: SettingTab) => {
+      onSettingsTabChange?.(tab)
+      if (settingsTab === undefined) setInternalSettingsTab(tab)
+    },
+    [settingsTab, onSettingsTabChange]
+  )
+  const [internalVacancySettingsSearch, setInternalVacancySettingsSearch] = useState('')
+  const vacancySearchExternal = typeof onVacancySettingsSearchExternalChange === 'function'
+  const vacancySettingsSearchValue = vacancySearchExternal ? (vacancySettingsSearchExternal ?? '') : internalVacancySettingsSearch
+
+  const textTabCountryControlled = typeof onTextTabCountryKeyChange === 'function'
+  const textTabOfficeControlled = typeof onTextTabOfficeIdChange === 'function'
+  const [internalTextCountryTab, setInternalTextCountryTab] = useState<string>(() => questionLinkOffices[0]?.id ?? 'by')
+  const [internalOfficeByCountry, setInternalOfficeByCountry] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {}
+    questionLinkOffices.forEach((c) => {
+      if (c.offices[0]) init[c.id] = c.offices[0].id
+    })
+    if (GLOBAL_REMOTE_TEXT_TAB.offices[0]) init[GLOBAL_REMOTE_TEXT_TAB.id] = GLOBAL_REMOTE_TEXT_TAB.offices[0].id
+    return init
+  })
+
+  const selectedCountryTab = textTabCountryControlled
+    ? parseVacancyTextCountryKey(textTabCountryKey)
+    : internalTextCountryTab
+
+  const resolvedOfficeIdForCountry = useMemo(() => {
+    const meta = getVacancyTextTabCountryByKey(selectedCountryTab)
+    const offices = meta?.offices ?? []
+    if (offices.length === 0) return null
+    if (textTabOfficeControlled) {
+      return parseVacancyTextOfficeId(selectedCountryTab, textTabOfficeId)
+    }
+    const fromInternal = internalOfficeByCountry[selectedCountryTab]
+    if (fromInternal && offices.some((x) => x.id === fromInternal)) return fromInternal
+    return offices[0]?.id ?? null
+  }, [selectedCountryTab, textTabOfficeControlled, textTabOfficeId, internalOfficeByCountry])
+
+  const handleTextSegmentChange = useCallback(
+    (fullKey: string) => {
+      const sep = fullKey.indexOf(VACANCY_TEXT_SEGMENT_SEP)
+      if (sep === -1) return
+      const countryKey = fullKey.slice(0, sep)
+      const officeId = fullKey.slice(sep + VACANCY_TEXT_SEGMENT_SEP.length)
+      onTextTabCountryKeyChange?.(countryKey)
+      if (!textTabCountryControlled) setInternalTextCountryTab(countryKey)
+      onTextTabOfficeIdChange?.(officeId)
+      if (!textTabOfficeControlled) {
+        setInternalOfficeByCountry((prev) => ({ ...prev, [countryKey]: officeId }))
+      }
+    },
+    [textTabCountryControlled, textTabOfficeControlled, onTextTabCountryKeyChange, onTextTabOfficeIdChange]
+  )
+
   const [isPublished, setIsPublished] = useState(false)
   const [publicationUrl, setPublicationUrl] = useState<string | null>(null)
   const [editHistory, setEditHistory] = useState<HistoryItem[]>([
@@ -311,8 +573,6 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
     return init
   })
 
-  // Состояние для вкладок стран в разделе "Текст вакансии"
-  const [selectedCountryTab, setSelectedCountryTab] = useState<string>(questionLinkOffices[0]?.id || 'by')
   // Состояние активности вакансии для каждой страны
   const [vacancyActiveByCountry, setVacancyActiveByCountry] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {}
@@ -333,34 +593,154 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
     link: string
     fieldSettings: Record<string, { active: boolean; visible: boolean }>
   }>>(() => {
-    const init: Record<string, any> = {}
-    questionLinkOffices.forEach(o => {
-      init[o.id] = {
-        title: '',
-        department: '',
-        header: '',
-        responsibilities: '',
-        requirements: '',
-        niceToHave: '',
-        conditions: '',
-        closing: '',
-        link: '',
-        fieldSettings: {
-          title: { active: true, visible: true },
-          department: { active: true, visible: true },
-          header: { active: true, visible: true },
-          responsibilities: { active: true, visible: true },
-          requirements: { active: true, visible: true },
-          niceToHave: { active: true, visible: true },
-          conditions: { active: true, visible: true },
-          closing: { active: true, visible: true },
-          link: { active: true, visible: true },
-          attachment: { active: true, visible: true },
-        }
-      }
+    const init: Record<string, ReturnType<typeof createDefaultVacancyFieldsByCountryEntry>> = {}
+    questionLinkOffices.forEach((o) => {
+      init[o.id] = createDefaultVacancyFieldsByCountryEntry()
     })
     return init
   })
+
+  /** false — один набор локаций; true — индивидуальные параметры по странам/офисам (см. «Текст вакансии») */
+  const [vacancyLocationsIndividual, setVacancyLocationsIndividual] = useState(false)
+  const [vacancyLocationRows, setVacancyLocationRows] = useState<{ id: string; label: string }[]>(() => [
+    { id: 'loc-msk', label: 'Минск' },
+    { id: 'loc-remote', label: 'Удалённо' },
+  ])
+
+  /** Учитывать ли доп. поле кандидата на этой вакансии (каталог полей — в настройках компании) */
+  const [vacancyAdditionalFieldEnabled, setVacancyAdditionalFieldEnabled] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(CANDIDATE_ADDITIONAL_FIELD_ROWS.map((f) => [f.id, true]))
+  )
+
+  const setAdditionalFieldOnVacancy = useCallback((fieldId: string, enabled: boolean) => {
+    setVacancyAdditionalFieldEnabled((prev) => ({ ...prev, [fieldId]: enabled }))
+  }, [])
+
+  const enableAllAdditionalFieldsOnVacancy = useCallback(() => {
+    setVacancyAdditionalFieldEnabled(Object.fromEntries(CANDIDATE_ADDITIONAL_FIELD_ROWS.map((f) => [f.id, true])))
+  }, [])
+
+  const disableAllAdditionalFieldsOnVacancy = useCallback(() => {
+    setVacancyAdditionalFieldEnabled(Object.fromEntries(CANDIDATE_ADDITIONAL_FIELD_ROWS.map((f) => [f.id, false])))
+  }, [])
+
+  /** Активность карточки «Вопросы» по id строки локации (только vacancyLocationsIndividual) */
+  const [vacancyQuestionsActiveByRowId, setVacancyQuestionsActiveByRowId] = useState<Record<string, boolean>>({})
+  const [newLocationLabel, setNewLocationLabel] = useState('')
+
+  const allAdditionalFieldsOnVacancy = useMemo(
+    () => CANDIDATE_ADDITIONAL_FIELD_ROWS.every((f) => vacancyAdditionalFieldEnabled[f.id]),
+    [vacancyAdditionalFieldEnabled]
+  )
+
+  const addLocationFromCatalog = useCallback((catalogId: string) => {
+    const row = LOCATION_CATALOG.find((c) => c.id === catalogId)
+    if (!row) return
+    setVacancyLocationRows((prev) => (prev.some((r) => r.id === row.id) ? prev : [...prev, { id: row.id, label: row.label }]))
+  }, [])
+
+  const removeLocationRow = useCallback((id: string) => {
+    setVacancyLocationRows((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  const addCustomLocationRow = useCallback(() => {
+    const t = newLocationLabel.trim()
+    if (!t) return
+    const id = `custom-${Date.now()}`
+    setVacancyLocationRows((prev) => [...prev, { id, label: t }])
+    setNewLocationLabel('')
+  }, [newLocationLabel])
+
+  const visibleCountryKeysForIndividual = useMemo(
+    () => getVisibleCountryKeysFromLocationRows(vacancyLocationRows),
+    [vacancyLocationRows]
+  )
+
+  const countriesForTextTabs = useMemo((): VacancyTextTabCountry[] => {
+    if (!vacancyLocationsIndividual) {
+      return questionLinkOffices.filter((o) => visibleCountryKeysForIndividual.includes(o.id))
+    }
+    return buildOrderedIndividualTextTabCountries(vacancyLocationRows, visibleCountryKeysForIndividual)
+  }, [vacancyLocationsIndividual, vacancyLocationRows, visibleCountryKeysForIndividual])
+
+  /** Единая полоска вкладок: страна+офис, без вложенного второго TabList */
+  const textTabFlatSegments = useMemo(() => buildFlatTextTabSegments(countriesForTextTabs), [countriesForTextTabs])
+  const selectedTextSegmentKey = useMemo(() => {
+    const oid = resolvedOfficeIdForCountry
+    if (textTabFlatSegments.length === 0) return ''
+    if (!oid) return textTabFlatSegments[0]?.key ?? ''
+    const k = `${selectedCountryTab}${VACANCY_TEXT_SEGMENT_SEP}${oid}`
+    if (textTabFlatSegments.some((s) => s.key === k)) return k
+    return textTabFlatSegments[0]?.key ?? ''
+  }, [selectedCountryTab, resolvedOfficeIdForCountry, textTabFlatSegments])
+
+  /** Цели карточек «Вопросы и ссылки»: в индивидуальном режиме — каждая строка локации; иначе — базовая страна */
+  const questionsLinkTargets = useMemo((): { key: string; heading: string }[] => {
+    if (!vacancyLocationsIndividual) {
+      const o = questionLinkOffices[0]!
+      return [{ key: o.id, heading: o.name }]
+    }
+    return vacancyLocationRows.map((r) => ({ key: r.id, heading: r.label }))
+  }, [vacancyLocationsIndividual, vacancyLocationRows])
+
+  useEffect(() => {
+    if (!vacancyLocationsIndividual) return
+    setVacancyQuestionsActiveByRowId((prev) => {
+      const next = { ...prev }
+      for (const row of vacancyLocationRows) {
+        if (next[row.id] === undefined) next[row.id] = true
+      }
+      return next
+    })
+    setQuestionsLinksByOffice((prev) => {
+      const next = { ...prev }
+      for (const row of vacancyLocationRows) {
+        if (next[row.id] == null) next[row.id] = getDefaultOfficeState()
+      }
+      return next
+    })
+  }, [vacancyLocationsIndividual, vacancyLocationRows])
+
+  useEffect(() => {
+    const tabIds = countriesForTextTabs.map((c) => c.id)
+    setVacancyFieldsByCountry((prev) => {
+      let next = prev
+      let changed = false
+      for (const id of tabIds) {
+        if (!next[id]) {
+          if (!changed) {
+            next = { ...prev }
+            changed = true
+          }
+          next[id] = createDefaultVacancyFieldsByCountryEntry()
+        }
+      }
+      return changed ? next : prev
+    })
+    setVacancyActiveByCountry((prev) => {
+      let next = prev
+      let changed = false
+      for (const id of tabIds) {
+        if (next[id] === undefined) {
+          if (!changed) {
+            next = { ...prev }
+            changed = true
+          }
+          next[id] = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [countriesForTextTabs])
+
+  useEffect(() => {
+    if (!vacancyLocationsIndividual) return
+    const keys = textTabFlatSegments.map((s) => s.key)
+    if (keys.length === 0) return
+    if (!keys.includes(selectedTextSegmentKey)) {
+      handleTextSegmentChange(keys[0])
+    }
+  }, [vacancyLocationsIndividual, textTabFlatSegments, selectedTextSegmentKey, handleTextSegmentChange])
 
   const updateOfficeLink = (officeId: string, upd: Partial<OfficeLink>) => {
     setQuestionsLinksByOffice(prev => ({ ...prev, [officeId]: { ...(prev[officeId] ?? {}), link: { ...(prev[officeId]?.link ?? getDefaultOfficeState().link), ...upd } } }))
@@ -484,22 +864,557 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
   useEffect(() => {
     if (open) {
       setVacancyTitleS(vacancyTitle ?? '')
-      setSelectedSettingTab('text')
+      if (settingsTab === undefined) setInternalSettingsTab('text')
     }
-  }, [open, vacancyTitle])
+  }, [open, vacancyTitle, settingsTab])
 
   const stagesBeforeOffer = getStagesBeforeOffer()
   const maxMeetingsCount = Math.max(0, stagesBeforeOffer.length - 2)
 
   const handleSave = () => {
-    onSave?.({ vacancyTitle: vacancyTitleS, vacancyDepartment, vacancyHeader, vacancyResponsibilities, vacancyRequirements, vacancyNiceToHave, vacancyConditions, vacancyClosing, vacancyLink, fieldSettings, isPublished, publicationUrl, selectedRecruiters, mainRecruiter, customersOnlyFromDepartment, selectedVacancyInterviewers, finalInterviewInterviewers, activeStages, activeGrades, salaryRanges, interviewMeetings, scorecardLinkUrl, scorecardLinkTitle, scorecardLinkPosition, scorecardLocalActive, useUnifiedPrompt, analysisPrompt, integrationPartner, huntflowVacancyId, questionsLinksByOffice })
-    onOpenChange(false)
+    onSave?.({ vacancyTitle: vacancyTitleS, vacancyDepartment, vacancyHeader, vacancyResponsibilities, vacancyRequirements, vacancyNiceToHave, vacancyConditions, vacancyClosing, vacancyLink, fieldSettings, isPublished, publicationUrl, selectedRecruiters, mainRecruiter, customersOnlyFromDepartment, selectedVacancyInterviewers, finalInterviewInterviewers, activeStages, activeGrades, salaryRanges, interviewMeetings, scorecardLinkUrl, scorecardLinkTitle, scorecardLinkPosition, scorecardLocalActive, useUnifiedPrompt, analysisPrompt, integrationPartner, huntflowVacancyId, questionsLinksByOffice, vacancyLocationsIndividual, vacancyLocationRows, vacancyAdditionalFieldEnabled })
+    if (!embedded) onOpenChange(false)
   }
-  const handleCancel = () => onOpenChange(false)
+  const handleCancel = () => {
+    onEmbeddedCancel?.()
+    if (!embedded) onOpenChange(false)
+  }
 
-  const filteredSections = vacancySettingsSearch.trim()
-    ? SECTIONS.filter(s => s.label.toLowerCase().includes(vacancySettingsSearch.trim().toLowerCase()))
+  const canDeleteVacancy = mode === 'edit' && vacancyId != null && typeof onDelete === 'function'
+
+  const handleDeleteVacancyClick = () => {
+    if (vacancyId == null || !onDelete) return
+    const title = vacancyTitleS.trim() || vacancyTitle || vacancy?.title || `№ ${vacancyId}`
+    toast.showWarning('Удалить вакансию?', `Вакансия «${title}» будет удалена без возможности восстановления (в демо — из списка).`, {
+      duration: 60_000,
+      actions: [
+        { label: 'Отмена', onClick: () => {}, variant: 'soft', color: 'gray' },
+        {
+          label: 'Удалить',
+          onClick: () => {
+            onDelete(vacancyId)
+            if (!embedded) onOpenChange(false)
+            else onEmbeddedCancel?.()
+            toast.showSuccess('Вакансия удалена', 'Запись убрана из списка.')
+          },
+          variant: 'solid',
+          color: 'red',
+        },
+      ],
+    })
+  }
+
+  const filteredSections = vacancySettingsSearchValue.trim()
+    ? SECTIONS.filter(s => s.label.toLowerCase().includes(vacancySettingsSearchValue.trim().toLowerCase()))
     : SECTIONS
+
+  const sidebarClassName =
+    embedded && settingsSidebarHostEl ? `${styles.sidebar} ${styles.sidebarInAtsLeft}` : styles.sidebar
+
+  const editSidebarNode = (
+    <Flex direction="column" gap="2" className={sidebarClassName}>
+      {!vacancySearchExternal && (
+        <TextField.Root
+          placeholder="Search vacancy-settings..."
+          value={internalVacancySettingsSearch}
+          onChange={(e) => setInternalVacancySettingsSearch(e.target.value)}
+          size="2"
+        />
+      )}
+      <Text size="2" weight="medium">Настройки вакансии</Text>
+      <Text size="1" weight="medium" color="gray">Разделы настроек</Text>
+      {filteredSections.map(({ key, label }) => (
+        <Button key={key} variant={activeTab === key ? 'solid' : 'soft'} onClick={() => setTab(key)} style={{ justifyContent: 'flex-start' }}>
+          <Text size="2">{label}</Text>
+        </Button>
+      ))}
+    </Flex>
+  )
+
+  const editMainColumnBox = (
+              <Box className={styles.content}>
+                {activeTab === 'text' && (
+                  <Box>
+                    <Flex align="center" justify="between" mb="4">
+                      <Text size="3" weight="bold">Текст вакансии</Text>
+                      <Flex align="center" gap="2">
+                        {isPublished && publicationUrl && (
+                          <Button variant="soft" size="2" onClick={() => window.open(publicationUrl!, '_blank')}>
+                            <GlobeIcon width={16} height={16} /> Открыть на сайте
+                          </Button>
+                        )}
+                        <Button
+                          variant={isPublished ? 'solid' : 'soft'}
+                          color={isPublished ? 'green' : 'gray'}
+                          size="2"
+                          className={isPublished ? styles.publishTogglePublished : undefined}
+                          onClick={(e) => {
+                            const btn = e.currentTarget; (btn.querySelector('.button-text') as HTMLElement) && ((btn.querySelector('.button-text') as HTMLElement).textContent = isPublished ? 'Опубликовано' : 'Опубликовать на сайте')
+                            if (!isPublished) {
+                              const url = `https://company.com/vacancies/${(vacancyTitleS || 'v').toLowerCase().replace(/\s+/g, '-')}`
+                              setPublicationUrl(url); setIsPublished(true)
+                              setEditHistory(prev => [{ id: String(Date.now()), date: new Date().toLocaleString('ru-RU'), user: 'Текущий пользователь', changes: 'Вакансия опубликована на сайте', version: prev[0]?.version ? prev[0].version + 1 : 1 }, ...prev])
+                              alert(`Вакансия опубликована на сайте!\nURL: ${url}`)
+                            } else {
+                              setIsPublished(false); setPublicationUrl(null)
+                              setEditHistory(prev => [{ id: String(Date.now()), date: new Date().toLocaleString('ru-RU'), user: 'Текущий пользователь', changes: 'Публикация вакансии снята с сайта', version: prev[0]?.version ? prev[0].version + 1 : 1 }, ...prev])
+                              alert('Вакансия снята с публикации')
+                            }
+                          }}
+                          onMouseEnter={(e) => { if (isPublished) { const span = e.currentTarget.querySelector('.button-text') as HTMLElement; if (span) span.textContent = 'Снять публикацию' } }}
+                          onMouseLeave={(e) => { if (isPublished) { const span = e.currentTarget.querySelector('.button-text') as HTMLElement; if (span) span.textContent = 'Опубликовано' } }}
+                        >
+                          {isPublished ? (<><span className="button-text">Опубликовано</span></>) : (<><GlobeIcon width={16} height={16} /> Опубликовать на сайте</>)}
+                        </Button>
+                      </Flex>
+                    </Flex>
+                    {!vacancyLocationsIndividual ? (
+                      <Box mb="4">
+                        <Text size="2" color="gray" mb="3" style={{ display: 'block' }}>
+                          Единый текст для всех локаций: табы стран и площадок отключены при режиме «везде одинаково» в разделе «Локации».
+                        </Text>
+                        {(() => {
+                          const office = questionLinkOffices.find((o) => o.id === 'by')!
+                          return (
+                        <Box>
+                          <Flex align="center" justify="end" mb="3">
+                            <Flex align="center" gap="2">
+                              <Text size="2" color="gray">Активность:</Text>
+                              <Switch
+                                checked={vacancyActiveByCountry[office.id] || false}
+                                onCheckedChange={(checked) => setVacancyActiveByCountry((prev) => ({ ...prev, [office.id]: checked }))}
+                              />
+                            </Flex>
+                          </Flex>
+                          <Flex direction="column" gap="4">
+                            <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Название</Text><TextField.Root value={vacancyFieldsByCountry[office.id]?.title || vacancyTitleS} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, title: e.target.value } })); setVacancyTitleS(e.target.value) }} placeholder="Введите название вакансии" disabled={!vacancyActiveByCountry[office.id]} /></Box>
+                            <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Отдел</Text><Select.Root value={vacancyFieldsByCountry[office.id]?.department || vacancyDepartment} onValueChange={(v) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, department: v } })); setVacancyDepartment(v) }}><Select.Trigger placeholder="Выберите отдел" disabled={!vacancyActiveByCountry[office.id]} /><Select.Content>{getAllDepartmentsFlat(mockDepartments).map(d => <Select.Item key={d.id} value={d.id}>{'  '.repeat(d.level)}{d.name}</Select.Item>)}</Select.Content></Select.Root></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Шапка</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.active ?? fieldSettings.header.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, header: { ...fs.header, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, header: { ...prev.header, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.visible ?? fieldSettings.header.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, header: { ...fs.header, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, header: { ...prev.header, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.header || vacancyHeader} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, header: e.target.value } })); setVacancyHeader(e.target.value) }} placeholder="Введите текст шапки" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.active ?? fieldSettings.header.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Обязанности</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.active ?? fieldSettings.responsibilities.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, responsibilities: { ...fs.responsibilities, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, responsibilities: { ...prev.responsibilities, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.visible ?? fieldSettings.responsibilities.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, responsibilities: { ...fs.responsibilities, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, responsibilities: { ...prev.responsibilities, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.responsibilities || vacancyResponsibilities} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, responsibilities: e.target.value } })); setVacancyResponsibilities(e.target.value) }} placeholder="Введите обязанности" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.active ?? fieldSettings.responsibilities.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Пожелания</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.active ?? fieldSettings.requirements.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, requirements: { ...fs.requirements, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, requirements: { ...prev.requirements, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.visible ?? fieldSettings.requirements.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, requirements: { ...fs.requirements, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, requirements: { ...prev.requirements, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.requirements || vacancyRequirements} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, requirements: e.target.value } })); setVacancyRequirements(e.target.value) }} placeholder="Введите пожелания" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.active ?? fieldSettings.requirements.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Будет плюсом</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.active ?? fieldSettings.niceToHave.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, niceToHave: { ...fs.niceToHave, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, niceToHave: { ...prev.niceToHave, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.visible ?? fieldSettings.niceToHave.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, niceToHave: { ...fs.niceToHave, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, niceToHave: { ...prev.niceToHave, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.niceToHave || vacancyNiceToHave} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, niceToHave: e.target.value } })); setVacancyNiceToHave(e.target.value) }} placeholder="Введите что будет плюсом" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.active ?? fieldSettings.niceToHave.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Условия работы</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.active ?? fieldSettings.conditions.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, conditions: { ...fs.conditions, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, conditions: { ...prev.conditions, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.visible ?? fieldSettings.conditions.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, conditions: { ...fs.conditions, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, conditions: { ...prev.conditions, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.conditions || vacancyConditions} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, conditions: e.target.value } })); setVacancyConditions(e.target.value) }} placeholder="Введите условия работы" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.active ?? fieldSettings.conditions.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Завершение</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.active ?? fieldSettings.closing.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, closing: { ...fs.closing, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, closing: { ...prev.closing, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.visible ?? fieldSettings.closing.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, closing: { ...fs.closing, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, closing: { ...prev.closing, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.closing || vacancyClosing} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, closing: e.target.value } })); setVacancyClosing(e.target.value) }} placeholder="Введите завершающий текст" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.active ?? fieldSettings.closing.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Дополнительная ссылка</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.active ?? fieldSettings.link.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, link: { ...fs.link, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, link: { ...prev.link, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.visible ?? fieldSettings.link.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, link: { ...fs.link, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, link: { ...prev.link, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextField.Root value={vacancyFieldsByCountry[office.id]?.link || vacancyLink} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, link: e.target.value } })); setVacancyLink(e.target.value) }} placeholder="https://example.com/vacancy" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.active ?? fieldSettings.link.active)} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Вложения</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, attachment: { ...fs.attachment, active: !!c } } } })); setFieldSettings(prev => ({ ...prev, attachment: { ...prev.attachment, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.visible ?? fieldSettings.attachment.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, attachment: { ...fs.attachment, visible: !!c } } } })); setFieldSettings(prev => ({ ...prev, attachment: { ...prev.attachment, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex>
+                              <Flex direction="column" gap="2"><input type="file" accept=".docx,.pptx,.figma" onChange={(e) => setVacancyAttachment(e.target.files?.[0] || null)} disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)} id="vacancy-edit-modal-attachment-uniform" style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} /><Button asChild variant="soft" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)} style={{ width: '100%', justifyContent: 'flex-start' }}><label htmlFor="vacancy-edit-modal-attachment-uniform" style={{ cursor: (vacancyActiveByCountry[office.id] && (vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8 }}><UploadIcon width={16} height={16} /><Text size="2">{vacancyAttachment ? vacancyAttachment.name : 'Выберите файл (docx, pptx, figma)'}</Text></label></Button>{vacancyAttachment && <Flex align="center" gap="2" style={{ padding: '8px 12px', backgroundColor: 'var(--gray-2)', borderRadius: 6 }}><FileTextIcon width={16} height={16} /><Text size="2" style={{ flex: 1 }}>{vacancyAttachment.name}</Text><Text size="1" color="gray">{(vacancyAttachment.size / 1024).toFixed(2)} KB</Text><Button size="1" variant="ghost" color="red" onClick={() => setVacancyAttachment(null)}><Cross2Icon width={14} height={14} /></Button></Flex>}</Flex>
+                            </Box>
+                          </Flex>
+                        </Box>
+                          )
+                        })()}
+                      </Box>
+                    ) : (
+                    <Tabs.Root value={selectedTextSegmentKey} onValueChange={handleTextSegmentChange} mb="4">
+                      {textTabFlatSegments.length > 1 ? (
+                        <Tabs.List className={styles.tabListScroll}>
+                          {textTabFlatSegments.map((seg) => (
+                            <Tabs.Trigger key={seg.key} value={seg.key}>
+                              <Text size="2">{seg.label}</Text>
+                            </Tabs.Trigger>
+                          ))}
+                        </Tabs.List>
+                      ) : null}
+                      {textTabFlatSegments.map((seg) => {
+                        const office = getVacancyTextTabCountryByKey(seg.countryKey)
+                        if (!office) return null
+                        return (
+                        <Tabs.Content key={seg.key} value={seg.key}>
+                          <Flex align="center" justify="between" mb="3" gap="3" wrap="wrap">
+                            <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
+                              {textTabFlatSegments.length === 1 ? (
+                                <Text size="2" color="gray">
+                                  {office.offices.length > 1
+                                    ? `${office.name} — ${office.offices.find((x) => x.id === seg.officeId)?.name ?? ''}`
+                                    : office.name}
+                                </Text>
+                              ) : null}
+                            </Flex>
+                            <Flex align="center" gap="2" style={{ flexShrink: 0 }}>
+                              <Text size="2" color="gray">Активность:</Text>
+                              <Switch 
+                                checked={vacancyActiveByCountry[office.id] || false} 
+                                onCheckedChange={(checked) => setVacancyActiveByCountry(prev => ({ ...prev, [office.id]: checked }))} 
+                              />
+                            </Flex>
+                          </Flex>
+                          <Flex direction="column" gap="4">
+                            <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Название</Text><TextField.Root value={vacancyFieldsByCountry[office.id]?.title || vacancyTitleS} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, title: e.target.value } })); if (office.id === selectedCountryTab) setVacancyTitleS(e.target.value) }} placeholder="Введите название вакансии" disabled={!vacancyActiveByCountry[office.id]} /></Box>
+                            <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Отдел</Text><Select.Root value={vacancyFieldsByCountry[office.id]?.department || vacancyDepartment} onValueChange={(v) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, department: v } })); if (office.id === selectedCountryTab) setVacancyDepartment(v) }}><Select.Trigger placeholder="Выберите отдел" disabled={!vacancyActiveByCountry[office.id]} /><Select.Content>{getAllDepartmentsFlat(mockDepartments).map(d => <Select.Item key={d.id} value={d.id}>{'  '.repeat(d.level)}{d.name}</Select.Item>)}</Select.Content></Select.Root></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Шапка</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.active ?? fieldSettings.header.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, header: { ...fs.header, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, header: { ...prev.header, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.visible ?? fieldSettings.header.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, header: { ...fs.header, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, header: { ...prev.header, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.header || vacancyHeader} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, header: e.target.value } })); if (office.id === selectedCountryTab) setVacancyHeader(e.target.value) }} placeholder="Введите текст шапки" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.active ?? fieldSettings.header.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Обязанности</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.active ?? fieldSettings.responsibilities.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, responsibilities: { ...fs.responsibilities, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, responsibilities: { ...prev.responsibilities, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.visible ?? fieldSettings.responsibilities.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, responsibilities: { ...fs.responsibilities, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, responsibilities: { ...prev.responsibilities, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.responsibilities || vacancyResponsibilities} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, responsibilities: e.target.value } })); if (office.id === selectedCountryTab) setVacancyResponsibilities(e.target.value) }} placeholder="Введите обязанности" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.active ?? fieldSettings.responsibilities.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Пожелания</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.active ?? fieldSettings.requirements.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, requirements: { ...fs.requirements, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, requirements: { ...prev.requirements, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.visible ?? fieldSettings.requirements.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, requirements: { ...fs.requirements, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, requirements: { ...prev.requirements, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.requirements || vacancyRequirements} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, requirements: e.target.value } })); if (office.id === selectedCountryTab) setVacancyRequirements(e.target.value) }} placeholder="Введите пожелания" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.active ?? fieldSettings.requirements.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Будет плюсом</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.active ?? fieldSettings.niceToHave.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, niceToHave: { ...fs.niceToHave, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, niceToHave: { ...prev.niceToHave, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.visible ?? fieldSettings.niceToHave.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, niceToHave: { ...fs.niceToHave, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, niceToHave: { ...prev.niceToHave, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.niceToHave || vacancyNiceToHave} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, niceToHave: e.target.value } })); if (office.id === selectedCountryTab) setVacancyNiceToHave(e.target.value) }} placeholder="Введите что будет плюсом" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.active ?? fieldSettings.niceToHave.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Условия работы</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.active ?? fieldSettings.conditions.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, conditions: { ...fs.conditions, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, conditions: { ...prev.conditions, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.visible ?? fieldSettings.conditions.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, conditions: { ...fs.conditions, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, conditions: { ...prev.conditions, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.conditions || vacancyConditions} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, conditions: e.target.value } })); if (office.id === selectedCountryTab) setVacancyConditions(e.target.value) }} placeholder="Введите условия работы" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.active ?? fieldSettings.conditions.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Завершение</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.active ?? fieldSettings.closing.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, closing: { ...fs.closing, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, closing: { ...prev.closing, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.visible ?? fieldSettings.closing.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, closing: { ...fs.closing, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, closing: { ...prev.closing, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.closing || vacancyClosing} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, closing: e.target.value } })); if (office.id === selectedCountryTab) setVacancyClosing(e.target.value) }} placeholder="Введите завершающий текст" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.active ?? fieldSettings.closing.active)} style={{ minHeight: '100px' }} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Дополнительная ссылка</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.active ?? fieldSettings.link.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, link: { ...fs.link, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, link: { ...prev.link, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.visible ?? fieldSettings.link.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, link: { ...fs.link, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, link: { ...prev.link, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextField.Root value={vacancyFieldsByCountry[office.id]?.link || vacancyLink} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, link: e.target.value } })); if (office.id === selectedCountryTab) setVacancyLink(e.target.value) }} placeholder="https://example.com/vacancy" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.active ?? fieldSettings.link.active)} /></Box>
+                            <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Вложения</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, attachment: { ...fs.attachment, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, attachment: { ...prev.attachment, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.visible ?? fieldSettings.attachment.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, attachment: { ...fs.attachment, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, attachment: { ...prev.attachment, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex>
+                              <Flex direction="column" gap="2"><input type="file" accept=".docx,.pptx,.figma" onChange={(e) => setVacancyAttachment(e.target.files?.[0] || null)} disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)} id={`vacancy-edit-modal-attachment-${office.id}`} style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} /><Button asChild variant="soft" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)} style={{ width: '100%', justifyContent: 'flex-start' }}><label htmlFor={`vacancy-edit-modal-attachment-${office.id}`} style={{ cursor: (vacancyActiveByCountry[office.id] && (vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8 }}><UploadIcon width={16} height={16} /><Text size="2">{vacancyAttachment ? vacancyAttachment.name : 'Выберите файл (docx, pptx, figma)'}</Text></label></Button>{vacancyAttachment && <Flex align="center" gap="2" style={{ padding: '8px 12px', backgroundColor: 'var(--gray-2)', borderRadius: 6 }}><FileTextIcon width={16} height={16} /><Text size="2" style={{ flex: 1 }}>{vacancyAttachment.name}</Text><Text size="1" color="gray">{(vacancyAttachment.size / 1024).toFixed(2)} KB</Text><Button size="1" variant="ghost" color="red" onClick={() => setVacancyAttachment(null)}><Cross2Icon width={14} height={14} /></Button></Flex>}</Flex>
+                            </Box>
+                          </Flex>
+                        </Tabs.Content>
+                        )
+                      })}
+                    </Tabs.Root>
+                    )}
+                  </Box>
+                )}
+
+                {activeTab === 'locations' && (
+                  <Box>
+                    <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>Локации</Text>
+                    <Text size="2" color="gray" mb="4" style={{ display: 'block' }}>
+                      Укажите, где открыта вакансия. Режим «индивидуальные параметры» подразумевает уточнение по странам и площадкам в разделе «Текст вакансии».
+                    </Text>
+                    <Card style={{ padding: 16 }}>
+                      <Flex align="center" justify="between" gap="4" wrap="wrap" mb="4">
+                        <Flex align="center" gap="3" style={{ flex: 1, minWidth: 220 }}>
+                          <Text size="2" weight={!vacancyLocationsIndividual ? 'medium' : 'regular'} color={!vacancyLocationsIndividual ? undefined : 'gray'}>
+                            Везде одинаково
+                          </Text>
+                          <Switch checked={vacancyLocationsIndividual} onCheckedChange={setVacancyLocationsIndividual} />
+                          <Text size="2" weight={vacancyLocationsIndividual ? 'medium' : 'regular'} color={vacancyLocationsIndividual ? undefined : 'gray'}>
+                            Индивидуальные параметры
+                          </Text>
+                        </Flex>
+                      </Flex>
+                      <Separator size="4" mb="4" />
+                      <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Выбранные локации</Text>
+                      {vacancyLocationRows.length === 0 ? (
+                        <Text size="2" color="gray" mb="4" style={{ display: 'block' }}>
+                          Список пуст — добавьте локацию ниже.
+                        </Text>
+                      ) : (
+                        <Box className={styles.locationChipsRow} mb="4">
+                          {vacancyLocationRows.map((row) => (
+                            <Flex
+                              key={row.id}
+                              align="center"
+                              gap="2"
+                              style={{
+                                flexShrink: 0,
+                                padding: '8px 10px',
+                                borderRadius: 6,
+                                backgroundColor: 'var(--gray-2)',
+                              }}
+                            >
+                              <Text size="2">{row.label}</Text>
+                              <Button
+                                size="1"
+                                variant="ghost"
+                                color="red"
+                                type="button"
+                                onClick={() => removeLocationRow(row.id)}
+                                aria-label={`Удалить ${row.label}`}
+                              >
+                                <TrashIcon width={14} height={14} />
+                              </Button>
+                            </Flex>
+                          ))}
+                        </Box>
+                      )}
+                      <Flex direction="column" gap="3">
+                        <Box>
+                          <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Добавить из справочника</Text>
+                          <Select.Root
+                            value="__none__"
+                            onValueChange={(v) => {
+                              if (v === '__none__') return
+                              addLocationFromCatalog(v)
+                            }}
+                          >
+                            <Select.Trigger placeholder="Выберите локацию" style={{ width: '100%', maxWidth: 320 }} />
+                            <Select.Content>
+                              <Select.Item value="__none__">—</Select.Item>
+                              {LOCATION_CATALOG.filter((c) => !vacancyLocationRows.some((r) => r.id === c.id)).map((c) => (
+                                <Select.Item key={c.id} value={c.id}>{c.label}</Select.Item>
+                              ))}
+                            </Select.Content>
+                          </Select.Root>
+                        </Box>
+                        <Box>
+                          <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Своя локация</Text>
+                          <Flex gap="2" wrap="wrap" align="center">
+                            <TextField.Root
+                              value={newLocationLabel}
+                              onChange={(e) => setNewLocationLabel(e.target.value)}
+                              placeholder="Например: Краков"
+                              style={{ flex: 1, minWidth: 180, maxWidth: 320 }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomLocationRow() } }}
+                            />
+                            <Button type="button" variant="soft" onClick={addCustomLocationRow}>
+                              <PlusIcon width={14} height={14} />
+                              <Text size="2">Добавить</Text>
+                            </Button>
+                          </Flex>
+                        </Box>
+                      </Flex>
+                    </Card>
+                  </Box>
+                )}
+    
+                {activeTab === 'recruiters' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Рекрутеры</Text>
+                    <Flex direction="column" gap="3">{allRecruiters.map((r) => {
+                      const sel = selectedRecruiters.has(r.id), main = mainRecruiter === r.id
+                      return <Card key={r.id} style={{ padding: 16 }}><Flex align="center" gap="3"><Checkbox checked={sel} onCheckedChange={() => handleRecruiterToggle(r.id)} /><Flex direction="column" gap="1" style={{ flex: 1 }}><Flex align="center" gap="2"><Text size="3" weight="medium">{r.name}</Text>{main && <Badge color="blue" variant="soft" size="1">Главный</Badge>}</Flex><Text size="2" color="gray">{r.position}</Text><Text size="1" color="gray">{r.email}</Text><Text size="1" color="gray">{r.phone}</Text></Flex><Box><Text size="1" color="gray" mb="1" style={{ display: 'block', textAlign: 'right' }}>Главный</Text><Switch checked={main} disabled={!sel} onCheckedChange={() => handleMainRecruiterToggle(r.id)} /></Box></Flex></Card>
+                    })}</Flex>
+                    {allRecruiters.length === 0 && <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>Нет доступных рекрутеров</Text>}
+                  </Box>
+                )}
+    
+                {activeTab === 'customers' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Заказчики и интервьюеры</Text>
+                    <Flex align="center" gap="2" mb="4"><Switch checked={customersOnlyFromDepartment} onCheckedChange={setCustomersOnlyFromDepartment} /><Text size="2">Только из отдела</Text><Text size="1" color="gray">(выкл. — все)</Text></Flex>
+                    {(() => {
+                      const deptName = getAllDepartmentsFlat(mockDepartments).find(d => d.id === vacancyDepartment)?.name ?? ''
+                      const isHR = (d: string) => d === 'HR' || d === 'HR Департамент'
+                      const filtered = customersOnlyFromDepartment ? allInterviewers.filter(i => i.department === deptName || isHR(i.department)) : allInterviewers
+                      return <Flex direction="column" gap="3">{filtered.map((i) => {
+                        const sel = selectedVacancyInterviewers.has(i.id), fin = finalInterviewInterviewers.has(i.id)
+                        return <Card key={i.id} style={{ padding: 16 }}><Flex align="center" gap="3"><Checkbox checked={sel} onCheckedChange={() => handleVacancyInterviewerToggle(i.id)} /><Flex direction="column" gap="1" style={{ flex: 1 }}><Flex align="center" gap="2"><Text size="3" weight="medium">{i.name}</Text>{i.isCustomer && <Badge color="blue" variant="soft" size="1">Заказчик</Badge>}{fin && <Badge color="purple" variant="soft" size="1">Финальное интервью</Badge>}</Flex><Text size="2" color="gray">{i.position}</Text><Text size="1" color="gray">{i.department}</Text><Text size="1" color="gray">{i.email}</Text><Text size="1" color="gray">{i.phone}</Text></Flex><Box><Text size="1" color="gray" mb="1" style={{ display: 'block', textAlign: 'right' }}>Финальное интервью</Text><Switch checked={fin} disabled={!sel} onCheckedChange={() => handleFinalInterviewToggle(i.id)} /></Box></Flex></Card>
+                      })}{filtered.length === 0 && <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>Нет доступных интервьюеров</Text>}</Flex>
+                    })()}
+                  </Box>
+                )}
+    
+                {activeTab === 'questions' && (
+                  <Box><Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Вопросы и ссылки</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Ссылка на вакансию, тогглер использования на сайте и один вопрос на каждую выбранную локацию. В режиме «везде одинаково» — одна карточка (Беларусь). В «индивидуальных параметрах» — отдельная карточка на каждую строку в «Локациях» (включая All world remote). У ссылки и вопроса можно выбрать цвет.</Text>
+                    {questionsLinkTargets.length === 0 && vacancyLocationsIndividual ? (
+                      <Text size="2" color="gray">Список локаций пуст — добавьте позиции в разделе «Локации».</Text>
+                    ) : (
+                    <Flex direction="column" gap="4">{questionsLinkTargets.map((t) => {
+                      const isActive = vacancyLocationsIndividual
+                        ? (vacancyQuestionsActiveByRowId[t.key] ?? true)
+                        : (vacancyActiveByCountry[t.key] ?? true)
+                      const state = questionsLinksByOffice[t.key] ?? getDefaultOfficeState(), { link, question } = state, q = question ?? { text: '', color: questionLinkColors[0].hex }
+                      const hideQuestionsCountryHeading =
+                        questionsLinkTargets.length === 1 && !vacancyLocationsIndividual
+                      const setActive = (checked: boolean) => {
+                        if (vacancyLocationsIndividual) {
+                          setVacancyQuestionsActiveByRowId((prev) => ({ ...prev, [t.key]: checked }))
+                        } else {
+                          setVacancyActiveByCountry((prev) => ({ ...prev, [t.key]: checked }))
+                        }
+                      }
+                      return <Card key={t.key} style={{ padding: 16, opacity: isActive ? 1 : 0.6 }}><Flex direction="column" gap="4">{hideQuestionsCountryHeading ? (
+                        <Flex align="center" justify="end" wrap="wrap" gap="2">
+                          <Flex align="center" gap="2">
+                            <Text size="2" color="gray">Активность:</Text>
+                            <Switch checked={isActive} onCheckedChange={(checked) => setActive(checked)} />
+                          </Flex>
+                        </Flex>
+                      ) : (
+                        <Flex align="center" justify="between" wrap="wrap" gap="2">
+                          <Text size="4" weight="bold" style={{ minWidth: 0 }}>
+                            {t.heading}
+                          </Text>
+                          <Flex align="center" gap="2" style={{ flexShrink: 0 }}>
+                            <Text size="2" color="gray">Активность:</Text>
+                            <Switch checked={isActive} onCheckedChange={(checked) => setActive(checked)} />
+                          </Flex>
+                        </Flex>
+                      )}
+                        <Box><Text size="3" weight="medium" mb="2" style={{ display: 'block' }}>Ссылка на вакансию</Text><Flex direction="column" gap="3"><Flex align="center" gap="3" wrap="wrap"><TextField.Root value={link.url} onChange={(e) => updateOfficeLink(t.key, { url: e.target.value })} placeholder="https://example.com/vacancy" style={{ flex: 1, minWidth: 200 }} disabled={!isActive} /><Flex align="center" gap="2"><Text size="2" color="gray">Использовать с сайта:</Text><Switch checked={link.useOnSite} onCheckedChange={(c) => updateOfficeLink(t.key, { useOnSite: !!c })} disabled={!isActive} /></Flex></Flex><Flex align="center" gap="2"><Text size="2" weight="medium">Цвет ссылки:</Text>{questionLinkColors.map((c) => <button key={c.id} type="button" onClick={() => updateOfficeLink(t.key, { color: c.hex })} title={c.label} disabled={!isActive} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: c.hex, border: link.color === c.hex ? '2px solid var(--gray-12)' : '2px solid transparent', cursor: isActive ? 'pointer' : 'not-allowed', padding: 0, opacity: isActive ? 1 : 0.5 }} aria-pressed={link.color === c.hex} />)}</Flex></Flex></Box>
+                        <Separator size="4" /><Box><Text size="3" weight="medium" mb="2" style={{ display: 'block' }}>Вопрос по вакансии</Text><Flex direction="column" gap="2"><TextArea value={q.text} onChange={(e) => updateOfficeQuestion(t.key, { text: e.target.value })} placeholder="Текст вопроса..." style={{ minWidth: '100%', minHeight: 60 }} disabled={!isActive} /><Flex gap="2" align="center"><Text size="2" color="gray">Цвет:</Text>{questionLinkColors.map((c) => <button key={c.id} type="button" onClick={() => updateOfficeQuestion(t.key, { color: c.hex })} title={c.label} disabled={!isActive} style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: c.hex, border: q.color === c.hex ? '2px solid var(--gray-12)' : '2px solid transparent', cursor: isActive ? 'pointer' : 'not-allowed', padding: 0, opacity: isActive ? 1 : 0.5 }} />)}</Flex></Flex></Box></Flex></Card>
+                    })}</Flex>
+                    )}
+                  </Box>
+                )}
+    
+                {activeTab === 'integrations' && (
+                  <Box><Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Связи и интеграции</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Настройка интеграций с внешними сервисами</Text>
+                    <Flex direction="column" gap="4"><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Интеграция</Text><Select.Root value={integrationPartner || '__none__'} onValueChange={(v) => { if (v === '__none__' && integrationPartner === 'huntflow') { toast.showToast({ type: 'warning', title: 'Отключить интеграцию Huntflow?', message: 'Подтвердите отключение связи с Huntflow.', duration: 5 * 60 * 1000, actions: [{ label: 'Подтвердить', onClick: () => { setIntegrationPartner(''); setHuntflowVacancyId('') }, variant: 'soft', color: 'gray' }, { label: 'Отклонить', onClick: () => {}, variant: 'solid', color: 'blue' }] }); return } setIntegrationPartner((v === '__none__' ? '' : v) as '' | 'huntflow') }}><Select.Trigger placeholder="Выберите интеграцию" style={{ width: '100%', maxWidth: 280 }} /><Select.Content><Select.Item value="__none__">—</Select.Item><Select.Item value="huntflow">Huntflow</Select.Item></Select.Content></Select.Root></Box>
+                    {integrationPartner === 'huntflow' && <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>ID вакансии в Huntflow</Text><TextField.Root type="text" inputMode="numeric" value={huntflowVacancyId} onChange={(e) => setHuntflowVacancyId(e.target.value.replace(/\D/g, ''))} placeholder="Только цифры" style={{ width: '100%', maxWidth: 200 }} /></Box>}</Flex>
+                  </Box>
+                )}
+    
+                {activeTab === 'statuses' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Статусы</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Выберите этапы рекрутинга, которые будут доступны для данной вакансии</Text>
+                    <Flex direction="column" gap="3">{recruitmentStages.map((s) => { const act = activeStages.has(s.id); return <Card key={s.id} style={{ padding: 16 }}><Flex align="center" gap="3"><Checkbox checked={act} onCheckedChange={() => handleStageToggle(s.id)} /><Flex align="center" gap="3" style={{ flex: 1 }}><Box style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: s.color, flexShrink: 0 }} /><Flex direction="column" gap="1"><Text size="3" weight="medium">{s.name}</Text>{s.description && <Text size="2" color="gray">{s.description}</Text>}</Flex></Flex></Flex></Card> })}</Flex>
+                    {recruitmentStages.length === 0 && <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>Нет доступных этапов</Text>}
+                  </Box>
+                )}
+    
+                {activeTab === 'salary' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Зарплатные вилки</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Выберите активные грейды и укажите зарплатные диапазоны. Редактирование доступно только для главной валюты ({companyCurrencies.find(c => c.isMain)?.code || 'BYN'}), остальные пересчитываются автоматически.</Text>
+                    <Box className={styles.salaryForksTableWrapper} style={{ overflowX: 'auto', width: '100%' }}><Table.Root style={{ tableLayout: 'fixed', width: 'max-content', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}><Table.Header><Table.Row><Table.ColumnHeaderCell style={{ position: 'sticky', left: 0, backgroundColor: 'var(--gray-2)', zIndex: 10, width: 180, minWidth: 180, maxWidth: 180 }}>Грейд</Table.ColumnHeaderCell>{companyCurrencies.map(cur => <Table.ColumnHeaderCell key={cur.id} style={{ width: cur.isMain ? 260 : 180, minWidth: cur.isMain ? 260 : 180, maxWidth: cur.isMain ? 260 : 180, whiteSpace: 'nowrap', padding: 12 }}><Flex direction="column" gap="1" align="center"><Text weight="bold">{cur.code}</Text>{cur.isMain && <Badge size="1" color="green">Главная</Badge>}<Text size="1" color="gray">{isGrossFormat ? 'Gross' : 'Net'}</Text></Flex></Table.ColumnHeaderCell>)}</Table.Row></Table.Header><Table.Body>{allGrades.map((g) => { const act = activeGrades.has(g.id), mainCur = companyCurrencies.find(c => c.isMain)?.code || 'BYN'; return <Table.Row key={g.id}><Table.Cell style={{ position: 'sticky', left: 0, backgroundColor: 'var(--gray-2)', zIndex: 10, width: 180, minWidth: 180, maxWidth: 180 }}><Flex align="center" gap="2"><Checkbox checked={act} onCheckedChange={() => handleGradeToggle(g.id)} /><Text weight={act ? 'medium' : 'regular'} style={{ opacity: act ? 1 : 0.5 }}>{g.name}</Text></Flex></Table.Cell>{companyCurrencies.map((cur) => { const isMain = cur.isMain, fromV = getSalaryValue(g.id, cur.code, 'from'), toV = getSalaryValue(g.id, cur.code, 'to'); return <Table.Cell key={cur.id} style={{ whiteSpace: 'nowrap', width: isMain ? 260 : 180, minWidth: isMain ? 260 : 180, maxWidth: isMain ? 260 : 180, padding: 12, verticalAlign: 'middle' }}>{act ? (isMain ? <Flex gap="2" align="center" style={{ flexWrap: 'nowrap' }}><input type="number" placeholder="От" value={fromV != null ? String(fromV) : ''} onChange={(e) => handleSalaryChange(g.id, cur.code, 'from', e.target.value)} style={{ minWidth: 100, padding: '4px 8px', fontSize: 13, lineHeight: 1.2, height: '28px', borderRadius: 6, border: '1px solid var(--gray-a6)', backgroundColor: 'var(--color-panel)', color: 'var(--gray-12)', outline: 'none', boxSizing: 'border-box', width: fromV != null ? Math.max(100, String(fromV).length * 8 + 24) : 100 }} /><Text>—</Text><input type="number" placeholder="До" value={toV != null ? String(toV) : ''} onChange={(e) => handleSalaryChange(g.id, cur.code, 'to', e.target.value)} style={{ minWidth: 100, padding: '4px 8px', fontSize: 13, lineHeight: 1.2, height: '28px', borderRadius: 6, border: '1px solid var(--gray-a6)', backgroundColor: 'var(--color-panel)', color: 'var(--gray-12)', outline: 'none', boxSizing: 'border-box', width: toV != null ? Math.max(100, String(toV).length * 8 + 24) : 100 }} /></Flex> : <Text size="2" style={{ whiteSpace: 'nowrap', display: 'block' }}>{fromV != null ? fromV.toFixed(2) : '—'} – {toV != null ? toV.toFixed(2) : '—'}</Text>) : <Text size="2" color="gray">—</Text>}</Table.Cell> })}</Table.Row> })}</Table.Body></Table.Root></Box>
+                  </Box>
+                )}
+    
+                {activeTab === 'interviews' && (
+                  <Box><Flex align="center" justify="between" mb="4"><Text size="3" weight="bold">Встречи и интервью</Text><Button size="2" variant="soft" onClick={addInterviewMeeting}><PlusIcon width={14} height={14} /><Text size="2">Добавить встречу</Text></Button></Flex><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Рекомендуемое количество встреч: {maxMeetingsCount} (активные этапы до оффера - 2). Для каждой встречи укажите этап, длительность, заголовок, сопровождающий текст и формат (офис или онлайн). Формат встречи связан с настройками этапа: если для выбранного этапа включено показывание офисов (showOffices = true), то выбор "Офис" активен, а если нет, то по определению ставится "Онлайн" и поле disabled.</Text>
+                    {interviewMeetings.length === 0 ? <Card style={{ padding: 24, textAlign: 'center' }}><Text size="2" color="gray">Нет встреч. Добавьте первую встречу.</Text></Card> : <Flex direction="column" gap="4">{interviewMeetings.map((m, i) => {
+                      const selectedStage = recruitmentStagesWithMeetings.find(s => s.id === m.stage)
+                      const showOfficesForStage = selectedStage?.showOffices ?? false
+                      const isFormatDisabled = !showOfficesForStage
+                      const currentFormat = isFormatDisabled ? 'online' : (m.format || 'online')
+                      return <Card key={m.id} style={{ padding: 16 }}><Flex direction="column" gap="4"><Flex align="center" justify="between"><Text size="3" weight="medium">Встреча {i + 1}</Text>{interviewMeetings.length > 1 && <Button size="1" variant="ghost" color="red" onClick={() => removeInterviewMeeting(m.id)}><TrashIcon width={14} height={14} /></Button>}</Flex><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Этап</Text><Select.Root value={m.stage} onValueChange={(v) => {
+                        const stage = recruitmentStagesWithMeetings.find(s => s.id === v)
+                        const showOffices = stage?.showOffices ?? false
+                        // Если showOffices = false, автоматически устанавливаем формат "Онлайн"
+                        // Если showOffices = true, сохраняем текущий формат или устанавливаем "Онлайн" по умолчанию
+                        const newFormat: 'office' | 'online' | '' = showOffices 
+                          ? (m.format === 'office' || m.format === 'online' ? m.format : 'online') 
+                          : 'online'
+                        updateInterviewMeeting(m.id, {
+                          stage: v,
+                          format: newFormat
+                        })
+                      }}><Select.Trigger placeholder="Выберите этап" style={{ width: '100%' }} /><Select.Content>{stagesBeforeOffer.map(s => <Select.Item key={s.id} value={s.id}>{s.description || s.name}</Select.Item>)}</Select.Content></Select.Root></Box><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Длительность встречи (минут)</Text><TextField.Root type="number" value={String(m.duration)} onChange={(e) => updateInterviewMeeting(m.id, { duration: parseInt(e.target.value) || 60 })} placeholder="60" style={{ width: 200 }} /></Box><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Заголовок названия встречи</Text><TextField.Root value={m.title} onChange={(e) => updateInterviewMeeting(m.id, { title: e.target.value })} placeholder="Например: Техническое интервью - Frontend Developer" style={{ width: '100%' }} /></Box><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Формат встречи</Text><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>{isFormatDisabled ? 'Для выбранного этапа показывание офисов отключено. Автоматически установлен формат "Онлайн".' : 'Выберите офис или онлайн'}</Text><Select.Root value={currentFormat} onValueChange={(v) => updateInterviewMeeting(m.id, { format: (v || 'online') as 'office' | 'online' | '' })} disabled={isFormatDisabled}><Select.Trigger placeholder={isFormatDisabled ? 'Онлайн (автоматически)' : 'Офис или онлайн'} style={{ width: '100%' }} /><Select.Content><Select.Item value="office">Офис</Select.Item><Select.Item value="online">Онлайн</Select.Item></Select.Content></Select.Root></Box><Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Сопровождающий текст</Text><DropdownMenu.Root><DropdownMenu.Trigger><Button size="1" variant="ghost"><Text size="1">Подсказки</Text><ChevronDownIcon width={12} height={12} /></Button></DropdownMenu.Trigger><DropdownMenu.Content style={{ minWidth: 260 }}><DropdownMenu.Item onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + '{{candidate_link}}' })}><Text size="2">Ссылка на кандидата в системе</Text></DropdownMenu.Item><DropdownMenu.Item onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + '{{external_integration_link}}' })}><Text size="2">Ссылка во внешней интеграции</Text></DropdownMenu.Item>{recruiterContactHints.map(({ label, variable }) => <DropdownMenu.Item key={variable} onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + `{{${variable}}}` })}><Text size="2">{label}</Text></DropdownMenu.Item>)}<DropdownMenu.Item onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + '{{office_instructions}}' })}><Text size="2">Инструкции офиса</Text></DropdownMenu.Item></DropdownMenu.Content></DropdownMenu.Root></Flex><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>Введите текст, который будет отправлен вместе с приглашением на встречу. Используйте подсказки для вставки шаблонов.</Text><TextArea value={m.description} onChange={(e) => updateInterviewMeeting(m.id, { description: e.target.value })} placeholder="Введите текст приглашения на встречу..." style={{ minHeight: 120, width: '100%' }} /></Box></Flex></Card>
+                    })}</Flex>}
+                  </Box>
+                )}
+    
+                {activeTab === 'scorecard' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Scorecard</Text><Flex direction="column" gap="4"><Card style={{ padding: 16 }}><Flex direction="column" gap="3"><Text size="3" weight="medium" mb="2">Ссылка</Text><Flex direction="column" gap="3"><Flex direction="column" gap="2"><Text size="2" weight="medium">Ссылка на Google документ</Text><TextField.Root value={scorecardLinkUrl} onChange={(e) => setScorecardLinkUrl(e.target.value)} placeholder="https://docs.google.com/document/..." style={{ width: '100%' }} /></Flex><Flex direction="column" gap="2"><Text size="2" weight="medium">Название-заголовок</Text><TextField.Root value={scorecardLinkTitle} onChange={(e) => setScorecardLinkTitle(e.target.value)} placeholder="Введите название" style={{ width: '100%' }} /></Flex><Flex direction="column" gap="2"><Text size="2" weight="medium">Место добавления</Text><Select.Root value={scorecardLinkPosition} onValueChange={(v: 'start' | 'end') => setScorecardLinkPosition(v)}><Select.Trigger style={{ width: '100%' }} /><Select.Content><Select.Item value="start">В начале</Select.Item><Select.Item value="end">В конце</Select.Item></Select.Content></Select.Root></Flex></Flex></Flex></Card><Card style={{ padding: 16 }}><Flex direction="column" gap="3"><Text size="3" weight="medium" mb="2">Локальный</Text><Flex direction="column" gap="3"><Flex align="center" gap="2"><Switch checked={scorecardLocalActive} onCheckedChange={setScorecardLocalActive} /><Text size="2">{scorecardLocalActive ? 'Активный' : 'Не активный'}</Text></Flex><Button variant="soft" onClick={() => setScorecardLocalSettingsOpen(true)} disabled={!scorecardLocalActive} style={{ width: 'fit-content' }}><GearIcon width={16} height={16} /><Text size="2">Настройки</Text></Button>{!scorecardLocalActive && <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>В разработке</Text>}</Flex></Flex></Card></Flex>
+                    <Dialog.Root open={scorecardLocalSettingsOpen} onOpenChange={setScorecardLocalSettingsOpen}><Dialog.Content style={{ maxWidth: 600 }}><Dialog.Title>Настройки локального Scorecard</Dialog.Title><Dialog.Description size="2" color="gray" mb="4">Настройки локального Scorecard находятся в разработке</Dialog.Description><Flex gap="3" justify="end" mt="4"><Dialog.Close><Button variant="soft">Закрыть</Button></Dialog.Close></Flex></Dialog.Content></Dialog.Root>
+                  </Box>
+                )}
+    
+                {activeTab === 'dataProcessing' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Обработка данных</Text><Flex direction="column" gap="4"><Card style={{ padding: 16 }}><Flex direction="column" gap="3"><Flex align="center" gap="2"><Switch checked={useUnifiedPrompt} onCheckedChange={setUseUnifiedPrompt} /><Text size="2">Использовать единый промпт</Text></Flex><Flex direction="column" gap="2"><Text size="2" weight="medium">Промпт для анализа</Text><TextArea value={analysisPrompt} onChange={(e) => setAnalysisPrompt(e.target.value)} placeholder="Введите промпт для анализа..." disabled={useUnifiedPrompt} style={{ minHeight: 140, width: '100%' }} /></Flex></Flex></Card></Flex></Box>
+                )}
+
+                {activeTab === 'additionalFields' && (
+                  <Box>
+                    <Flex align="start" justify="between" gap="3" wrap="wrap" mb="3">
+                      <Text size="3" weight="bold" style={{ display: 'block' }}>Дополнительные поля</Text>
+                      <Button asChild variant="soft" size="2">
+                        <Link to={COMPANY_CANDIDATE_FIELDS_SETTINGS_PATH}>
+                          <Flex align="center" gap="2">
+                            <ArrowTopRightIcon width={14} height={14} />
+                            <Text size="2">Все доп. поля</Text>
+                          </Flex>
+                        </Link>
+                      </Button>
+                    </Flex>
+                    <Flex direction="column" gap="4">
+                      <Text size="2" color="gray">
+                        Поля из справочника компании, которые кандидат заполняет при отклике на эту вакансию. Состав справочника настраивается отдельно; здесь включаются и выключаются поля только для этой вакансии.
+                      </Text>
+                      <Card style={{ padding: 16 }}>
+                        <Flex align="center" justify="between" gap="3" wrap="wrap" mb="3">
+                          <Text size="2" weight="medium">Все поля на вакансии</Text>
+                          <Flex align="center" gap="2">
+                            <Switch
+                              checked={allAdditionalFieldsOnVacancy}
+                              onCheckedChange={(c) => (c ? enableAllAdditionalFieldsOnVacancy() : disableAllAdditionalFieldsOnVacancy())}
+                            />
+                          </Flex>
+                        </Flex>
+                        <Table.Root>
+                          <Table.Header>
+                            <Table.Row>
+                              <Table.ColumnHeaderCell>Поле</Table.ColumnHeaderCell>
+                              <Table.ColumnHeaderCell>Тип</Table.ColumnHeaderCell>
+                              <Table.ColumnHeaderCell>На вакансии</Table.ColumnHeaderCell>
+                            </Table.Row>
+                          </Table.Header>
+                          <Table.Body>
+                            {CANDIDATE_ADDITIONAL_FIELD_ROWS.map((row) => (
+                              <Table.Row key={row.id}>
+                                <Table.Cell><Text size="2">{row.label}</Text></Table.Cell>
+                                <Table.Cell><Text size="2">{row.typeLabel}</Text></Table.Cell>
+                                <Table.Cell>
+                                  <Switch
+                                    checked={vacancyAdditionalFieldEnabled[row.id] ?? false}
+                                    onCheckedChange={(c) => setAdditionalFieldOnVacancy(row.id, c)}
+                                  />
+                                </Table.Cell>
+                              </Table.Row>
+                            ))}
+                          </Table.Body>
+                        </Table.Root>
+                        <Text size="1" color="gray" mt="3" style={{ display: 'block' }}>
+                          Новые поля в справочнике появятся здесь после сохранения в настройках компании.
+                        </Text>
+                      </Card>
+                    </Flex>
+                  </Box>
+                )}
+    
+                {activeTab === 'automations' && (
+                  <Box>
+                    <Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Автоматизации</Text>
+                    <Card style={{ padding: 16 }}>
+                      <Text size="2" color="gray">
+                        Контент раздела будет добавлен позже: триггеры, действия и цепочки, привязанные к этой вакансии.
+                      </Text>
+                    </Card>
+                  </Box>
+                )}
+    
+                {activeTab === 'history' && (
+                  <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>История правок</Text><Flex direction="column" gap="3">{editHistory.length === 0 ? <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>История правок пуста</Text> : editHistory.map((item) => <Card key={item.id} style={{ padding: 16, cursor: 'pointer' }} onClick={() => setSelectedHistoryItem(item)}><Flex direction="column" gap="2"><Flex align="center" justify="between"><Flex align="center" gap="2"><Badge color="gray" variant="soft">Версия {item.version}</Badge><Text size="2" weight="medium">{item.changes}</Text></Flex><Text size="1" color="gray">{item.date}</Text></Flex><Flex align="center" gap="2"><PersonIcon width={14} height={14} style={{ color: 'var(--gray-9)' }} /><Text size="1" color="gray">{item.user}</Text></Flex></Flex></Card>)}</Flex>
+                    <Dialog.Root open={selectedHistoryItem !== null} onOpenChange={(o) => !o && setSelectedHistoryItem(null)}><Dialog.Content style={{ maxWidth: 800, maxHeight: '90vh', overflow: 'auto' }}>{selectedHistoryItem && (() => { const nextV = editHistory.filter(h => h.version < selectedHistoryItem.version).sort((a, b) => b.version - a.version)[0]; const curT = selectedHistoryItem.fullText || selectedHistoryItem.changes, nextT = nextV?.fullText || nextV?.changes || '', diffT = nextT ? calculateDiff(curT, nextT) : curT; return <><Dialog.Title><Flex direction="column" gap="2"><Text size="4" weight="bold">Версия {selectedHistoryItem.version}</Text><Text size="2" color="gray">{selectedHistoryItem.changes}</Text></Flex></Dialog.Title><Dialog.Description><Flex direction="column" gap="3" mt="4"><Flex align="center" gap="2"><PersonIcon width={16} height={16} /><Text size="2">{selectedHistoryItem.user}</Text><Text size="1" color="gray">•</Text><Text size="1" color="gray">{selectedHistoryItem.date}</Text></Flex>{nextV && <Box style={{ padding: 12, backgroundColor: 'var(--yellow-2)', borderRadius: 6, border: '1px solid var(--yellow-6)' }}><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>Сравнение с версией {nextV.version} от {nextV.date}</Text><Text size="1" style={{ display: 'block' }}><span style={{ textDecoration: 'line-through', backgroundColor: '#fef3c7' }}>Удалено</span> <span style={{ textDecoration: 'underline', backgroundColor: '#fef3c7' }}>Добавлено</span></Text></Box>}<Box style={{ padding: 16, backgroundColor: 'var(--gray-2)', borderRadius: 6, border: '1px solid var(--gray-6)', whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, lineHeight: 1.6, maxHeight: 500, overflow: 'auto' }}><div dangerouslySetInnerHTML={{ __html: diffT.replace(/\n/g, '<br/>') }} /></Box></Flex></Dialog.Description><Flex gap="3" mt="4" justify="end"><Button variant="solid" color="blue" onClick={() => { setVersionToRestore(selectedHistoryItem); setRestoreConfirmationOpen(true) }}>Восстановить версию</Button><Dialog.Close><Button variant="soft" color="gray">Закрыть</Button></Dialog.Close></Flex></> })()}</Dialog.Content></Dialog.Root>
+                    <Dialog.Root open={restoreConfirmationOpen} onOpenChange={setRestoreConfirmationOpen}><Dialog.Content style={{ maxWidth: 600 }}><Dialog.Title><Text size="4" weight="bold">Подтверждение восстановления</Text></Dialog.Title><Dialog.Description><Flex direction="column" gap="4" mt="4"><Text size="2">Вы собираетесь восстановить версию {versionToRestore?.version} от {versionToRestore?.date}. Все текущие изменения будут заменены на значения из этой версии.</Text>{versionToRestore?.fieldsState && <><Separator /><Text size="2" weight="bold" mb="2">Будут восстановлены следующие поля:</Text><Box style={{ maxHeight: 300, overflowY: 'auto', padding: 12, backgroundColor: 'var(--gray-2)', borderRadius: 6, border: '1px solid var(--gray-6)' }}><Flex direction="column" gap="2">{Object.entries(versionToRestore.fieldsState?.fieldSettings ?? {}).map(([fk, settings]) => { const fn = getFieldName(fk); const fs = versionToRestore.fieldsState; let fv = ''; if (fk === 'title') fv = fs?.title || ''; else if (fk === 'department') fv = fs?.department || ''; else if (fk === 'header') fv = fs?.header || ''; else if (fk === 'responsibilities') fv = fs?.responsibilities || ''; else if (fk === 'requirements') fv = fs?.requirements || ''; else if (fk === 'niceToHave') fv = fs?.niceToHave || ''; else if (fk === 'conditions') fv = fs?.conditions || ''; else if (fk === 'closing') fv = fs?.closing || ''; else if (fk === 'link') fv = fs?.link || ''; return <Card key={fk} style={{ padding: 12 }}><Flex direction="column" gap="2"><Flex align="center" gap="2"><Text size="2" weight="medium">{fn}</Text><Badge color={settings.active ? 'green' : 'gray'} variant="soft" size="1">{settings.active ? 'Активно' : 'Неактивно'}</Badge><Badge color={settings.visible ? 'blue' : 'gray'} variant="soft" size="1">{settings.visible ? 'Видимо' : 'Скрыто'}</Badge></Flex>{fv && fk !== 'attachment' && <Text size="1" color="gray" style={{ maxHeight: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fv.length > 100 ? fv.substring(0, 100) + '...' : fv}</Text>}</Flex></Card> })}</Flex></Box><Box style={{ padding: 12, backgroundColor: 'var(--yellow-2)', borderRadius: 6, border: '1px solid var(--yellow-6)' }}><Text size="1" color="gray">⚠️ Восстановление создаст новую версию в истории правок. Текущие несохраненные изменения будут потеряны.</Text></Box></>}</Flex></Dialog.Description><Flex gap="3" mt="4" justify="end"><Button variant="soft" color="gray" onClick={() => { setRestoreConfirmationOpen(false); setVersionToRestore(null) }}>Отмена</Button><Button variant="solid" color="blue" onClick={handleRestoreVersion}>Восстановить</Button></Flex></Dialog.Content></Dialog.Root>
+                  </Box>
+                )}
+              </Box>
+  )
+
+  const editFooterFragment = (
+    <>
+            <Separator size="4" my="3" />
+            <Flex justify="between" align="center" gap="3" wrap="wrap" style={{ width: '100%' }}>
+              <Box style={{ minWidth: 0 }}>
+                {canDeleteVacancy ? (
+                  <Button size="3" type="button" variant="soft" color="red" onClick={handleDeleteVacancyClick}>
+                    Удалить
+                  </Button>
+                ) : null}
+              </Box>
+              <Flex gap="3" justify="end" wrap="wrap" style={{ marginLeft: 'auto' }}>
+                <Button size="3" variant="soft" onClick={handleCancel}>Отмена</Button>
+                <Button size="3" onClick={handleSave}>Сохранить</Button>
+              </Flex>
+            </Flex>
+    </>
+  )
+
+  const showSidebarInModalBody = !(embedded && settingsSidebarHostEl)
+
+  const editModeBodyAndFooter = (
+    <>
+            <Flex className={styles.body} gap="4">
+              {showSidebarInModalBody ? editSidebarNode : null}
+              {editMainColumnBox}
+            </Flex>
+            {editFooterFragment}
+    </>
+  )
+
+  if (embedded) {
+    if (!open) return null
+    if (mode !== 'edit') {
+      return (
+        <Box className={styles.embeddedRoot} p="4">
+          <Text size="2" color="gray">Встроенный режим доступен только при редактировании.</Text>
+        </Box>
+      )
+    }
+    return (
+      <>
+        {settingsSidebarHostEl ? createPortal(editSidebarNode, settingsSidebarHostEl) : null}
+        <Box className={styles.embeddedRoot}>
+          <Flex justify="between" align="center" mb="2" wrap="wrap" gap="2">
+            <Flex align="center" gap="2">
+              <Text size="5" weight="bold">{vacancy?.title ?? vacancyTitleS ?? vacancyTitle ?? 'Настройки вакансии'}</Text>
+              {onVacancyStatusChange && vacancyStatus !== undefined && (
+                <Flex align="center" gap="2">
+                  <Switch checked={vacancyStatus === 'active'} onCheckedChange={(c) => onVacancyStatusChange(c ? 'active' : 'inactive')} />
+                  <Text size="2" color="gray">Активна</Text>
+                </Flex>
+              )}
+            </Flex>
+          </Flex>
+          <Separator size="4" mb="3" />
+          {editModeBodyAndFooter}
+        </Box>
+      </>
+    )
+  }
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -528,20 +1443,24 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
           <Flex direction="column" gap="2" className={styles.sidebar}>
             <TextField.Root
               placeholder="Search vacancy-settings..."
-              value={vacancySettingsSearch}
-              onChange={(e) => setVacancySettingsSearch(e.target.value)}
+              value={vacancySettingsSearchValue}
+              onChange={(e) =>
+                vacancySearchExternal
+                  ? onVacancySettingsSearchExternalChange?.(e.target.value)
+                  : setInternalVacancySettingsSearch(e.target.value)
+              }
               size="2"
             />
             <Text size="2" weight="medium">Настройки вакансии</Text>
             <Text size="1" weight="medium" color="gray">Разделы настроек</Text>
             {filteredSections.map(({ key, label }) => (
-              <Button key={key} variant={selectedSettingTab === key ? 'solid' : 'soft'} onClick={() => setSelectedSettingTab(key)} style={{ justifyContent: 'flex-start' }}>
+              <Button key={key} variant={activeTab === key ? 'solid' : 'soft'} onClick={() => setTab(key)} style={{ justifyContent: 'flex-start' }}>
                 <Text size="2">{label}</Text>
               </Button>
             ))}
           </Flex>
           <Box className={styles.content} style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {selectedSettingTab === 'text' && (
+            {activeTab === 'text' && (
               <>
                 <Card style={{ padding: 16 }}>
                   <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Основная информация</Text>
@@ -552,7 +1471,12 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
                     <Box><Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Интервьюеры</Text><Text size="2">{vacancy != null ? vacancy.interviewers : selectedVacancyInterviewers.size}</Text></Box>
                     <Box><Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Дата</Text><Text size="2">{vacancy?.date ?? VIEW_DUMMY.date}</Text></Box>
                     {vacancy?.hasWarning && vacancy?.warningText && (
-                      <Box style={{ padding: 10, backgroundColor: 'var(--yellow-2)', borderRadius: 6, border: '1px solid var(--yellow-6)' }}><Text size="2" color="amber">⚠ {vacancy.warningText}</Text></Box>
+                      <Box style={{ padding: 10, backgroundColor: 'var(--yellow-2)', borderRadius: 6, border: '1px solid var(--yellow-6)' }}>
+                        <Flex align="center" gap="2">
+                          <ExclamationTriangleIcon width={14} height={14} />
+                          <Text size="2" color="amber">{vacancy.warningText}</Text>
+                        </Flex>
+                      </Box>
                     )}
                     <Box><Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Активность</Text><Badge color={(isPublished || !vacancyHeader) ? 'green' : 'gray'} variant="soft">{(isPublished || !vacancyHeader) ? 'Опубликовано' : 'Не опубликовано'}</Badge></Box>
                   </Flex>
@@ -574,7 +1498,22 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
                 </Card>
               </>
             )}
-            {selectedSettingTab === 'recruiters' && (
+            {activeTab === 'locations' && (
+              <Card style={{ padding: 16 }}>
+                <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Локации</Text>
+                <Box mb="3">
+                  <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Режим</Text>
+                  <Text size="2">{vacancyLocationsIndividual ? 'Индивидуальные параметры' : 'Везде одинаково'}</Text>
+                </Box>
+                <Box>
+                  <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Список</Text>
+                  <Text size="2">
+                    {vacancyLocationRows.length > 0 ? vacancyLocationRows.map((r) => r.label).join(', ') : '—'}
+                  </Text>
+                </Box>
+              </Card>
+            )}
+            {activeTab === 'recruiters' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Рекрутеры</Text>
                 <Flex direction="column" gap="2">{allRecruiters.filter(r => selectedRecruiters.has(r.id)).map(r => (
@@ -583,7 +1522,7 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
                 {allRecruiters.filter(r => selectedRecruiters.has(r.id)).length === 0 && (vacancy?.recruiter ? <Text size="2">{vacancy.recruiter}</Text> : <Flex align="center" gap="2"><Text size="2">{VIEW_DUMMY.recruiterName}</Text><Text size="1" color="gray">— {VIEW_DUMMY.recruiterPosition}</Text></Flex>)}
               </Card>
             )}
-            {selectedSettingTab === 'customers' && (
+            {activeTab === 'customers' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Заказчики и интервьюеры</Text>
                 <Box mb="3"><Text size="1" color="gray" style={{ display: 'block' }}>Только из отдела</Text><Text size="2">{customersOnlyFromDepartment ? 'Да' : 'Нет (все)'}</Text></Box>
@@ -591,42 +1530,42 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
                 {selectedVacancyInterviewers.size === 0 && <Flex align="center" gap="2"><Text size="2">{VIEW_DUMMY.interviewerName}</Text><Text size="1" color="gray">— {VIEW_DUMMY.interviewerPosition}</Text></Flex>}
               </Card>
             )}
-            {selectedSettingTab === 'questions' && (
+            {activeTab === 'questions' && (
               <>
                 <Card style={{ padding: 16 }}>
                   <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Ссылки</Text>
-                  <Flex direction="column" gap="1">{vacancyLink && <a href={vacancyLink} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-11)' }}><Text size="2">{vacancyLink}</Text></a>}{questionLinkOffices.map(o => { const l = questionsLinksByOffice[o.id]?.link; if (!l?.url) return null; return <a key={o.id} href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-11)' }}><Text size="2">{o.name}: {l.url}</Text></a> })}</Flex>
-                  {!vacancyLink && !questionLinkOffices.some(o => questionsLinksByOffice[o.id]?.link?.url) && <a href={VIEW_DUMMY.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-11)' }}><Text size="2">{VIEW_DUMMY.link}</Text></a>}
+                  <Flex direction="column" gap="1">{vacancyLink && <a href={vacancyLink} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-11)' }}><Text size="2">{vacancyLink}</Text></a>}{questionsLinkTargets.map((o) => { const l = questionsLinksByOffice[o.key]?.link; if (!l?.url) return null; return <a key={o.key} href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-11)' }}><Text size="2">{o.heading}: {l.url}</Text></a> })}</Flex>
+                  {!vacancyLink && !questionsLinkTargets.some((o) => questionsLinksByOffice[o.key]?.link?.url) && <a href={VIEW_DUMMY.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-11)' }}><Text size="2">{VIEW_DUMMY.link}</Text></a>}
                 </Card>
                 <Card style={{ padding: 16 }}>
                   <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Вопросы</Text>
-                  {questionLinkOffices.map(o => { const q = questionsLinksByOffice[o.id]?.question?.text; return <Box key={o.id} mb="2"><Text size="1" color="gray">{o.name}</Text><Text size="2">{q || VIEW_DUMMY.officeQuestion}</Text></Box> })}
+                  {questionsLinkTargets.map((o) => { const q = questionsLinksByOffice[o.key]?.question?.text; return <Box key={o.key} mb="2"><Text size="1" color="gray">{o.heading}</Text><Text size="2">{q || VIEW_DUMMY.officeQuestion}</Text></Box> })}
                 </Card>
               </>
             )}
-            {selectedSettingTab === 'integrations' && (
+            {activeTab === 'integrations' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Связи и интеграции</Text>
                 <Flex direction="column" gap="3">
                   <Box><Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Связи с интеграциями</Text><Text size="2">{integrationPartner === 'huntflow' ? `Huntflow${huntflowVacancyId ? ` (ID: ${huntflowVacancyId})` : ''}` : VIEW_DUMMY.integration}</Text></Box>
-                  <Box><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>Доступные офисы</Text>{questionLinkOffices.map(office => { const s = questionsLinksByOffice[office.id] ?? getDefaultOfficeState(); const l = s.link, q = s.question ?? { text: '', color: '' }; return <Box key={office.id} mb="2"><Text size="2" weight="medium">{office.name}</Text><Text size="1" color="gray" style={{ display: 'block' }}>Ссылка: {l?.url || VIEW_DUMMY.officeLink}; с сайта: {(l?.url ? l.useOnSite : VIEW_DUMMY.officeUseOnSite) ? 'да' : 'нет'}</Text><Text size="1" color="gray" style={{ display: 'block' }}>Вопрос: {q?.text || VIEW_DUMMY.officeQuestion}</Text></Box> })}</Box>
+                  <Box><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>Доступные офисы</Text>{questionsLinkTargets.map((office) => { const s = questionsLinksByOffice[office.key] ?? getDefaultOfficeState(); const l = s.link, q = s.question ?? { text: '', color: '' }; return <Box key={office.key} mb="2"><Text size="2" weight="medium">{office.heading}</Text><Text size="1" color="gray" style={{ display: 'block' }}>Ссылка: {l?.url || VIEW_DUMMY.officeLink}; с сайта: {(l?.url ? l.useOnSite : VIEW_DUMMY.officeUseOnSite) ? 'да' : 'нет'}</Text><Text size="1" color="gray" style={{ display: 'block' }}>Вопрос: {q?.text || VIEW_DUMMY.officeQuestion}</Text></Box> })}</Box>
                 </Flex>
               </Card>
             )}
-            {selectedSettingTab === 'statuses' && (
+            {activeTab === 'statuses' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>Переходы по этапам</Text>
                 <Text size="2" style={{ whiteSpace: 'nowrap', overflowX: 'auto', display: 'block' }}>{recruitmentStages.filter(s => activeStages.has(s.id)).map(s => s.name).join(' → ') || VIEW_DUMMY.stagesChain}</Text>
               </Card>
             )}
-            {selectedSettingTab === 'salary' && (
+            {activeTab === 'salary' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Зарплатные вилки</Text>
                 <Text size="1" color="gray" mb="2" style={{ display: 'block' }}>{isGrossFormat ? 'Gross' : 'Net'}</Text>
                 <Box className={styles.salaryForksTableWrapper} style={{ overflowX: 'auto' }}><Table.Root style={{ tableLayout: 'fixed', width: 'max-content', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}><Table.Header><Table.Row><Table.ColumnHeaderCell style={{ width: 100, padding: 8 }}>Грейд</Table.ColumnHeaderCell>{companyCurrencies.map(c => <Table.ColumnHeaderCell key={c.id} style={{ padding: 8 }}>{c.code}</Table.ColumnHeaderCell>)}</Table.Row></Table.Header><Table.Body>{allGrades.map(g => { const act = activeGrades.has(g.id); return <Table.Row key={g.id}><Table.Cell style={{ padding: 8 }}><Text size="2" weight={act ? 'medium' : 'regular'} style={{ opacity: act ? 1 : 0.6 }}>{g.name}</Text></Table.Cell>{companyCurrencies.map(cur => { const fromV = getSalaryValue(g.id, cur.code, 'from'), toV = getSalaryValue(g.id, cur.code, 'to'); return <Table.Cell key={cur.id} style={{ padding: 8 }}><Text size="2">{act ? `${fromV != null ? fromV.toFixed(2) : '—'} – ${toV != null ? toV.toFixed(2) : '—'}` : '—'}</Text></Table.Cell>})}</Table.Row>})}</Table.Body></Table.Root></Box>
               </Card>
             )}
-            {selectedSettingTab === 'interviews' && (
+            {activeTab === 'interviews' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Встречи и интервью</Text>
                 {interviewMeetings.length === 0 ? (
@@ -656,7 +1595,7 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
                 )}
               </Card>
             )}
-            {selectedSettingTab === 'scorecard' && (
+            {activeTab === 'scorecard' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Scorecard</Text>
                 <Flex direction="column" gap="2">
@@ -665,14 +1604,42 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
                 </Flex>
               </Card>
             )}
-            {selectedSettingTab === 'dataProcessing' && (
+            {activeTab === 'dataProcessing' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Промпт для анализа</Text>
                 <Text size="2">Единый промпт: {useUnifiedPrompt ? 'да' : 'нет'}</Text>
                 {(!useUnifiedPrompt || !analysisPrompt) && <Box mt="2"><Text size="2" style={{ whiteSpace: 'pre-wrap' }}>{analysisPrompt || VIEW_DUMMY.analysisPrompt}</Text></Box>}
               </Card>
             )}
-            {selectedSettingTab === 'history' && (
+            {activeTab === 'additionalFields' && (
+              <Card style={{ padding: 16 }}>
+                <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Дополнительные поля</Text>
+                <Text size="2" color="gray" mb="3">
+                  Справочник:{' '}
+                  <Text size="2" asChild>
+                    <Link to={COMPANY_CANDIDATE_FIELDS_SETTINGS_PATH} style={{ color: 'var(--accent-11)' }}>
+                      настройки полей кандидатов
+                    </Link>
+                  </Text>
+                </Text>
+                <Flex direction="column" gap="2">
+                  {CANDIDATE_ADDITIONAL_FIELD_ROWS.map((row) => (
+                    <Text size="2" key={row.id}>
+                      {row.label}: {vacancyAdditionalFieldEnabled[row.id] ? 'включено для вакансии' : 'выключено для вакансии'}
+                    </Text>
+                  ))}
+                </Flex>
+              </Card>
+            )}
+            {activeTab === 'automations' && (
+              <Card style={{ padding: 16 }}>
+                <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Автоматизации</Text>
+                <Text size="2" color="gray">
+                  Раздел в разработке. Здесь появятся сценарии и правила автоматизации для этой вакансии.
+                </Text>
+              </Card>
+            )}
+            {activeTab === 'history' && (
               <Card style={{ padding: 16 }}>
                 <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>История правок</Text>
                 {editHistory.length === 0 ? (
@@ -714,201 +1681,7 @@ export default function VacancyEditModal({ open, onOpenChange, vacancyId, vacanc
         </Flex>
         <Separator size="4" mb="3" />
 
-        <Flex className={styles.body} gap="4">
-          <Flex direction="column" gap="2" className={styles.sidebar}>
-            <TextField.Root
-              placeholder="Search vacancy-settings..."
-              value={vacancySettingsSearch}
-              onChange={(e) => setVacancySettingsSearch(e.target.value)}
-              size="2"
-            />
-            <Text size="2" weight="medium">Настройки вакансии</Text>
-            <Text size="1" weight="medium" color="gray">Разделы настроек</Text>
-            {filteredSections.map(({ key, label }) => (
-              <Button key={key} variant={selectedSettingTab === key ? 'solid' : 'soft'} onClick={() => setSelectedSettingTab(key)} style={{ justifyContent: 'flex-start' }}>
-                <Text size="2">{label}</Text>
-              </Button>
-            ))}
-          </Flex>
-
-          <Box className={styles.content}>
-            {selectedSettingTab === 'text' && (
-              <Box>
-                <Flex align="center" justify="between" mb="4">
-                  <Text size="3" weight="bold">Текст вакансии</Text>
-                  <Flex align="center" gap="2">
-                    {isPublished && publicationUrl && (
-                      <Button variant="soft" size="2" onClick={() => window.open(publicationUrl!, '_blank')}>
-                        <GlobeIcon width={16} height={16} /> Открыть на сайте
-                      </Button>
-                    )}
-                    <Button variant={isPublished ? 'solid' : 'soft'} color={isPublished ? 'green' : 'gray'} size="2"
-                      onClick={(e) => {
-                        const btn = e.currentTarget; (btn.querySelector('.button-text') as HTMLElement) && ((btn.querySelector('.button-text') as HTMLElement).textContent = isPublished ? 'Опубликовано' : 'Опубликовать на сайте')
-                        if (!isPublished) {
-                          const url = `https://company.com/vacancies/${(vacancyTitleS || 'v').toLowerCase().replace(/\s+/g, '-')}`
-                          setPublicationUrl(url); setIsPublished(true)
-                          setEditHistory(prev => [{ id: String(Date.now()), date: new Date().toLocaleString('ru-RU'), user: 'Текущий пользователь', changes: 'Вакансия опубликована на сайте', version: prev[0]?.version ? prev[0].version + 1 : 1 }, ...prev])
-                          alert(`Вакансия опубликована на сайте!\nURL: ${url}`)
-                        } else {
-                          setIsPublished(false); setPublicationUrl(null)
-                          setEditHistory(prev => [{ id: String(Date.now()), date: new Date().toLocaleString('ru-RU'), user: 'Текущий пользователь', changes: 'Публикация вакансии снята с сайта', version: prev[0]?.version ? prev[0].version + 1 : 1 }, ...prev])
-                          alert('Вакансия снята с публикации')
-                        }
-                      }}
-                      onMouseEnter={(e) => { if (isPublished) { const span = e.currentTarget.querySelector('.button-text') as HTMLElement; if (span) span.textContent = 'Снять публикацию' } }}
-                      onMouseLeave={(e) => { if (isPublished) { const span = e.currentTarget.querySelector('.button-text') as HTMLElement; if (span) span.textContent = 'Опубликовано' } }}
-                    >
-                      {isPublished ? (<><span className="button-text">Опубликовано</span></>) : (<><GlobeIcon width={16} height={16} /> Опубликовать на сайте</>)}
-                    </Button>
-                  </Flex>
-                </Flex>
-                {/* Вкладки с выбором страны */}
-                <Tabs.Root value={selectedCountryTab} onValueChange={setSelectedCountryTab} mb="4">
-                  <Tabs.List>
-                    {questionLinkOffices.map(office => (
-                      <Tabs.Trigger key={office.id} value={office.id}>
-                        {office.name}
-                      </Tabs.Trigger>
-                    ))}
-                  </Tabs.List>
-                  {questionLinkOffices.map(office => (
-                    <Tabs.Content key={office.id} value={office.id}>
-                      <Flex align="center" justify="between" mb="3">
-                        <Text size="2" color="gray">Настройки для {office.name}</Text>
-                        <Flex align="center" gap="2">
-                          <Text size="2" color="gray">Активность:</Text>
-                          <Switch 
-                            checked={vacancyActiveByCountry[office.id] || false} 
-                            onCheckedChange={(checked) => setVacancyActiveByCountry(prev => ({ ...prev, [office.id]: checked }))} 
-                          />
-                        </Flex>
-                      </Flex>
-                      <Flex direction="column" gap="4">
-                        <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Название</Text><TextField.Root value={vacancyFieldsByCountry[office.id]?.title || vacancyTitleS} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, title: e.target.value } })); if (office.id === selectedCountryTab) setVacancyTitleS(e.target.value) }} placeholder="Введите название вакансии" disabled={!vacancyActiveByCountry[office.id]} /></Box>
-                        <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Отдел</Text><Select.Root value={vacancyFieldsByCountry[office.id]?.department || vacancyDepartment} onValueChange={(v) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, department: v } })); if (office.id === selectedCountryTab) setVacancyDepartment(v) }}><Select.Trigger placeholder="Выберите отдел" disabled={!vacancyActiveByCountry[office.id]} /><Select.Content>{getAllDepartmentsFlat(mockDepartments).map(d => <Select.Item key={d.id} value={d.id}>{'  '.repeat(d.level)}{d.name}</Select.Item>)}</Select.Content></Select.Root></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Шапка</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.active ?? fieldSettings.header.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, header: { ...fs.header, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, header: { ...prev.header, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.visible ?? fieldSettings.header.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, header: { ...fs.header, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, header: { ...prev.header, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.header || vacancyHeader} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, header: e.target.value } })); if (office.id === selectedCountryTab) setVacancyHeader(e.target.value) }} placeholder="Введите текст шапки" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.header?.active ?? fieldSettings.header.active)} style={{ minHeight: '100px' }} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Обязанности</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.active ?? fieldSettings.responsibilities.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, responsibilities: { ...fs.responsibilities, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, responsibilities: { ...prev.responsibilities, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.visible ?? fieldSettings.responsibilities.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, responsibilities: { ...fs.responsibilities, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, responsibilities: { ...prev.responsibilities, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.responsibilities || vacancyResponsibilities} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, responsibilities: e.target.value } })); if (office.id === selectedCountryTab) setVacancyResponsibilities(e.target.value) }} placeholder="Введите обязанности" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.responsibilities?.active ?? fieldSettings.responsibilities.active)} style={{ minHeight: '100px' }} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Пожелания</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.active ?? fieldSettings.requirements.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, requirements: { ...fs.requirements, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, requirements: { ...prev.requirements, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.visible ?? fieldSettings.requirements.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, requirements: { ...fs.requirements, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, requirements: { ...prev.requirements, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.requirements || vacancyRequirements} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, requirements: e.target.value } })); if (office.id === selectedCountryTab) setVacancyRequirements(e.target.value) }} placeholder="Введите пожелания" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.requirements?.active ?? fieldSettings.requirements.active)} style={{ minHeight: '100px' }} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Будет плюсом</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.active ?? fieldSettings.niceToHave.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, niceToHave: { ...fs.niceToHave, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, niceToHave: { ...prev.niceToHave, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.visible ?? fieldSettings.niceToHave.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, niceToHave: { ...fs.niceToHave, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, niceToHave: { ...prev.niceToHave, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.niceToHave || vacancyNiceToHave} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, niceToHave: e.target.value } })); if (office.id === selectedCountryTab) setVacancyNiceToHave(e.target.value) }} placeholder="Введите что будет плюсом" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.niceToHave?.active ?? fieldSettings.niceToHave.active)} style={{ minHeight: '100px' }} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Условия работы</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.active ?? fieldSettings.conditions.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, conditions: { ...fs.conditions, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, conditions: { ...prev.conditions, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.visible ?? fieldSettings.conditions.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, conditions: { ...fs.conditions, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, conditions: { ...prev.conditions, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.conditions || vacancyConditions} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, conditions: e.target.value } })); if (office.id === selectedCountryTab) setVacancyConditions(e.target.value) }} placeholder="Введите условия работы" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.conditions?.active ?? fieldSettings.conditions.active)} style={{ minHeight: '100px' }} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Завершение</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.active ?? fieldSettings.closing.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, closing: { ...fs.closing, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, closing: { ...prev.closing, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.visible ?? fieldSettings.closing.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, closing: { ...fs.closing, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, closing: { ...prev.closing, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextArea value={vacancyFieldsByCountry[office.id]?.closing || vacancyClosing} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, closing: e.target.value } })); if (office.id === selectedCountryTab) setVacancyClosing(e.target.value) }} placeholder="Введите завершающий текст" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.closing?.active ?? fieldSettings.closing.active)} style={{ minHeight: '100px' }} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Дополнительная ссылка</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.active ?? fieldSettings.link.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, link: { ...fs.link, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, link: { ...prev.link, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.visible ?? fieldSettings.link.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, link: { ...fs.link, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, link: { ...prev.link, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex><TextField.Root value={vacancyFieldsByCountry[office.id]?.link || vacancyLink} onChange={(e) => { const fields = vacancyFieldsByCountry[office.id] || {}; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, link: e.target.value } })); if (office.id === selectedCountryTab) setVacancyLink(e.target.value) }} placeholder="https://example.com/vacancy" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.link?.active ?? fieldSettings.link.active)} /></Box>
-                        <Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Вложения</Text><Flex align="center" gap="3"><Flex align="center" gap="2"><Text size="1" color="gray">Активность:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, attachment: { ...fs.attachment, active: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, attachment: { ...prev.attachment, active: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex><Flex align="center" gap="2"><Text size="1" color="gray">Видимость:</Text><Switch checked={vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.visible ?? fieldSettings.attachment.visible} onCheckedChange={(c) => { const fields = vacancyFieldsByCountry[office.id] || {}; const fs = fields.fieldSettings || fieldSettings; setVacancyFieldsByCountry(prev => ({ ...prev, [office.id]: { ...fields, fieldSettings: { ...fs, attachment: { ...fs.attachment, visible: !!c } } } })); if (office.id === selectedCountryTab) setFieldSettings(prev => ({ ...prev, attachment: { ...prev.attachment, visible: !!c } })) }} disabled={!vacancyActiveByCountry[office.id]} /></Flex></Flex></Flex>
-                          <Flex direction="column" gap="2"><input type="file" accept=".docx,.pptx,.figma" onChange={(e) => setVacancyAttachment(e.target.files?.[0] || null)} disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)} id={`vacancy-edit-modal-attachment-${office.id}`} style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} /><Button asChild variant="soft" disabled={!vacancyActiveByCountry[office.id] || !(vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)} style={{ width: '100%', justifyContent: 'flex-start' }}><label htmlFor={`vacancy-edit-modal-attachment-${office.id}`} style={{ cursor: (vacancyActiveByCountry[office.id] && (vacancyFieldsByCountry[office.id]?.fieldSettings?.attachment?.active ?? fieldSettings.attachment.active)) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 8 }}><UploadIcon width={16} height={16} /><Text size="2">{vacancyAttachment ? vacancyAttachment.name : 'Выберите файл (docx, pptx, figma)'}</Text></label></Button>{vacancyAttachment && <Flex align="center" gap="2" style={{ padding: '8px 12px', backgroundColor: 'var(--gray-2)', borderRadius: 6 }}><FileTextIcon width={16} height={16} /><Text size="2" style={{ flex: 1 }}>{vacancyAttachment.name}</Text><Text size="1" color="gray">{(vacancyAttachment.size / 1024).toFixed(2)} KB</Text><Button size="1" variant="ghost" color="red" onClick={() => setVacancyAttachment(null)}><Cross2Icon width={14} height={14} /></Button></Flex>}</Flex>
-                        </Box>
-                      </Flex>
-                    </Tabs.Content>
-                  ))}
-                </Tabs.Root>
-              </Box>
-            )}
-
-            {selectedSettingTab === 'recruiters' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Рекрутеры</Text>
-                <Flex direction="column" gap="3">{allRecruiters.map((r) => {
-                  const sel = selectedRecruiters.has(r.id), main = mainRecruiter === r.id
-                  return <Card key={r.id} style={{ padding: 16 }}><Flex align="center" gap="3"><Checkbox checked={sel} onCheckedChange={() => handleRecruiterToggle(r.id)} /><Flex direction="column" gap="1" style={{ flex: 1 }}><Flex align="center" gap="2"><Text size="3" weight="medium">{r.name}</Text>{main && <Badge color="blue" variant="soft" size="1">Главный</Badge>}</Flex><Text size="2" color="gray">{r.position}</Text><Text size="1" color="gray">{r.email}</Text><Text size="1" color="gray">{r.phone}</Text></Flex><Box><Text size="1" color="gray" mb="1" style={{ display: 'block', textAlign: 'right' }}>Главный</Text><Switch checked={main} disabled={!sel} onCheckedChange={() => handleMainRecruiterToggle(r.id)} /></Box></Flex></Card>
-                })}</Flex>
-                {allRecruiters.length === 0 && <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>Нет доступных рекрутеров</Text>}
-              </Box>
-            )}
-
-            {selectedSettingTab === 'customers' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Заказчики и интервьюеры</Text>
-                <Flex align="center" gap="2" mb="4"><Switch checked={customersOnlyFromDepartment} onCheckedChange={setCustomersOnlyFromDepartment} /><Text size="2">Только из отдела</Text><Text size="1" color="gray">(выкл. — все)</Text></Flex>
-                {(() => {
-                  const deptName = getAllDepartmentsFlat(mockDepartments).find(d => d.id === vacancyDepartment)?.name ?? ''
-                  const isHR = (d: string) => d === 'HR' || d === 'HR Департамент'
-                  const filtered = customersOnlyFromDepartment ? allInterviewers.filter(i => i.department === deptName || isHR(i.department)) : allInterviewers
-                  return <Flex direction="column" gap="3">{filtered.map((i) => {
-                    const sel = selectedVacancyInterviewers.has(i.id), fin = finalInterviewInterviewers.has(i.id)
-                    return <Card key={i.id} style={{ padding: 16 }}><Flex align="center" gap="3"><Checkbox checked={sel} onCheckedChange={() => handleVacancyInterviewerToggle(i.id)} /><Flex direction="column" gap="1" style={{ flex: 1 }}><Flex align="center" gap="2"><Text size="3" weight="medium">{i.name}</Text>{i.isCustomer && <Badge color="blue" variant="soft" size="1">Заказчик</Badge>}{fin && <Badge color="purple" variant="soft" size="1">Финальное интервью</Badge>}</Flex><Text size="2" color="gray">{i.position}</Text><Text size="1" color="gray">{i.department}</Text><Text size="1" color="gray">{i.email}</Text><Text size="1" color="gray">{i.phone}</Text></Flex><Box><Text size="1" color="gray" mb="1" style={{ display: 'block', textAlign: 'right' }}>Финальное интервью</Text><Switch checked={fin} disabled={!sel} onCheckedChange={() => handleFinalInterviewToggle(i.id)} /></Box></Flex></Card>
-                  })}{filtered.length === 0 && <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>Нет доступных интервьюеров</Text>}</Flex>
-                })()}
-              </Box>
-            )}
-
-            {selectedSettingTab === 'questions' && (
-              <Box><Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Вопросы и ссылки</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Ссылка на вакансию, тогглер использования на сайте и один вопрос по вакансии на офис. Настройки задаются отдельно для каждого офиса. У ссылки и вопроса можно выбрать цвет. Страны автоматически включаются/выключаются на основе активности вакансии для каждой страны из раздела "Текст вакансии".</Text>
-                <Flex direction="column" gap="4">{questionLinkOffices.map((office) => {
-                  const isActive = vacancyActiveByCountry[office.id] ?? true
-                  const state = questionsLinksByOffice[office.id] ?? getDefaultOfficeState(), { link, question } = state, q = question ?? { text: '', color: questionLinkColors[0].hex }
-                  return <Card key={office.id} style={{ padding: 16, opacity: isActive ? 1 : 0.6 }}><Flex direction="column" gap="4"><Flex align="center" justify="between"><Text size="4" weight="bold">{office.name}</Text><Flex align="center" gap="2"><Text size="2" color="gray">Активность:</Text><Switch checked={isActive} onCheckedChange={(checked) => setVacancyActiveByCountry(prev => ({ ...prev, [office.id]: checked }))} /></Flex></Flex>
-                    <Box><Text size="3" weight="medium" mb="2" style={{ display: 'block' }}>Ссылка на вакансию</Text><Flex direction="column" gap="3"><Flex align="center" gap="3" wrap="wrap"><TextField.Root value={link.url} onChange={(e) => updateOfficeLink(office.id, { url: e.target.value })} placeholder="https://example.com/vacancy" style={{ flex: 1, minWidth: 200 }} disabled={!isActive} /><Flex align="center" gap="2"><Text size="2" color="gray">Использовать с сайта:</Text><Switch checked={link.useOnSite} onCheckedChange={(c) => updateOfficeLink(office.id, { useOnSite: !!c })} disabled={!isActive} /></Flex></Flex><Flex align="center" gap="2"><Text size="2" weight="medium">Цвет ссылки:</Text>{questionLinkColors.map((c) => <button key={c.id} type="button" onClick={() => updateOfficeLink(office.id, { color: c.hex })} title={c.label} disabled={!isActive} style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: c.hex, border: link.color === c.hex ? '2px solid var(--gray-12)' : '2px solid transparent', cursor: isActive ? 'pointer' : 'not-allowed', padding: 0, opacity: isActive ? 1 : 0.5 }} aria-pressed={link.color === c.hex} />)}</Flex></Flex></Box>
-                    <Separator size="4" /><Box><Text size="3" weight="medium" mb="2" style={{ display: 'block' }}>Вопрос по вакансии</Text><Flex direction="column" gap="2"><TextArea value={q.text} onChange={(e) => updateOfficeQuestion(office.id, { text: e.target.value })} placeholder="Текст вопроса..." style={{ minWidth: '100%', minHeight: 60 }} disabled={!isActive} /><Flex gap="2" align="center"><Text size="2" color="gray">Цвет:</Text>{questionLinkColors.map((c) => <button key={c.id} type="button" onClick={() => updateOfficeQuestion(office.id, { color: c.hex })} title={c.label} disabled={!isActive} style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: c.hex, border: q.color === c.hex ? '2px solid var(--gray-12)' : '2px solid transparent', cursor: isActive ? 'pointer' : 'not-allowed', padding: 0, opacity: isActive ? 1 : 0.5 }} />)}</Flex></Flex></Box></Flex></Card>
-                })}</Flex>
-              </Box>
-            )}
-
-            {selectedSettingTab === 'integrations' && (
-              <Box><Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>Связи и интеграции</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Настройка интеграций с внешними сервисами</Text>
-                <Flex direction="column" gap="4"><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Интеграция</Text><Select.Root value={integrationPartner || '__none__'} onValueChange={(v) => { if (v === '__none__' && integrationPartner === 'huntflow') { toast.showToast({ type: 'warning', title: 'Отключить интеграцию Huntflow?', message: 'Подтвердите отключение связи с Huntflow.', duration: 5 * 60 * 1000, actions: [{ label: 'Подтвердить', onClick: () => { setIntegrationPartner(''); setHuntflowVacancyId('') }, variant: 'soft', color: 'gray' }, { label: 'Отклонить', onClick: () => {}, variant: 'solid', color: 'blue' }] }); return } setIntegrationPartner((v === '__none__' ? '' : v) as '' | 'huntflow') }}><Select.Trigger placeholder="Выберите интеграцию" style={{ width: '100%', maxWidth: 280 }} /><Select.Content><Select.Item value="__none__">—</Select.Item><Select.Item value="huntflow">Huntflow</Select.Item></Select.Content></Select.Root></Box>
-                {integrationPartner === 'huntflow' && <Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>ID вакансии в Huntflow</Text><TextField.Root type="text" inputMode="numeric" value={huntflowVacancyId} onChange={(e) => setHuntflowVacancyId(e.target.value.replace(/\D/g, ''))} placeholder="Только цифры" style={{ width: '100%', maxWidth: 200 }} /></Box>}</Flex>
-              </Box>
-            )}
-
-            {selectedSettingTab === 'statuses' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Статусы</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Выберите этапы рекрутинга, которые будут доступны для данной вакансии</Text>
-                <Flex direction="column" gap="3">{recruitmentStages.map((s) => { const act = activeStages.has(s.id); return <Card key={s.id} style={{ padding: 16 }}><Flex align="center" gap="3"><Checkbox checked={act} onCheckedChange={() => handleStageToggle(s.id)} /><Flex align="center" gap="3" style={{ flex: 1 }}><Box style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: s.color, flexShrink: 0 }} /><Flex direction="column" gap="1"><Text size="3" weight="medium">{s.name}</Text>{s.description && <Text size="2" color="gray">{s.description}</Text>}</Flex></Flex></Flex></Card> })}</Flex>
-                {recruitmentStages.length === 0 && <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>Нет доступных этапов</Text>}
-              </Box>
-            )}
-
-            {selectedSettingTab === 'salary' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Зарплатные вилки</Text><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Выберите активные грейды и укажите зарплатные диапазоны. Редактирование доступно только для главной валюты ({companyCurrencies.find(c => c.isMain)?.code || 'BYN'}), остальные пересчитываются автоматически.</Text>
-                <Box className={styles.salaryForksTableWrapper} style={{ overflowX: 'auto', width: '100%' }}><Table.Root style={{ tableLayout: 'fixed', width: 'max-content', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}><Table.Header><Table.Row><Table.ColumnHeaderCell style={{ position: 'sticky', left: 0, backgroundColor: 'var(--gray-2)', zIndex: 10, width: 180, minWidth: 180, maxWidth: 180 }}>Грейд</Table.ColumnHeaderCell>{companyCurrencies.map(cur => <Table.ColumnHeaderCell key={cur.id} style={{ width: cur.isMain ? 260 : 180, minWidth: cur.isMain ? 260 : 180, maxWidth: cur.isMain ? 260 : 180, whiteSpace: 'nowrap', padding: 12 }}><Flex direction="column" gap="1" align="center"><Text weight="bold">{cur.code}</Text>{cur.isMain && <Badge size="1" color="green">Главная</Badge>}<Text size="1" color="gray">{isGrossFormat ? 'Gross' : 'Net'}</Text></Flex></Table.ColumnHeaderCell>)}</Table.Row></Table.Header><Table.Body>{allGrades.map((g) => { const act = activeGrades.has(g.id), mainCur = companyCurrencies.find(c => c.isMain)?.code || 'BYN'; return <Table.Row key={g.id}><Table.Cell style={{ position: 'sticky', left: 0, backgroundColor: 'var(--gray-2)', zIndex: 10, width: 180, minWidth: 180, maxWidth: 180 }}><Flex align="center" gap="2"><Checkbox checked={act} onCheckedChange={() => handleGradeToggle(g.id)} /><Text weight={act ? 'medium' : 'regular'} style={{ opacity: act ? 1 : 0.5 }}>{g.name}</Text></Flex></Table.Cell>{companyCurrencies.map((cur) => { const isMain = cur.isMain, fromV = getSalaryValue(g.id, cur.code, 'from'), toV = getSalaryValue(g.id, cur.code, 'to'); return <Table.Cell key={cur.id} style={{ whiteSpace: 'nowrap', width: isMain ? 260 : 180, minWidth: isMain ? 260 : 180, maxWidth: isMain ? 260 : 180, padding: 12, verticalAlign: 'middle' }}>{act ? (isMain ? <Flex gap="2" align="center" style={{ flexWrap: 'nowrap' }}><input type="number" placeholder="От" value={fromV != null ? String(fromV) : ''} onChange={(e) => handleSalaryChange(g.id, cur.code, 'from', e.target.value)} style={{ minWidth: 100, padding: '4px 8px', fontSize: 13, lineHeight: 1.2, height: '28px', borderRadius: 6, border: '1px solid var(--gray-a6)', backgroundColor: 'var(--color-panel)', color: 'var(--gray-12)', outline: 'none', boxSizing: 'border-box', width: fromV != null ? Math.max(100, String(fromV).length * 8 + 24) : 100 }} /><Text>—</Text><input type="number" placeholder="До" value={toV != null ? String(toV) : ''} onChange={(e) => handleSalaryChange(g.id, cur.code, 'to', e.target.value)} style={{ minWidth: 100, padding: '4px 8px', fontSize: 13, lineHeight: 1.2, height: '28px', borderRadius: 6, border: '1px solid var(--gray-a6)', backgroundColor: 'var(--color-panel)', color: 'var(--gray-12)', outline: 'none', boxSizing: 'border-box', width: toV != null ? Math.max(100, String(toV).length * 8 + 24) : 100 }} /></Flex> : <Text size="2" style={{ whiteSpace: 'nowrap', display: 'block' }}>{fromV != null ? fromV.toFixed(2) : '—'} – {toV != null ? toV.toFixed(2) : '—'}</Text>) : <Text size="2" color="gray">—</Text>}</Table.Cell> })}</Table.Row> })}</Table.Body></Table.Root></Box>
-              </Box>
-            )}
-
-            {selectedSettingTab === 'interviews' && (
-              <Box><Flex align="center" justify="between" mb="4"><Text size="3" weight="bold">Встречи и интервью</Text><Button size="2" variant="soft" onClick={addInterviewMeeting}><PlusIcon width={14} height={14} /><Text size="2">Добавить встречу</Text></Button></Flex><Text size="2" color="gray" mb="4" style={{ display: 'block' }}>Рекомендуемое количество встреч: {maxMeetingsCount} (активные этапы до оффера - 2). Для каждой встречи укажите этап, длительность, заголовок, сопровождающий текст и формат (офис или онлайн). Формат встречи связан с настройками этапа: если для выбранного этапа включено показывание офисов (showOffices = true), то выбор "Офис" активен, а если нет, то по определению ставится "Онлайн" и поле disabled.</Text>
-                {interviewMeetings.length === 0 ? <Card style={{ padding: 24, textAlign: 'center' }}><Text size="2" color="gray">Нет встреч. Добавьте первую встречу.</Text></Card> : <Flex direction="column" gap="4">{interviewMeetings.map((m, i) => {
-                  const selectedStage = recruitmentStagesWithMeetings.find(s => s.id === m.stage)
-                  const showOfficesForStage = selectedStage?.showOffices ?? false
-                  const isFormatDisabled = !showOfficesForStage
-                  const currentFormat = isFormatDisabled ? 'online' : (m.format || 'online')
-                  return <Card key={m.id} style={{ padding: 16 }}><Flex direction="column" gap="4"><Flex align="center" justify="between"><Text size="3" weight="medium">Встреча {i + 1}</Text>{interviewMeetings.length > 1 && <Button size="1" variant="ghost" color="red" onClick={() => removeInterviewMeeting(m.id)}><TrashIcon width={14} height={14} /></Button>}</Flex><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Этап</Text><Select.Root value={m.stage} onValueChange={(v) => {
-                    const stage = recruitmentStagesWithMeetings.find(s => s.id === v)
-                    const showOffices = stage?.showOffices ?? false
-                    // Если showOffices = false, автоматически устанавливаем формат "Онлайн"
-                    // Если showOffices = true, сохраняем текущий формат или устанавливаем "Онлайн" по умолчанию
-                    const newFormat: 'office' | 'online' | '' = showOffices 
-                      ? (m.format === 'office' || m.format === 'online' ? m.format : 'online') 
-                      : 'online'
-                    updateInterviewMeeting(m.id, {
-                      stage: v,
-                      format: newFormat
-                    })
-                  }}><Select.Trigger placeholder="Выберите этап" style={{ width: '100%' }} /><Select.Content>{stagesBeforeOffer.map(s => <Select.Item key={s.id} value={s.id}>{s.description || s.name}</Select.Item>)}</Select.Content></Select.Root></Box><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Длительность встречи (минут)</Text><TextField.Root type="number" value={String(m.duration)} onChange={(e) => updateInterviewMeeting(m.id, { duration: parseInt(e.target.value) || 60 })} placeholder="60" style={{ width: 200 }} /></Box><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Заголовок названия встречи</Text><TextField.Root value={m.title} onChange={(e) => updateInterviewMeeting(m.id, { title: e.target.value })} placeholder="Например: Техническое интервью - Frontend Developer" style={{ width: '100%' }} /></Box><Box><Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>Формат встречи</Text><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>{isFormatDisabled ? 'Для выбранного этапа показывание офисов отключено. Автоматически установлен формат "Онлайн".' : 'Выберите офис или онлайн'}</Text><Select.Root value={currentFormat} onValueChange={(v) => updateInterviewMeeting(m.id, { format: (v || 'online') as 'office' | 'online' | '' })} disabled={isFormatDisabled}><Select.Trigger placeholder={isFormatDisabled ? 'Онлайн (автоматически)' : 'Офис или онлайн'} style={{ width: '100%' }} /><Select.Content><Select.Item value="office">Офис</Select.Item><Select.Item value="online">Онлайн</Select.Item></Select.Content></Select.Root></Box><Box><Flex align="center" justify="between" mb="2"><Text size="2" weight="medium">Сопровождающий текст</Text><DropdownMenu.Root><DropdownMenu.Trigger><Button size="1" variant="ghost"><Text size="1">Подсказки</Text><ChevronDownIcon width={12} height={12} /></Button></DropdownMenu.Trigger><DropdownMenu.Content style={{ minWidth: 260 }}><DropdownMenu.Item onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + '{{candidate_link}}' })}><Text size="2">Ссылка на кандидата в системе</Text></DropdownMenu.Item><DropdownMenu.Item onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + '{{external_integration_link}}' })}><Text size="2">Ссылка во внешней интеграции</Text></DropdownMenu.Item>{recruiterContactHints.map(({ label, variable }) => <DropdownMenu.Item key={variable} onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + `{{${variable}}}` })}><Text size="2">{label}</Text></DropdownMenu.Item>)}<DropdownMenu.Item onSelect={() => updateInterviewMeeting(m.id, { description: m.description + (m.description ? '\n' : '') + '{{office_instructions}}' })}><Text size="2">Инструкции офиса</Text></DropdownMenu.Item></DropdownMenu.Content></DropdownMenu.Root></Flex><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>Введите текст, который будет отправлен вместе с приглашением на встречу. Используйте подсказки для вставки шаблонов.</Text><TextArea value={m.description} onChange={(e) => updateInterviewMeeting(m.id, { description: e.target.value })} placeholder="Введите текст приглашения на встречу..." style={{ minHeight: 120, width: '100%' }} /></Box></Flex></Card>
-                })}</Flex>}
-              </Box>
-            )}
-
-            {selectedSettingTab === 'scorecard' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Scorecard</Text><Flex direction="column" gap="4"><Card style={{ padding: 16 }}><Flex direction="column" gap="3"><Text size="3" weight="medium" mb="2">Ссылка</Text><Flex direction="column" gap="3"><Flex direction="column" gap="2"><Text size="2" weight="medium">Ссылка на Google документ</Text><TextField.Root value={scorecardLinkUrl} onChange={(e) => setScorecardLinkUrl(e.target.value)} placeholder="https://docs.google.com/document/..." style={{ width: '100%' }} /></Flex><Flex direction="column" gap="2"><Text size="2" weight="medium">Название-заголовок</Text><TextField.Root value={scorecardLinkTitle} onChange={(e) => setScorecardLinkTitle(e.target.value)} placeholder="Введите название" style={{ width: '100%' }} /></Flex><Flex direction="column" gap="2"><Text size="2" weight="medium">Место добавления</Text><Select.Root value={scorecardLinkPosition} onValueChange={(v: 'start' | 'end') => setScorecardLinkPosition(v)}><Select.Trigger style={{ width: '100%' }} /><Select.Content><Select.Item value="start">В начале</Select.Item><Select.Item value="end">В конце</Select.Item></Select.Content></Select.Root></Flex></Flex></Flex></Card><Card style={{ padding: 16 }}><Flex direction="column" gap="3"><Text size="3" weight="medium" mb="2">Локальный</Text><Flex direction="column" gap="3"><Flex align="center" gap="2"><Switch checked={scorecardLocalActive} onCheckedChange={setScorecardLocalActive} /><Text size="2">{scorecardLocalActive ? 'Активный' : 'Не активный'}</Text></Flex><Button variant="soft" onClick={() => setScorecardLocalSettingsOpen(true)} disabled={!scorecardLocalActive} style={{ width: 'fit-content' }}><GearIcon width={16} height={16} /><Text size="2">Настройки</Text></Button>{!scorecardLocalActive && <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>В разработке</Text>}</Flex></Flex></Card></Flex>
-                <Dialog.Root open={scorecardLocalSettingsOpen} onOpenChange={setScorecardLocalSettingsOpen}><Dialog.Content style={{ maxWidth: 600 }}><Dialog.Title>Настройки локального Scorecard</Dialog.Title><Dialog.Description size="2" color="gray" mb="4">Настройки локального Scorecard находятся в разработке</Dialog.Description><Flex gap="3" justify="end" mt="4"><Dialog.Close><Button variant="soft">Закрыть</Button></Dialog.Close></Flex></Dialog.Content></Dialog.Root>
-              </Box>
-            )}
-
-            {selectedSettingTab === 'dataProcessing' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>Обработка данных</Text><Flex direction="column" gap="4"><Card style={{ padding: 16 }}><Flex direction="column" gap="3"><Flex align="center" gap="2"><Switch checked={useUnifiedPrompt} onCheckedChange={setUseUnifiedPrompt} /><Text size="2">Использовать единый промпт</Text></Flex><Flex direction="column" gap="2"><Text size="2" weight="medium">Промпт для анализа</Text><TextArea value={analysisPrompt} onChange={(e) => setAnalysisPrompt(e.target.value)} placeholder="Введите промпт для анализа..." disabled={useUnifiedPrompt} style={{ minHeight: 140, width: '100%' }} /></Flex></Flex></Card></Flex></Box>
-            )}
-
-            {selectedSettingTab === 'history' && (
-              <Box><Text size="3" weight="bold" mb="4" style={{ display: 'block' }}>История правок</Text><Flex direction="column" gap="3">{editHistory.length === 0 ? <Text size="2" color="gray" style={{ textAlign: 'center', padding: 40 }}>История правок пуста</Text> : editHistory.map((item) => <Card key={item.id} style={{ padding: 16, cursor: 'pointer' }} onClick={() => setSelectedHistoryItem(item)}><Flex direction="column" gap="2"><Flex align="center" justify="between"><Flex align="center" gap="2"><Badge color="gray" variant="soft">Версия {item.version}</Badge><Text size="2" weight="medium">{item.changes}</Text></Flex><Text size="1" color="gray">{item.date}</Text></Flex><Flex align="center" gap="2"><PersonIcon width={14} height={14} style={{ color: 'var(--gray-9)' }} /><Text size="1" color="gray">{item.user}</Text></Flex></Flex></Card>)}</Flex>
-                <Dialog.Root open={selectedHistoryItem !== null} onOpenChange={(o) => !o && setSelectedHistoryItem(null)}><Dialog.Content style={{ maxWidth: 800, maxHeight: '90vh', overflow: 'auto' }}>{selectedHistoryItem && (() => { const nextV = editHistory.filter(h => h.version < selectedHistoryItem.version).sort((a, b) => b.version - a.version)[0]; const curT = selectedHistoryItem.fullText || selectedHistoryItem.changes, nextT = nextV?.fullText || nextV?.changes || '', diffT = nextT ? calculateDiff(curT, nextT) : curT; return <><Dialog.Title><Flex direction="column" gap="2"><Text size="4" weight="bold">Версия {selectedHistoryItem.version}</Text><Text size="2" color="gray">{selectedHistoryItem.changes}</Text></Flex></Dialog.Title><Dialog.Description><Flex direction="column" gap="3" mt="4"><Flex align="center" gap="2"><PersonIcon width={16} height={16} /><Text size="2">{selectedHistoryItem.user}</Text><Text size="1" color="gray">•</Text><Text size="1" color="gray">{selectedHistoryItem.date}</Text></Flex>{nextV && <Box style={{ padding: 12, backgroundColor: 'var(--yellow-2)', borderRadius: 6, border: '1px solid var(--yellow-6)' }}><Text size="1" color="gray" mb="2" style={{ display: 'block' }}>Сравнение с версией {nextV.version} от {nextV.date}</Text><Text size="1" style={{ display: 'block' }}><span style={{ textDecoration: 'line-through', backgroundColor: '#fef3c7' }}>Удалено</span> <span style={{ textDecoration: 'underline', backgroundColor: '#fef3c7' }}>Добавлено</span></Text></Box>}<Box style={{ padding: 16, backgroundColor: 'var(--gray-2)', borderRadius: 6, border: '1px solid var(--gray-6)', whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, lineHeight: 1.6, maxHeight: 500, overflow: 'auto' }}><div dangerouslySetInnerHTML={{ __html: diffT.replace(/\n/g, '<br/>') }} /></Box></Flex></Dialog.Description><Flex gap="3" mt="4" justify="end"><Button variant="solid" color="blue" onClick={() => { setVersionToRestore(selectedHistoryItem); setRestoreConfirmationOpen(true) }}>Восстановить версию</Button><Dialog.Close><Button variant="soft" color="gray">Закрыть</Button></Dialog.Close></Flex></> })()}</Dialog.Content></Dialog.Root>
-                <Dialog.Root open={restoreConfirmationOpen} onOpenChange={setRestoreConfirmationOpen}><Dialog.Content style={{ maxWidth: 600 }}><Dialog.Title><Text size="4" weight="bold">Подтверждение восстановления</Text></Dialog.Title><Dialog.Description><Flex direction="column" gap="4" mt="4"><Text size="2">Вы собираетесь восстановить версию {versionToRestore?.version} от {versionToRestore?.date}. Все текущие изменения будут заменены на значения из этой версии.</Text>{versionToRestore?.fieldsState && <><Separator /><Text size="2" weight="bold" mb="2">Будут восстановлены следующие поля:</Text><Box style={{ maxHeight: 300, overflowY: 'auto', padding: 12, backgroundColor: 'var(--gray-2)', borderRadius: 6, border: '1px solid var(--gray-6)' }}><Flex direction="column" gap="2">{Object.entries(versionToRestore.fieldsState?.fieldSettings ?? {}).map(([fk, settings]) => { const fn = getFieldName(fk); const fs = versionToRestore.fieldsState; let fv = ''; if (fk === 'title') fv = fs?.title || ''; else if (fk === 'department') fv = fs?.department || ''; else if (fk === 'header') fv = fs?.header || ''; else if (fk === 'responsibilities') fv = fs?.responsibilities || ''; else if (fk === 'requirements') fv = fs?.requirements || ''; else if (fk === 'niceToHave') fv = fs?.niceToHave || ''; else if (fk === 'conditions') fv = fs?.conditions || ''; else if (fk === 'closing') fv = fs?.closing || ''; else if (fk === 'link') fv = fs?.link || ''; return <Card key={fk} style={{ padding: 12 }}><Flex direction="column" gap="2"><Flex align="center" gap="2"><Text size="2" weight="medium">{fn}</Text><Badge color={settings.active ? 'green' : 'gray'} variant="soft" size="1">{settings.active ? 'Активно' : 'Неактивно'}</Badge><Badge color={settings.visible ? 'blue' : 'gray'} variant="soft" size="1">{settings.visible ? 'Видимо' : 'Скрыто'}</Badge></Flex>{fv && fk !== 'attachment' && <Text size="1" color="gray" style={{ maxHeight: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fv.length > 100 ? fv.substring(0, 100) + '...' : fv}</Text>}</Flex></Card> })}</Flex></Box><Box style={{ padding: 12, backgroundColor: 'var(--yellow-2)', borderRadius: 6, border: '1px solid var(--yellow-6)' }}><Text size="1" color="gray">⚠️ Восстановление создаст новую версию в истории правок. Текущие несохраненные изменения будут потеряны.</Text></Box></>}</Flex></Dialog.Description><Flex gap="3" mt="4" justify="end"><Button variant="soft" color="gray" onClick={() => { setRestoreConfirmationOpen(false); setVersionToRestore(null) }}>Отмена</Button><Button variant="solid" color="blue" onClick={handleRestoreVersion}>Восстановить</Button></Flex></Dialog.Content></Dialog.Root>
-              </Box>
-            )}
-          </Box>
-        </Flex>
-
-        <Separator size="4" my="3" />
-        <Flex justify="end" gap="3">
-          <Button size="3" variant="soft" onClick={handleCancel}>Отмена</Button>
-          <Button size="3" onClick={handleSave}>Сохранить</Button>
-        </Flex>
+        {editModeBodyAndFooter}
       </Dialog.Content>
       )}
     </Dialog.Root>

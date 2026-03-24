@@ -5,7 +5,12 @@ import { Box, Text, Flex, Grid, Button } from '@radix-ui/themes'
 import { LightningBoltIcon, GearIcon, CheckIcon } from '@radix-ui/react-icons'
 import ExtensionSettingsModal from './ExtensionSettingsModal'
 import IntegrationSettingsModal from './IntegrationSettingsModal'
-import { getHuntflowUserSettings, type HuntflowUserSettings } from '@/lib/huntflowUserSettings'
+import type { HuntflowUserSettings } from '@/lib/huntflowUserSettings'
+import {
+  fetchHuntflowSettings,
+  fetchIntegrationStatuses,
+  type IntegrationStatusItem,
+} from '@/services/profile/integrationsService'
 import styles from './IntegrationsPage.module.css'
 
 const ChromeLogo = () => (
@@ -133,9 +138,11 @@ export default function IntegrationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false)
   const [huntflowUserSettings, setHuntflowUserSettings] = useState<HuntflowUserSettings | null>(null)
+  const [integrationStatuses, setIntegrationStatuses] = useState<IntegrationStatusItem[]>([])
 
   useEffect(() => {
-    setHuntflowUserSettings(getHuntflowUserSettings())
+    void fetchHuntflowSettings().then(setHuntflowUserSettings)
+    void fetchIntegrationStatuses().then(setIntegrationStatuses)
   }, [])
 
   const handleConfigure = (integrationName: string) => {
@@ -150,10 +157,13 @@ export default function IntegrationsPage() {
 
   const handleSave = () => {
     if (selectedIntegration === 'Huntflow') {
-      setHuntflowUserSettings(getHuntflowUserSettings())
+      void fetchHuntflowSettings().then(setHuntflowUserSettings)
     }
     handleCloseModal()
   }
+
+  const getStatusCheck = (key: string) =>
+    integrationStatuses.find((s) => s.key === key)?.connected ?? true
 
   return (
     <Box className={styles.integrationsBlock}>
@@ -175,7 +185,7 @@ export default function IntegrationsPage() {
                 Расширение Chrome &quot;HR Helper&quot;
               </Text>
               <Flex align="center" gap="2" mt="1">
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('gemini') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2" color="gray">
                   Включено
                 </Text>
@@ -226,7 +236,7 @@ export default function IntegrationsPage() {
                     <Text size="2" color="gray">
                       Ключи:
                     </Text>
-                    <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                    {getStatusCheck('huntflow') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                     <Text size="2">Ключи компании</Text>
                   </Flex>
                 )
@@ -276,7 +286,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   API ключ:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('clickup') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">Настроен</Text>
               </Flex>
             }
@@ -290,7 +300,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   Integration Token:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('notion') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">Настроен</Text>
               </Flex>
             }
@@ -304,7 +314,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   Username:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('telegram') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">talent_softnetix</Text>
               </Flex>
             }
@@ -319,14 +329,14 @@ export default function IntegrationsPage() {
                   <Text size="2" color="gray">
                     OAuth:
                   </Text>
-                  <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                  {getStatusCheck('google') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                   <Text size="2">Подключен</Text>
                 </Flex>
                 <Flex align="center" gap="2">
                   <Text size="2" color="gray">
                     Токен:
                   </Text>
-                  <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                  {getStatusCheck('google') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                   <Text size="2">Валидный</Text>
                 </Flex>
               </Flex>
@@ -341,7 +351,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   OAuth/API:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('hh') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">Настроен</Text>
               </Flex>
             }
@@ -355,7 +365,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   API ключ:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('openai') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">Настроен</Text>
               </Flex>
             }
@@ -369,7 +379,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   API ключ:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('cloud-ai') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">Настроен</Text>
               </Flex>
             }
@@ -383,7 +393,7 @@ export default function IntegrationsPage() {
                 <Text size="2" color="gray">
                   Webhook/API:
                 </Text>
-                <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />
+                {getStatusCheck('n8n') && <CheckIcon width={14} height={14} style={{ color: 'var(--green-9)' }} />}
                 <Text size="2">Настроен</Text>
               </Flex>
             }

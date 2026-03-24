@@ -1,12 +1,13 @@
 'use client'
 
 import { Box, Flex, Text, Button } from "@radix-ui/themes"
-import { 
-  PersonIcon, 
+import {
+  BarChartIcon,
+  PersonIcon,
   VideoIcon,
-  Link2Icon, 
-  QuestionMarkCircledIcon, 
-  ClipboardIcon
+  Link2Icon,
+  QuestionMarkCircledIcon,
+  ClipboardIcon,
 } from "@radix-ui/react-icons"
 import styles from './TransferStagesSection.module.css'
 
@@ -95,7 +96,7 @@ export default function TransferStagesSection({ stages }: TransferStagesSectionP
                       >
                         {section.icon === 'globe' && <Link2Icon width={14} height={14} />}
                         {section.icon === 'question' && <QuestionMarkCircledIcon width={14} height={14} />}
-                        {section.icon === 'money' && <Box style={{ fontSize: '14px' }}>💰</Box>}
+                        {section.icon === 'money' && <BarChartIcon width={14} height={14} aria-hidden />}
                         {section.icon === 'prompt' && <ClipboardIcon width={14} height={14} />}
                         {section.icon === 'interviewers' && <PersonIcon width={14} height={14} />}
                         {section.name}

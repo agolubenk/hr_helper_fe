@@ -159,14 +159,18 @@ export default function FloatingActions({ actions = [] }: FloatingActionsProps) 
   const [quickButtons, setQuickButtons] = useState<QuickButton[]>(() => getQuickButtons())
 
   useEffect(() => {
-    const handler = () => setQuickButtons(getQuickButtons())
+    const onNativeStorage = (e: StorageEvent) => {
+      if (e.key === QUICK_BUTTONS_KEY || e.key === null) {
+        setQuickButtons(getQuickButtons())
+      }
+    }
     const handleCustom = (e: CustomEvent) => {
       if (e.detail?.key === QUICK_BUTTONS_KEY) setQuickButtons(getQuickButtons())
     }
-    window.addEventListener('storage', handler)
+    window.addEventListener('storage', onNativeStorage)
     window.addEventListener('localStorageChange', handleCustom as EventListener)
     return () => {
-      window.removeEventListener('storage', handler)
+      window.removeEventListener('storage', onNativeStorage)
       window.removeEventListener('localStorageChange', handleCustom as EventListener)
     }
   }, [])
@@ -423,7 +427,7 @@ export default function FloatingActions({ actions = [] }: FloatingActionsProps) 
       {(isVisible || isPinned) && isQuickButtonsEnabled && (
         <Box
           position="fixed"
-          left="16px"
+          left="8px"
           bottom="60px"
           style={{
             zIndex: 1500,

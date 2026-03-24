@@ -21,6 +21,7 @@ import { InviteDetailRedirect } from '@/app/pages/InviteDetailRedirect'
 import { InviteEditRedirect } from '@/app/pages/InviteEditRedirect'
 import FinanceSettingsPage from '@/app/pages/FinanceSettingsPage'
 import BenchmarksPage from '@/app/pages/BenchmarksPage'
+import BenchmarksDashboardPage from '@/app/pages/BenchmarksDashboardPage'
 import { WikiPage } from '@/app/pages/WikiPage'
 import { WikiDetailPage } from '@/app/pages/WikiDetailPage'
 import { WikiEditPage } from '@/app/pages/WikiEditPage'
@@ -64,11 +65,13 @@ import { SpecializationPreviewPage } from '@/app/pages/SpecializationPreviewPage
 import { AdminPage } from '@/app/pages/AdminPage'
 import { AdminUsersPage } from '@/app/pages/AdminUsersPage'
 import { AdminGroupsPage } from '@/app/pages/AdminGroupsPage'
-import { AtsIndexPage } from '@/app/pages/AtsIndexPage'
-import { AtsCandidatePage } from '@/app/pages/AtsCandidatePage'
-import { AtsAssessmentNewPage } from '@/app/pages/AtsAssessmentNewPage'
-import { AtsAssessmentViewPage } from '@/app/pages/AtsAssessmentViewPage'
-import { AtsAssessmentEditPage } from '@/app/pages/AtsAssessmentEditPage'
+import {
+  AtsIndexPage,
+  AtsCandidatePage,
+  AtsAssessmentNewPage,
+  AtsAssessmentViewPage,
+  AtsAssessmentEditPage,
+} from '@/features/ats'
 import {
   CompanySettingsPage,
   CompanySettingsOrgStructurePage,
@@ -87,6 +90,7 @@ import {
   CompanySettingsVacancyPromptPage,
   CompanySettingsRecruitingOfferTemplatePage,
 } from '@/app/pages/CompanySettingsPages'
+import { ModulePlaceholderPage } from '@/app/pages/ModulePlaceholderPage'
 
 const layoutProps = {
   pageTitle: 'HR Helper',
@@ -110,6 +114,15 @@ function ProjectDetailAppLayout() {
   return (
     <AppLayout {...layoutProps} pageTitle={pageTitle}>
       <ProjectDetailPage />
+    </AppLayout>
+  )
+}
+
+/** Обертка: AppLayout + заглушка для маршрутов из меню без своей страницы */
+function AppModulePlaceholder({ pageTitle }: { pageTitle: string }) {
+  return (
+    <AppLayout {...layoutProps} pageTitle={pageTitle}>
+      <ModulePlaceholderPage />
     </AppLayout>
   )
 }
@@ -140,7 +153,7 @@ export function App() {
             <Route path="/account/login" element={<LoginPage />} />
             <Route path="/account/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/account/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/account/profile" element={<AppLayout {...layoutProps}><ProfilePage /></AppLayout>} />
+            <Route path="/account/profile" element={<AppLayout {...layoutProps} pageTitle="Профиль"><ProfilePage /></AppLayout>} />
             <Route path="/finance" element={<Navigate to="/company-settings/finance" replace />} />
             <Route path="/company-settings" element={<AppLayout {...layoutProps} pageTitle="Общие настройки компании"><CompanySettingsPage /></AppLayout>} />
             <Route path="/company-settings/org-structure" element={<AppLayout {...layoutProps} pageTitle="Оргструктура"><CompanySettingsOrgStructurePage /></AppLayout>} />
@@ -155,13 +168,19 @@ export function App() {
             <Route path="/company-settings/recruiting/rules" element={<AppLayout {...layoutProps} pageTitle="Правила привлечения"><CompanySettingsRecruitingRulesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/stages" element={<AppLayout {...layoutProps} pageTitle="Этапы найма и причины отказа"><CompanySettingsRecruitingStagesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/commands" element={<AppLayout {...layoutProps} pageTitle="Команды workflow"><CompanySettingsRecruitingCommandsPage /></AppLayout>} />
-            <Route path="/company-settings/candidate-fields" element={<AppLayout {...layoutProps} pageTitle="Поля кандидатов"><CompanySettingsCandidateFieldsPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/candidate-fields" element={<AppLayout {...layoutProps} pageTitle="Поля кандидатов"><CompanySettingsCandidateFieldsPage /></AppLayout>} />
+            <Route path="/company-settings/candidate-fields" element={<Navigate to="/company-settings/recruiting/candidate-fields" replace />} />
             <Route path="/company-settings/scorecard" element={<AppLayout {...layoutProps} pageTitle="Настройки Scorecard"><CompanySettingsScorecardPage /></AppLayout>} />
             <Route path="/company-settings/sla" element={<AppLayout {...layoutProps} pageTitle="SLA для вакансий"><CompanySettingsSlaPage /></AppLayout>} />
             <Route path="/company-settings/vacancy-prompt" element={<AppLayout {...layoutProps} pageTitle="Промпт для вакансий"><CompanySettingsVacancyPromptPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/offer-template" element={<AppLayout {...layoutProps} pageTitle="Шаблон оффера"><CompanySettingsRecruitingOfferTemplatePage /></AppLayout>} />
-            <Route path="/company-settings/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки зарплат"><BenchmarksPage /></AppLayout>} />
-            <Route path="/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки зарплат"><BenchmarksPage /></AppLayout>} />
+            <Route path="/company-settings/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки — обзор"><BenchmarksDashboardPage /></AppLayout>} />
+            <Route
+              path="/company-settings/*"
+              element={<AppModulePlaceholder pageTitle="Настройки компании" />}
+            />
+            <Route path="/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки — обзор"><BenchmarksDashboardPage /></AppLayout>} />
+            <Route path="/finance/benchmarks/all" element={<AppLayout {...layoutProps} pageTitle="Все бенчмарки"><BenchmarksPage /></AppLayout>} />
             <Route path="/wiki" element={<AppLayout {...layoutProps} pageTitle="Wiki"><WikiPage /></AppLayout>} />
             <Route path="/wiki/:id" element={<AppLayout {...layoutProps} pageTitle="Wiki"><WikiDetailPage /></AppLayout>} />
             <Route path="/wiki/:id/edit" element={<AppLayout {...layoutProps} pageTitle="Wiki"><WikiEditPage /></AppLayout>} />
@@ -172,11 +191,13 @@ export function App() {
             <Route path="/reporting/company" element={<AppLayout {...layoutProps} pageTitle="Отчет по компании"><CompanyReportPage /></AppLayout>} />
             <Route path="/reporting/hiring-plan" element={<AppLayout {...layoutProps} pageTitle="План найма"><HiringPlanPage /></AppLayout>} />
             <Route path="/reporting/hiring-plan/yearly" element={<AppLayout {...layoutProps} pageTitle="План найма (год)"><YearlyHiringPlanPage /></AppLayout>} />
+            <Route path="/reporting/*" element={<AppModulePlaceholder pageTitle="Отчётность" />} />
             <Route path="/telegram" element={<AppLayout {...layoutProps} pageTitle="Telegram"><TelegramPage /></AppLayout>} />
             <Route path="/telegram/2fa" element={<AppLayout {...layoutProps} pageTitle="Telegram — 2FA"><Telegram2FAPage /></AppLayout>} />
             <Route path="/telegram/chats" element={<AppLayout {...layoutProps} pageTitle="Telegram — Чаты"><TelegramChatsPage /></AppLayout>} />
             <Route path="/projects/teams" element={<AppLayout {...layoutProps} pageTitle="Команды проектов"><ProjectsTeamsPage /></AppLayout>} />
             <Route path="/projects/resources" element={<AppLayout {...layoutProps} pageTitle="Ресурсы и аллокация"><ProjectsResourcesPage /></AppLayout>} />
+            <Route path="/projects/hr" element={<AppModulePlaceholder pageTitle="HR‑проекты" />} />
             <Route path="/projects/:id" element={<ProjectDetailAppLayout />} />
             <Route path="/projects" element={<AppLayout {...layoutProps} pageTitle="Проекты"><ProjectsPage /></AppLayout>} />
             <Route path="/ats" element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsIndexPage /></AppLayout>} />
@@ -194,6 +215,10 @@ export function App() {
             />
             <Route
               path="/ats/vacancy/:vacancyId/candidate/:candidateId"
+              element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsCandidatePage /></AppLayout>}
+            />
+            <Route
+              path="/ats/vacancy/:vacancyId"
               element={<AppLayout {...layoutProps} pageTitle="ATS"><AtsCandidatePage /></AppLayout>}
             />
             <Route path="/admin-crm" element={<Navigate to="/admin" replace />} />
@@ -218,6 +243,24 @@ export function App() {
                 <Route path="*" element={<Navigate to="info" replace />} />
               </Route>
             </Route>
+            <Route path="/tasks" element={<AppModulePlaceholder pageTitle="Задачи" />} />
+            <Route path="/onboarding" element={<AppModulePlaceholder pageTitle="Онбординг" />} />
+            <Route path="/onboarding/*" element={<AppModulePlaceholder pageTitle="Онбординг" />} />
+            <Route path="/hr-services/*" element={<AppModulePlaceholder pageTitle="HROps" />} />
+            <Route path="/employees" element={<AppModulePlaceholder pageTitle="Сотрудники" />} />
+            <Route path="/employees/*" element={<AppModulePlaceholder pageTitle="Сотрудники" />} />
+            <Route path="/internal-vacancies" element={<AppModulePlaceholder pageTitle="Внутренние вакансии" />} />
+            <Route path="/learning/*" element={<AppModulePlaceholder pageTitle="L&D" />} />
+            <Route path="/performance/*" element={<AppModulePlaceholder pageTitle="Эффективность" />} />
+            <Route path="/compensation/*" element={<AppModulePlaceholder pageTitle="C&B" />} />
+            <Route path="/internal-site" element={<AppModulePlaceholder pageTitle="Внутренний сайт" />} />
+            <Route path="/internal-site/*" element={<AppModulePlaceholder pageTitle="Внутренний сайт" />} />
+            <Route path="/hr-pr/*" element={<AppModulePlaceholder pageTitle="HR PR" />} />
+            <Route path="/analytics" element={<AppModulePlaceholder pageTitle="Аналитика" />} />
+            <Route path="/settings/*" element={<AppModulePlaceholder pageTitle="Настройки" />} />
+            <Route path="/integrations/*" element={<AppModulePlaceholder pageTitle="Интеграции" />} />
+            <Route path="/my-requests/*" element={<AppModulePlaceholder pageTitle="Мои заявки" />} />
+            <Route path="/my-documents/*" element={<AppModulePlaceholder pageTitle="Мои документы" />} />
             <Route path="/errors/401" element={<Error401Page />} />
             <Route path="/errors/402" element={<Error402Page />} />
             <Route path="/errors/403" element={<ForbiddenPage />} />

@@ -3,6 +3,7 @@
 .sidebar {
   width: 280px;
   z-index: 1000; /* Выше субменю (999) */
+  bottom: 48px; /* Высота футера — меню между Header и Footer, не перекрывает футер */
 }
 
 /* На мобильных устройствах (до 768px) */
@@ -10,12 +11,13 @@
   .sidebar {
     width: 100%;
     z-index: 1700;
+    bottom: 40px; /* Высота футера на мобильных */
   }
 }
 
 /* Анимация для элементов меню */
 .menuItem {
-  transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  transition: transform var(--duration-normal) var(--ease-in-out), background-color var(--duration-normal) var(--ease-in-out);
   position: relative;
   will-change: transform;
 }
@@ -32,43 +34,46 @@
   transform: translateX(5px);
 }
 
-/* Заголовок отдела в меню */
-.sectionLabel {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--gray-10);
-  padding: 12px 12px 6px;
-  margin-top: 4px;
-}
-
-.sectionLabel:first-child {
-  margin-top: 0;
-  padding-top: 6px;
-}
-
-/* Группа кнопок Admin CRM: открыть в новой вкладке + настройки */
+/* Группа кнопок Admin CRM: открыть в новой вкладке + настройки (высота −15%) */
 .adminButtonGroup {
   display: flex;
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--gray-8);
-  padding: 3px 4px;
+  padding: 2px var(--space-1);
   background: var(--gray-3);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
+  min-height: 32px; /* 38px × 0.85 ≈ 32px */
+  width: 140px;
+  min-width: 140px;
+  box-sizing: border-box;
 }
 
 .adminButtonGroup .adminOpenBtn {
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  min-width: 90px;
-  width: 90px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+  flex: 1;
   justify-content: center;
+  min-height: unset;
+  height: 28px;
+}
+
+/* Кнопка «+» — квадратная 28×28, иконка жирная акцентная */
+.adminButtonGroup .adminOpenBtnIcon {
+  min-width: 28px;
+  width: 28px;
+  padding: 2px;
+  flex: 0 0 28px;
+  color: var(--accent-11);
+}
+
+.adminButtonGroup .adminOpenBtnIcon path {
+  stroke-width: 2.5;
 }
 
 .adminButtonGroup .adminBtnLabel {
@@ -80,4 +85,17 @@
 
 .adminButtonGroup .adminOpenBtn:hover {
   background: var(--gray-5);
+}
+
+/* Кнопка «Заявки» — акцентный цвет текста */
+.adminButtonGroup .adminOpenBtnAccent {
+  color: var(--accent-11);
+}
+
+/* Иконка настроек — выровнять по высоте с кнопкой «Открыть» (28px) */
+.adminButtonGroup .rt-IconButton {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
 }

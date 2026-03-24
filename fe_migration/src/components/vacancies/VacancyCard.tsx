@@ -160,9 +160,7 @@ export default function VacancyCard({ vacancy, onClick, onEditClick, onStatusCli
       {/* Количество интервьюеров
           - Иконка людей и количество */}
       <Flex align="center" gap="2" mb="2">
-        <Box style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          👥
-        </Box>
+        <PersonIcon width={16} height={16} style={{ color: 'var(--gray-11)' }} />
         <Text size="2">{vacancy.interviewers} интервьюеров</Text>
       </Flex>
 

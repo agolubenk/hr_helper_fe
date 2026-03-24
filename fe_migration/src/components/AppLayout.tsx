@@ -54,6 +54,9 @@ import styles from './AppLayout.module.css'
  */
 const SIDEBAR_STATE_STORAGE_KEY = 'sidebarMenuOpen'
 
+/** Высота фиксированного футера (см. Footer.module.css) — как во frontend MainLayout */
+const FOOTER_HEIGHT = 48
+
 /**
  * DESKTOP_BREAKPOINT - точка перелома для определения десктопных устройств
  * 
@@ -107,7 +110,13 @@ export default function AppLayout({
   const pathname = usePathname()
   // Проверка, является ли текущая страница ats (для показа StatusBar)
   const isRecrChatPage = pathname?.startsWith('/ats')
-  
+  const isAdminPage = pathname?.startsWith('/admin')
+
+  useEffect(() => {
+    const t = (pageTitle ?? 'HR Helper').trim()
+    document.title = t === 'HR Helper' ? 'HR Helper' : `${t} — HR Helper`
+  }, [pageTitle])
+
   /**
    * isDesktop - проверка, является ли устройство десктопом
    * 
@@ -329,13 +338,19 @@ export default function AppLayout({
           - height/overflow: без прокрутки у контейнера, скролл только внутри контента страниц
           - marginTop: отступ от Header (64px) и StatusBar (48px если есть) */}
       <Flex
+        className={styles.contentWrapper}
         style={{
           marginTop: isRecrChatPage ? '112px' : '64px',
           width: '100%',
-          height: isRecrChatPage ? 'calc(100vh - 112px - 49px)' : 'calc(100vh - 49px)', /* минус footer; высота контента увеличена на высоту header */
+          maxWidth: '100vw',
+          height: isRecrChatPage
+            ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
+            : `calc(100vh - 64px - ${FOOTER_HEIGHT}px)`,
+          flexDirection: 'column',
           minHeight: 0,
-          overflow: 'hidden',
           transition: 'all 0.2s ease-in-out',
+          overflowX: 'hidden',
+          overflowY: 'auto',
         }}
       >
         {/* Основной контент страницы */}
@@ -343,12 +358,19 @@ export default function AppLayout({
           className={styles.content}
           data-app-layout-content
           style={{ 
-            padding: '24px 0 56px 0',
+            padding: isAdminPage
+              ? `0 0 ${FOOTER_HEIGHT + 24}px 0`
+              : isRecrChatPage
+                ? '0'
+                : `24px 0 ${FOOTER_HEIGHT + 24}px 0`,
             borderTop: '1px solid var(--gray-a6)',
             flex: 1,
             minWidth: 0,
+            maxWidth: '100%',
             minHeight: 0,
-            overflow: 'auto',
+            height: isRecrChatPage
+              ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
+              : undefined,
             marginLeft: '34px',
             marginRight: menuOpen ? '280px' : '24px',
             width: menuOpen ? 'calc(100% - 280px - 34px)' : 'calc(100% - 34px - 24px)',

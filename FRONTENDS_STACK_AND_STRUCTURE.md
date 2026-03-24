@@ -76,10 +76,12 @@ frontend old/
 ## `fe_migration/` — миграция стека без смены архитектуры на FSD
 
 - Базовый эталон переноса: **frontend old (3001)** → сравнение **`./start-dev-migration.sh`** (3001 + 3002).  
-- План переноса страниц и чек-листы: **`fe_migration/MIGRATION_PLAN.md`** (фазы A–K, построчная проверка I, J1–J5).  
-- **Очередь нерешённого** (приёмка, улучшения, роли, хвосты): **`fe_migration/MIGRATION_PLAN_UPD.md`**.  
+- **Мастер-план остаточной миграции:** **`Детальный план остаточной миграции hr_helper_fe.md`** (корень репо); сводка статуса по фазам — **`fe_migration/docs/DETAILED_PLAN_STATUS.md`**.  
+- План переноса страниц и чек-листы: **`MIGRATION_PLAN.md`** (корень репо; фазы A–K, I, J; код живёт в `fe_migration/`).  
+- **Очередь нерешённого** (приёмка фаза 14, хвосты): **`MIGRATION_PLAN_UPD.md`** (корень репо).  
 - **Расхождения с эталоном 3001** (намеренные и найденные при приёмке): **`fe_migration/docs/MIGRATION_DIVERGENCES.md`**.  
 - Отдельно зафиксирована **доработка UI профиля и оболочки** под новую платформу (**frontend :3000**): **`fe_migration/docs/UI_MIGRATION_PLAN.md`** (футер, FloatingActions, тема, соцсети, UserCard и т.д.).  
+- В текущем цикле миграции из доработок **исключены**: `Sidebar`, `Header`, `Footer`, `FloatingActions` (у `FloatingActions` зафиксирован `left: 12px`).  
 - **`src/router-adapter.tsx`** вместо `next/link` и `next/navigation`.
 
 ---
@@ -87,14 +89,14 @@ frontend old/
 ## Зачем этот документ
 
 1. Различие трёх приложений и **трёх скриптов** запуска.  
-2. При переносе экрана в **fe_migration** — следовать **MIGRATION_PLAN.md**.  
+2. При переносе экрана в **fe_migration** — следовать **`MIGRATION_PLAN.md`** (корень репо) и мастер-плану **`Детальный план остаточной миграции hr_helper_fe.md`**.  
 3. При поиске legacy-кода — `frontend old/app/`, `frontend old/components/`.
 
 ---
 
 ## Миграция и качество переноса
 
-- Перенос legacy-страниц (3001 → 3002): **`fe_migration/MIGRATION_PLAN.md`**.  
-- Нерешённое и отложенное: **`fe_migration/MIGRATION_PLAN_UPD.md`**.  
+- Перенос legacy-страниц (3001 → 3002): **`MIGRATION_PLAN.md`** + статус фаз **`fe_migration/docs/DETAILED_PLAN_STATUS.md`**.  
+- Нерешённое и отложенное: **`MIGRATION_PLAN_UPD.md`**.  
 - UI-изменения и parity с **3000** по профилю/хедеру/футеру: **`fe_migration/docs/UI_MIGRATION_PLAN.md`**.  
 - После переноса каждой страницы: сверка построчно (**I**), чек-лист (**J**), таблица учёта (**G**).

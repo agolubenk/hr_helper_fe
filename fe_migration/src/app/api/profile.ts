@@ -1,5 +1,6 @@
 import type { SocialLink } from '@/lib/types/social-links'
 import type { WorkingHours } from '@/lib/types/working-hours'
+import { getApiUrl } from '@/lib/api'
 
 export interface ProfileApiResponse {
   id?: number
@@ -15,6 +16,10 @@ export interface ProfileApiResponse {
   meeting_interval_minutes?: number
   work_time_by_day?: WorkingHours['custom']
   social_links?: SocialLink[]
+  role?: string
+  user_role?: string
+  groups?: string[]
+  permissions?: string[]
 }
 
 export interface ProfileData {
@@ -84,6 +89,10 @@ export function mapProfileApiToUserData(
   }
 }
 
+function isProfileApiEnabled(): boolean {
+  return import.meta.env?.VITE_USE_PROFILE_API === 'true'
+}
+
 const SCHEDULE_STORAGE_KEY = 'profileSchedule'
 
 export interface StoredSchedule {
@@ -131,7 +140,92 @@ export function mergeScheduleIntoProfileData(
 
 /** Мок: в fe_migration API не вызывается, возвращаем null */
 export async function fetchProfile(): Promise<ProfileApiResponse | null> {
+  if (!isProfileApiEnabled()) return null
+
+  const tryEndpoints = ['accounts/profile/', 'accounts/me/']
+  for (const endpoint of tryEndpoints) {
+    try {
+      const response = await fetch(getApiUrl(endpoint), { credentials: 'include' })
+      if (!response.ok) continue
+      const json = await response.json()
+      const payload = (json?.data ?? json) as ProfileApiResponse | null
+      if (payload && typeof payload === 'object') return payload
+    } catch {
+      // fallback to next endpoint
+    }
+  }
   return null
+}
+
+export interface SaveProfilePayload {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+}
+
+export type ProfileApiErrorCode =
+  | 'API_DISABLED'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'VALIDATION'
+  | 'NOT_FOUND'
+  | 'NETWORK'
+  | 'UNKNOWN'
+
+export interface ProfileApiResult {
+  ok: boolean
+  status?: number
+  code?: ProfileApiErrorCode
+}
+
+function mapStatusToProfileApiCode(status?: number): ProfileApiErrorCode {
+  if (status === 401) return 'UNAUTHORIZED'
+  if (status === 403) return 'FORBIDDEN'
+  if (status === 404) return 'NOT_FOUND'
+  if (status === 400 || status === 422) return 'VALIDATION'
+  return 'UNKNOWN'
+}
+
+export async function saveProfile(payload: SaveProfilePayload): Promise<ProfileApiResult> {
+  if (!isProfileApiEnabled()) return { ok: true, code: 'API_DISABLED' }
+  try {
+    const response = await fetch(getApiUrl('accounts/profile/'), {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        first_name: payload.firstName,
+        last_name: payload.lastName,
+        email: payload.email,
+        phone: payload.phone,
+      }),
+    })
+    if (response.ok) {
+      return { ok: true, status: response.status }
+    }
+    return { ok: false, status: response.status, code: mapStatusToProfileApiCode(response.status) }
+  } catch {
+    return { ok: false, code: 'NETWORK' }
+  }
+}
+
+export async function saveProfileSocialLinks(links: SocialLink[]): Promise<ProfileApiResult> {
+  if (!isProfileApiEnabled()) return { ok: true, code: 'API_DISABLED' }
+  try {
+    const response = await fetch(getApiUrl('accounts/profile/social-links/'), {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ social_links: links }),
+    })
+    if (response.ok) {
+      return { ok: true, status: response.status }
+    }
+    return { ok: false, status: response.status, code: mapStatusToProfileApiCode(response.status) }
+  } catch {
+    return { ok: false, code: 'NETWORK' }
+  }
 }
 
 /** Мок: фраза-напоминание хранится в localStorage */

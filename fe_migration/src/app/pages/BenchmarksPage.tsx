@@ -34,206 +34,72 @@
  * TODO: Заменить моковые данные на реальные из API
  */
 
-import { Box, Flex, Text, Button, TextField, Table, Badge, Select, Card } from "@radix-ui/themes"
-import { PlusIcon, MagnifyingGlassIcon, ReloadIcon, EyeOpenIcon, Pencil2Icon, TrashIcon, ExternalLinkIcon, CalendarIcon, SewingPinFilledIcon, BackpackIcon, BarChartIcon, PersonIcon } from "@radix-ui/react-icons"
-import { useState, useEffect } from "react"
-import { Benchmark, BenchmarkStats, BenchmarkSettings, Grade, Vacancy } from "@/lib/api"
+import {
+  Box,
+  Flex,
+  Text,
+  Button,
+  TextField,
+  Table,
+  Badge,
+  Select,
+  Card,
+  Dialog,
+  Separator,
+  TextArea,
+  Switch,
+} from "@radix-ui/themes"
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  ReloadIcon,
+  EyeOpenIcon,
+  Pencil2Icon,
+  TrashIcon,
+  ExternalLinkIcon,
+  CalendarIcon,
+  SewingPinFilledIcon,
+  BackpackIcon,
+  DashboardIcon,
+  DoubleArrowLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DoubleArrowRightIcon,
+} from "@radix-ui/react-icons"
+import { useState, useEffect, useMemo } from "react"
+import { Benchmark, BenchmarkSettings, Grade, Vacancy } from "@/lib/api"
+import { Link } from '@/router-adapter'
+import {
+  MOCK_BENCHMARKS,
+  MOCK_GRADES,
+  MOCK_SETTINGS,
+  MOCK_VACANCIES,
+  formatSalaryDisplay,
+} from '@/app/pages/benchmarks/benchmarksMocks'
+import { useToast } from '@/components/Toast/ToastContext'
 import styles from './styles/BenchmarksPage.module.css'
 
-/**
- * MOCK_BENCHMARKS - моковые данные бенчмарков зарплат
- * 
- * Структура бенчмарка:
- * - id: уникальный идентификатор бенчмарка
- * - type: тип бенчмарка ('candidate' - от кандидата, 'vacancy' - от вакансии)
- * - vacancy, vacancy_name: ID и название вакансии
- * - grade, grade_name: ID и название грейда
- * - salary_from, salary_to: минимальная и максимальная зарплата
- * - salary_display: отформатированная строка зарплаты
- * - location: локация
- * - work_format: формат работы (гибрид, удаленка, офис)
- * - compensation: компенсации (ДМС, спортзал и т.д.)
- * - benefits: бенефиты (обеды, корпоративы и т.д.)
- * - development: возможности развития (конференции, курсы и т.д.)
- * - technologies: технологии
- * - domain, domain_display: домен (fintech, ecommerce и т.д.)
- * - hh_vacancy_id: ID вакансии в HeadHunter (опционально)
- * - date_added: дата добавления бенчмарка
- * - is_active: флаг активности бенчмарка
- * - created_at, updated_at: даты создания и обновления
- * 
- * TODO: Заменить на реальные данные из API
- */
-const MOCK_BENCHMARKS: Benchmark[] = [
-  {
-    id: 1,
-    type: 'candidate',
-    vacancy: 1,
-    vacancy_name: 'Frontend Developer',
-    grade: 1,
-    grade_name: 'Middle',
-    salary_from: '200000',
-    salary_to: '300000',
-    salary_display: '200 000 - 300 000 ₽',
-    location: 'Москва',
-    work_format: 'гибрид',
-    compensation: 'ДМС, спортзал',
-    benefits: 'Обеды, корпоративы',
-    development: 'Конференции, курсы',
-    technologies: 'React, TypeScript, Next.js',
-    domain: 'fintech',
-    domain_display: 'FinTech',
-    hh_vacancy_id: '12345678',
-    date_added: '2026-01-20T10:00:00Z',
-    is_active: true,
-    created_at: '2026-01-20T10:00:00Z',
-    updated_at: '2026-01-20T10:00:00Z',
-  },
-  {
-    id: 2,
-    type: 'vacancy',
-    vacancy: 2,
-    vacancy_name: 'Backend Developer',
-    grade: 2,
-    grade_name: 'Senior',
-    salary_from: '300000',
-    salary_to: '450000',
-    salary_display: '300 000 - 450 000 ₽',
-    location: 'Санкт-Петербург',
-    work_format: 'удаленка',
-    compensation: 'ДМС',
-    benefits: 'Обеды',
-    development: 'Курсы',
-    technologies: 'Python, Django, PostgreSQL',
-    domain: 'ecommerce',
-    domain_display: 'E-commerce',
-    hh_vacancy_id: '87654321',
-    date_added: '2026-01-19T14:30:00Z',
-    is_active: true,
-    created_at: '2026-01-19T14:30:00Z',
-    updated_at: '2026-01-19T14:30:00Z',
-  },
-  {
-    id: 3,
-    type: 'candidate',
-    vacancy: 3,
-    vacancy_name: 'DevOps Engineer',
-    grade: 1,
-    grade_name: 'Middle',
-    salary_from: '250000',
-    salary_to: '350000',
-    salary_display: '250 000 - 350 000 ₽',
-    location: 'Казань',
-    work_format: 'офис',
-    compensation: 'ДМС, спортзал',
-    benefits: 'Обеды, корпоративы',
-    development: 'Конференции',
-    technologies: 'Kubernetes, Docker, AWS',
-    domain: 'saas',
-    domain_display: 'SaaS',
-    date_added: '2026-01-18T09:15:00Z',
-    is_active: true,
-    created_at: '2026-01-18T09:15:00Z',
-    updated_at: '2026-01-18T09:15:00Z',
-  },
-  {
-    id: 4,
-    type: 'vacancy',
-    vacancy: 1,
-    vacancy_name: 'Frontend Developer',
-    grade: 3,
-    grade_name: 'Lead',
-    salary_from: '400000',
-    salary_to: '600000',
-    salary_display: '400 000 - 600 000 ₽',
-    location: 'Москва',
-    work_format: 'гибрид',
-    compensation: 'ДМС, спортзал, парковка',
-    benefits: 'Обеды, корпоративы, тимбилдинги',
-    development: 'Конференции, курсы, менторинг',
-    technologies: 'React, TypeScript, Next.js, GraphQL',
-    domain: 'fintech',
-    domain_display: 'FinTech',
-    hh_vacancy_id: '11223344',
-    date_added: '2026-01-17T16:45:00Z',
-    is_active: false,
-    created_at: '2026-01-17T16:45:00Z',
-    updated_at: '2026-01-17T16:45:00Z',
-  },
-  {
-    id: 5,
-    type: 'candidate',
-    vacancy: 4,
-    vacancy_name: 'QA Engineer',
-    grade: 1,
-    grade_name: 'Junior',
-    salary_from: '120000',
-    salary_to: '180000',
-    salary_display: '120 000 - 180 000 ₽',
-    location: 'Новосибирск',
-    work_format: 'удаленка',
-    compensation: 'ДМС',
-    benefits: 'Обеды',
-    development: 'Курсы',
-    technologies: 'Selenium, Python, Postman',
-    domain: 'gaming',
-    domain_display: 'Gaming',
-    date_added: '2026-01-16T11:20:00Z',
-    is_active: true,
-    created_at: '2026-01-16T11:20:00Z',
-    updated_at: '2026-01-16T11:20:00Z',
-  },
-]
+const PAGE_SIZE_OPTIONS = [10, 15, 25, 50, 100] as const
 
-const MOCK_STATS: BenchmarkStats = {
-  total_benchmarks: 5,
-  active_benchmarks: 4,
-  type_stats: [
-    { type: 'candidate', count: 3, avg_salary_from: '190000', avg_salary_to: '276667' },
-    { type: 'vacancy', count: 2, avg_salary_from: '350000', avg_salary_to: '525000' },
-  ],
-  grade_stats: [
-    { grade__name: 'Middle', count: 2, avg_salary_from: '225000', avg_salary_to: '325000' },
-    { grade__name: 'Senior', count: 1, avg_salary_from: '300000', avg_salary_to: '450000' },
-    { grade__name: 'Lead', count: 1, avg_salary_from: '400000', avg_salary_to: '600000' },
-    { grade__name: 'Junior', count: 1, avg_salary_from: '120000', avg_salary_to: '180000' },
-  ],
-}
-
-const MOCK_SETTINGS: BenchmarkSettings = {
-  id: 1,
-  vacancy_fields: ['work_format', 'compensation', 'benefits', 'development', 'technologies', 'domain'],
-  candidate_fields: ['work_format', 'compensation', 'benefits'],
-}
-
-const MOCK_GRADES: Grade[] = [
-  { id: 1, name: 'Junior' },
-  { id: 2, name: 'Middle' },
-  { id: 3, name: 'Senior' },
-  { id: 4, name: 'Lead' },
-  { id: 5, name: 'Principal' },
-]
-
-const MOCK_VACANCIES: Vacancy[] = [
-  { id: 1, name: 'Frontend Developer', title: 'Frontend Developer' },
-  { id: 2, name: 'Backend Developer', title: 'Backend Developer' },
-  { id: 3, name: 'DevOps Engineer', title: 'DevOps Engineer' },
-  { id: 4, name: 'QA Engineer', title: 'QA Engineer' },
-  { id: 5, name: 'Project Manager', title: 'Project Manager' },
-]
+const WORK_FORMAT_EDIT_OPTIONS = [
+  { value: 'none', label: 'Не указано' },
+  { value: 'офис', label: 'Офис' },
+  { value: 'гибрид', label: 'Гибрид' },
+  { value: 'удаленка', label: 'Удалёнка' },
+  { value: 'all world', label: 'All World' },
+] as const
 
 export default function BenchmarksPage() {
-  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([])
-  const [stats, setStats] = useState<BenchmarkStats | null>(null)
+  const { showSuccess } = useToast()
+  const [benchmarkDataset, setBenchmarkDataset] = useState<Benchmark[]>(() => [...MOCK_BENCHMARKS])
   const [settings, setSettings] = useState<BenchmarkSettings | null>(null)
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('')
   const [vacancyFilter, setVacancyFilter] = useState<string>('')
   const [gradeFilter, setGradeFilter] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [page, setPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
+  const [pageSize, setPageSize] = useState<number>(15)
   const [grades, setGrades] = useState<Grade[]>([])
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({
@@ -245,103 +111,98 @@ export default function BenchmarksPage() {
     domain: false,
   })
 
-  const loadBenchmarks = async () => {
-    setLoading(true)
-    try {
-      // Имитация задержки API
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      // Фильтрация моковых данных
-      let filteredBenchmarks = [...MOCK_BENCHMARKS]
-      
-      // Фильтр по поиску
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        filteredBenchmarks = filteredBenchmarks.filter(b => 
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [addType, setAddType] = useState<'candidate' | 'vacancy'>('candidate')
+  const [addVacancyId, setAddVacancyId] = useState('1')
+  const [addGradeId, setAddGradeId] = useState('1')
+  const [addSalaryFrom, setAddSalaryFrom] = useState('')
+  const [addSalaryTo, setAddSalaryTo] = useState('')
+  const [addLocation, setAddLocation] = useState('')
+
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [viewBenchmark, setViewBenchmark] = useState<Benchmark | null>(null)
+
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editBenchmarkId, setEditBenchmarkId] = useState<number | null>(null)
+  const [editType, setEditType] = useState<'candidate' | 'vacancy'>('candidate')
+  const [editVacancyId, setEditVacancyId] = useState('1')
+  const [editGradeId, setEditGradeId] = useState('1')
+  const [editSalaryFrom, setEditSalaryFrom] = useState('')
+  const [editSalaryTo, setEditSalaryTo] = useState('')
+  const [editLocation, setEditLocation] = useState('')
+  const [editIsActive, setEditIsActive] = useState(true)
+  const [editLinkedCandidateId, setEditLinkedCandidateId] = useState('')
+  const [editTotalExperienceYears, setEditTotalExperienceYears] = useState('')
+  const [editWorkRegionsDisplay, setEditWorkRegionsDisplay] = useState('')
+  const [editSalaryExpectationsNote, setEditSalaryExpectationsNote] = useState('')
+  const [editVacancyDescription, setEditVacancyDescription] = useState('')
+  const [editVacancySourceDisplay, setEditVacancySourceDisplay] = useState('')
+  const [editDomainDescription, setEditDomainDescription] = useState('')
+  const [editWorkFormat, setEditWorkFormat] = useState('')
+  const [editCompensation, setEditCompensation] = useState('')
+  const [editBenefits, setEditBenefits] = useState('')
+  const [editDevelopment, setEditDevelopment] = useState('')
+  const [editTechnologies, setEditTechnologies] = useState('')
+  const [editDomainDisplay, setEditDomainDisplay] = useState('')
+  const [editDomainKey, setEditDomainKey] = useState('')
+  const [editHhVacancyId, setEditHhVacancyId] = useState('')
+  const [editNotes, setEditNotes] = useState('')
+
+  const { tableRows, totalFiltered, effectivePage } = useMemo(() => {
+    let filtered = [...benchmarkDataset]
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (b) =>
           b.vacancy_name?.toLowerCase().includes(query) ||
           b.grade_name?.toLowerCase().includes(query) ||
           b.location?.toLowerCase().includes(query) ||
           b.technologies?.toLowerCase().includes(query)
-        )
-      }
-      
-      // Фильтр по типу
-      if (typeFilter) {
-        filteredBenchmarks = filteredBenchmarks.filter(b => b.type === typeFilter)
-      }
-      
-      // Фильтр по вакансии
-      if (vacancyFilter) {
-        filteredBenchmarks = filteredBenchmarks.filter(b => b.vacancy === parseInt(vacancyFilter))
-      }
-      
-      // Фильтр по грейду
-      if (gradeFilter) {
-        filteredBenchmarks = filteredBenchmarks.filter(b => b.grade === parseInt(gradeFilter))
-      }
-      
-      // Фильтр по статусу
-      if (statusFilter === 'true') {
-        filteredBenchmarks = filteredBenchmarks.filter(b => b.is_active === true)
-      } else if (statusFilter === 'false') {
-        filteredBenchmarks = filteredBenchmarks.filter(b => b.is_active === false)
-      }
-      
-      // Пагинация
-      const pageSize = 15
-      const startIndex = (page - 1) * pageSize
-      const endIndex = startIndex + pageSize
-      const paginatedBenchmarks = filteredBenchmarks.slice(startIndex, endIndex)
-      
-      setBenchmarks(paginatedBenchmarks)
-      setTotalCount(filteredBenchmarks.length)
-      
-      // TODO: Когда будет готов API, раскомментировать:
-      /*
-      const params: any = {
-        page,
-        page_size: 15,
-      }
-      if (searchQuery) params.search = searchQuery
-      if (typeFilter) params.type = typeFilter
-      if (vacancyFilter) params.vacancy = parseInt(vacancyFilter)
-      if (gradeFilter) params.grade = parseInt(gradeFilter)
-      if (statusFilter === 'true') params.is_active = true
-      if (statusFilter === 'false') params.is_active = false
-
-      const response = await benchmarksApi.getAll(params)
-      if (response.data) {
-        setBenchmarks(response.data.results || [])
-        setTotalCount(response.data.count || 0)
-      } else if (response.error) {
-        console.error('Ошибка загрузки бенчмарков:', response.error)
-      }
-      */
-    } catch (error) {
-      console.error('Ошибка при загрузке бенчмарков:', error)
-    } finally {
-      setLoading(false)
+      )
     }
-  }
 
-  const loadStats = async () => {
-    try {
-      // Имитация задержки API
-      await new Promise(resolve => setTimeout(resolve, 200))
-      
-      setStats(MOCK_STATS)
-      
-      // TODO: Когда будет готов API, раскомментировать:
-      /*
-      const response = await benchmarksApi.getStats()
-      if (response.data) {
-        setStats(response.data)
-      }
-      */
-    } catch (error) {
-      console.error('Ошибка при загрузке статистики:', error)
+    if (typeFilter) {
+      filtered = filtered.filter((b) => b.type === typeFilter)
     }
-  }
+
+    if (vacancyFilter) {
+      filtered = filtered.filter((b) => b.vacancy === parseInt(vacancyFilter, 10))
+    }
+
+    if (gradeFilter) {
+      filtered = filtered.filter((b) => b.grade === parseInt(gradeFilter, 10))
+    }
+
+    if (statusFilter === 'true') {
+      filtered = filtered.filter((b) => b.is_active === true)
+    } else if (statusFilter === 'false') {
+      filtered = filtered.filter((b) => b.is_active === false)
+    }
+
+    const filteredTotal = filtered.length
+    const maxPage = Math.max(1, Math.ceil(filteredTotal / pageSize) || 1)
+    const effPage = Math.min(page, maxPage)
+    const startIndex = (effPage - 1) * pageSize
+    const rows = filtered.slice(startIndex, startIndex + pageSize)
+
+    return { tableRows: rows, totalFiltered: filteredTotal, effectivePage: effPage }
+  }, [
+    benchmarkDataset,
+    page,
+    pageSize,
+    searchQuery,
+    typeFilter,
+    vacancyFilter,
+    gradeFilter,
+    statusFilter,
+  ])
+
+  useEffect(() => {
+    if (effectivePage !== page) {
+      setPage(effectivePage)
+    }
+  }, [effectivePage, page])
 
   const loadSettings = async () => {
     try {
@@ -418,20 +279,13 @@ export default function BenchmarksPage() {
   }
 
   useEffect(() => {
-    loadBenchmarks()
-    loadStats()
     loadSettings()
     loadGrades()
     loadVacancies()
-  }, [page])
-
-  useEffect(() => {
-    loadBenchmarks()
-  }, [searchQuery, typeFilter, vacancyFilter, gradeFilter, statusFilter])
+  }, [])
 
   const handleSearch = () => {
     setPage(1)
-    loadBenchmarks()
   }
 
   const handleReset = () => {
@@ -441,9 +295,6 @@ export default function BenchmarksPage() {
     setGradeFilter('')
     setStatusFilter('')
     setPage(1)
-    setTimeout(() => {
-      loadBenchmarks()
-    }, 100)
   }
 
   const toggleFieldVisibility = (field: string) => {
@@ -461,6 +312,201 @@ export default function BenchmarksPage() {
     return type === 'candidate' ? 'Кандидат' : 'Вакансия'
   }
 
+  const handleAddBenchmark = () => {
+    const vId = parseInt(addVacancyId, 10)
+    const gId = parseInt(addGradeId, 10)
+    const vacancy = MOCK_VACANCIES.find((x) => x.id === vId) ?? MOCK_VACANCIES[0]
+    const grade = MOCK_GRADES.find((x) => x.id === gId) ?? MOCK_GRADES[0]
+    const from = addSalaryFrom.trim() || '0'
+    const to = addSalaryTo.trim() || from
+    const now = new Date().toISOString()
+    const nextId = benchmarkDataset.reduce((m, b) => Math.max(m, b.id), 0) + 1
+    const disp = formatSalaryDisplay(from, to)
+    const row: Benchmark = {
+      id: nextId,
+      type: addType,
+      vacancy: vacancy.id,
+      vacancy_name: vacancy.name ?? vacancy.title ?? `Вакансия ${vacancy.id}`,
+      grade: grade.id,
+      grade_name: grade.name,
+      salary_from: from.replace(/\s/g, ''),
+      salary_to: to.replace(/\s/g, ''),
+      salary_display: disp,
+      location: addLocation.trim() || '—',
+      work_format: addType === 'candidate' ? 'гибрид' : 'офис',
+      compensation: 'ДМС',
+      benefits: 'Обеды',
+      development: 'Курсы',
+      technologies: '—',
+      domain: 'saas',
+      domain_display: 'SaaS',
+      domain_description:
+        addType === 'candidate'
+          ? 'Мок: сфера и домен кандидата.'
+          : 'Мок: домен продукта и команды.',
+      hh_vacancy_id: addType === 'vacancy' ? String(12_000_000 + nextId) : null,
+      notes: null,
+      is_active: true,
+      date_added: now,
+      created_at: now,
+      updated_at: now,
+      linked_candidate_id: addType === 'candidate' ? 8000 + nextId : null,
+      total_experience_years: addType === 'candidate' ? 3 : null,
+      work_regions_display:
+        addType === 'candidate' ? `${addLocation.trim() || '—'}; мок-регионы` : null,
+      salary_expectations_note:
+        addType === 'candidate' ? `Ожидания по ЗП: ${disp} (мок)` : null,
+      vacancy_description:
+        addType === 'vacancy'
+          ? `Описание вакансии «${vacancy.name ?? vacancy.title}» — мок-текст.`
+          : null,
+      vacancy_source_display: addType === 'vacancy' ? 'Внутренняя база' : null,
+    }
+    setBenchmarkDataset((prev) => [...prev, row])
+    setAddModalOpen(false)
+    setAddSalaryFrom('')
+    setAddSalaryTo('')
+    setAddLocation('')
+  }
+
+  const openViewBenchmark = (b: Benchmark) => {
+    setViewBenchmark(b)
+    setViewModalOpen(true)
+  }
+
+  const openEditBenchmark = (b: Benchmark) => {
+    setEditBenchmarkId(b.id)
+    setEditType(b.type)
+    setEditVacancyId(String(b.vacancy))
+    setEditGradeId(String(b.grade))
+    setEditSalaryFrom(b.salary_from)
+    setEditSalaryTo(b.salary_to?.trim() ?? '')
+    setEditLocation(b.location)
+    setEditIsActive(b.is_active)
+    setEditLinkedCandidateId(b.linked_candidate_id != null ? String(b.linked_candidate_id) : '')
+    setEditTotalExperienceYears(
+      b.total_experience_years != null ? String(b.total_experience_years) : ''
+    )
+    setEditWorkRegionsDisplay(b.work_regions_display ?? '')
+    setEditSalaryExpectationsNote(b.salary_expectations_note ?? '')
+    setEditVacancyDescription(b.vacancy_description ?? '')
+    setEditVacancySourceDisplay(b.vacancy_source_display ?? '')
+    setEditDomainDescription(b.domain_description ?? '')
+    setEditWorkFormat(b.work_format ?? '')
+    setEditCompensation(b.compensation ?? '')
+    setEditBenefits(b.benefits ?? '')
+    setEditDevelopment(b.development ?? '')
+    setEditTechnologies(b.technologies ?? '')
+    setEditDomainDisplay(b.domain_display ?? '')
+    setEditDomainKey(b.domain ?? '')
+    setEditHhVacancyId(b.hh_vacancy_id ?? '')
+    setEditNotes(b.notes ?? '')
+    setEditModalOpen(true)
+  }
+
+  const handleSaveEditBenchmark = () => {
+    if (editBenchmarkId === null) return
+    const vId = parseInt(editVacancyId, 10)
+    const gId = parseInt(editGradeId, 10)
+    const vacancy = MOCK_VACANCIES.find((x) => x.id === vId) ?? MOCK_VACANCIES[0]
+    const grade = MOCK_GRADES.find((x) => x.id === gId) ?? MOCK_GRADES[0]
+    const from = editSalaryFrom.trim() || '0'
+    const to = editSalaryTo.trim() || from
+    const now = new Date().toISOString()
+
+    const lcRaw = editLinkedCandidateId.trim()
+    const linked_candidate_id =
+      editType !== 'candidate'
+        ? null
+        : lcRaw === ''
+          ? null
+          : Number.isFinite(Number(lcRaw))
+            ? parseInt(lcRaw, 10)
+            : null
+
+    const expRaw = editTotalExperienceYears.trim()
+    const total_experience_years =
+      editType !== 'candidate'
+        ? null
+        : expRaw === ''
+          ? null
+          : Number.isFinite(Number(expRaw))
+            ? Math.floor(Number(expRaw))
+            : null
+
+    const hhRaw = editHhVacancyId.trim()
+    const hh_vacancy_id = editType === 'vacancy' ? (hhRaw !== '' ? hhRaw : null) : null
+
+    setBenchmarkDataset((prev) =>
+      prev.map((b) =>
+        b.id === editBenchmarkId
+          ? {
+              ...b,
+              type: editType,
+              vacancy: vacancy.id,
+              vacancy_name: vacancy.name ?? vacancy.title ?? `Вакансия ${vacancy.id}`,
+              grade: grade.id,
+              grade_name: grade.name,
+              salary_from: from.replace(/\s/g, ''),
+              salary_to: to.replace(/\s/g, ''),
+              salary_display: formatSalaryDisplay(from, to),
+              location: editLocation.trim() || '—',
+              is_active: editIsActive,
+              updated_at: now,
+              linked_candidate_id:
+                editType === 'candidate' ? linked_candidate_id : null,
+              total_experience_years:
+                editType === 'candidate' ? total_experience_years : null,
+              work_regions_display:
+                editType === 'candidate'
+                  ? editWorkRegionsDisplay.trim() || null
+                  : null,
+              salary_expectations_note:
+                editType === 'candidate'
+                  ? editSalaryExpectationsNote.trim() || null
+                  : null,
+              vacancy_description:
+                editType === 'vacancy'
+                  ? editVacancyDescription.trim() || null
+                  : null,
+              vacancy_source_display:
+                editType === 'vacancy'
+                  ? editVacancySourceDisplay.trim() || null
+                  : null,
+              domain_description: editDomainDescription.trim() || null,
+              work_format: editWorkFormat.trim() || null,
+              compensation: editCompensation.trim() || null,
+              benefits: editBenefits.trim() || null,
+              development: editDevelopment.trim() || null,
+              technologies: editTechnologies.trim() || null,
+              domain: editDomainKey.trim() || null,
+              domain_display: editDomainDisplay.trim() || null,
+              hh_vacancy_id: editType === 'vacancy' ? hh_vacancy_id : null,
+              notes: editNotes.trim() || null,
+            }
+          : b
+      )
+    )
+    setEditModalOpen(false)
+    setEditBenchmarkId(null)
+    showSuccess('Сохранено', 'Изменения записаны локально (мок).')
+  }
+
+  const handleDeleteBenchmark = (b: Benchmark) => {
+    if (!window.confirm(`Удалить бенчмарк #${b.id} (${b.vacancy_name})?`)) return
+    setBenchmarkDataset((prev) => prev.filter((x) => x.id !== b.id))
+    showSuccess('Удалено', 'Запись удалена из списка (мок).')
+  }
+
+  const toggleBenchmarkActive = (id: number) => {
+    const now = new Date().toISOString()
+    setBenchmarkDataset((prev) =>
+      prev.map((b) =>
+        b.id === id ? { ...b, is_active: !b.is_active, updated_at: now } : b
+      )
+    )
+  }
+
   const getWorkFormatBadge = (workFormat: string | null | undefined) => {
     if (!workFormat) return <Text size="2" color="gray">—</Text>
     const formatMap: Record<string, { label: string; color: string }> = {
@@ -473,83 +519,612 @@ export default function BenchmarksPage() {
     return <Badge color={format.color as any}>{format.label}</Badge>
   }
 
-  const totalPages = Math.ceil(totalCount / 15)
-  const pageNumbers = []
-  for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) {
+  const totalPages =
+    totalFiltered > 0 ? Math.max(1, Math.ceil(totalFiltered / pageSize)) : 0
+  const safePage = totalFiltered > 0 ? Math.min(page, totalPages) : 1
+  const rangeStart = totalFiltered === 0 ? 0 : (safePage - 1) * pageSize + 1
+  const rangeEnd = Math.min(safePage * pageSize, totalFiltered)
+  const pageNumbers: number[] = []
+  for (
+    let i = Math.max(1, safePage - 2);
+    i <= Math.min(totalPages, safePage + 2);
+    i++
+  ) {
     pageNumbers.push(i)
   }
 
   const enabledFields = settings?.vacancy_fields || []
 
+  const viewBenchmarkLive =
+    viewBenchmark !== null
+      ? benchmarkDataset.find((b) => b.id === viewBenchmark.id) ?? viewBenchmark
+      : null
+
   return (
     <Box className={styles.container}>
         <Flex direction="column" gap="4">
+          <Dialog.Root open={addModalOpen} onOpenChange={setAddModalOpen}>
+            <Dialog.Content style={{ maxWidth: '480px' }}>
+              <Dialog.Title>Новый бенчмарк</Dialog.Title>
+              <Dialog.Description size="2" color="gray" mb="3">
+                Мок: запись добавляется локально (без API).
+              </Dialog.Description>
+              <Flex direction="column" gap="3">
+                <Flex direction="column" gap="1">
+                  <Text size="2" weight="medium">Тип</Text>
+                  <Select.Root value={addType} onValueChange={(v) => setAddType(v as 'candidate' | 'vacancy')}>
+                    <Select.Trigger />
+                    <Select.Content>
+                      <Select.Item value="candidate">Кандидат</Select.Item>
+                      <Select.Item value="vacancy">Вакансия</Select.Item>
+                    </Select.Content>
+                  </Select.Root>
+                </Flex>
+                <Flex direction="column" gap="1">
+                  <Text size="2" weight="medium">Специализация</Text>
+                  <Select.Root value={addVacancyId} onValueChange={setAddVacancyId}>
+                    <Select.Trigger />
+                    <Select.Content>
+                      {MOCK_VACANCIES.map((v) => (
+                        <Select.Item key={v.id} value={v.id.toString()}>
+                          {v.name ?? v.title}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </Flex>
+                <Flex direction="column" gap="1">
+                  <Text size="2" weight="medium">Грейд</Text>
+                  <Select.Root value={addGradeId} onValueChange={setAddGradeId}>
+                    <Select.Trigger />
+                    <Select.Content>
+                      {MOCK_GRADES.map((g) => (
+                        <Select.Item key={g.id} value={g.id.toString()}>
+                          {g.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </Flex>
+                <Flex gap="2">
+                  <Box style={{ flex: 1 }}>
+                    <Text size="2" weight="medium" mb="1" as="div">Зарплата от</Text>
+                    <TextField.Root
+                      placeholder="200000"
+                      value={addSalaryFrom}
+                      onChange={(e) => setAddSalaryFrom(e.target.value)}
+                    />
+                  </Box>
+                  <Box style={{ flex: 1 }}>
+                    <Text size="2" weight="medium" mb="1" as="div">Зарплата до</Text>
+                    <TextField.Root
+                      placeholder="300000"
+                      value={addSalaryTo}
+                      onChange={(e) => setAddSalaryTo(e.target.value)}
+                    />
+                  </Box>
+                </Flex>
+                <Flex direction="column" gap="1">
+                  <Text size="2" weight="medium">Локация</Text>
+                  <TextField.Root
+                    placeholder="Москва"
+                    value={addLocation}
+                    onChange={(e) => setAddLocation(e.target.value)}
+                  />
+                </Flex>
+                <Flex justify="end" gap="2" mt="2">
+                  <Button variant="soft" onClick={() => setAddModalOpen(false)}>Отмена</Button>
+                  <Button onClick={handleAddBenchmark}>Сохранить</Button>
+                </Flex>
+              </Flex>
+            </Dialog.Content>
+          </Dialog.Root>
+
+          <Dialog.Root open={viewModalOpen} onOpenChange={setViewModalOpen}>
+            <Dialog.Content
+              style={{ maxWidth: 'min(560px, 96vw)' }}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <Dialog.Title>Просмотр бенчмарка</Dialog.Title>
+              <Dialog.Description size="2" color="gray" mb="2">
+                Мок: данные из локальной записи; ссылки ведут в разделы приложения.
+              </Dialog.Description>
+              {viewBenchmarkLive && (
+                <Box className={styles.viewDialogBody}>
+                  <Flex direction="column" gap="3">
+                    <Flex direction="column" gap="2">
+                      <Text size="1" weight="bold" color="gray">
+                        Общие
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">ID: </Text>
+                        {viewBenchmarkLive.id}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Тип: </Text>
+                        {getTypeLabel(viewBenchmarkLive.type)}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Специализация / роль: </Text>
+                        {viewBenchmarkLive.vacancy_name}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Грейд: </Text>
+                        {viewBenchmarkLive.grade_name}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Вилка (ЗП): </Text>
+                        {viewBenchmarkLive.salary_display}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Локация: </Text>
+                        {viewBenchmarkLive.location}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Статус записи: </Text>
+                        {viewBenchmarkLive.is_active ? 'Активен' : 'Неактивен'}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Дата добавления: </Text>
+                        {new Date(viewBenchmarkLive.date_added).toLocaleString('ru-RU')}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Обновлено: </Text>
+                        {new Date(viewBenchmarkLive.updated_at).toLocaleString('ru-RU')}
+                      </Text>
+                    </Flex>
+
+                    {viewBenchmarkLive.type === 'candidate' && (
+                      <>
+                        <Separator size="4" />
+                        <Flex direction="column" gap="2">
+                          <Text size="1" weight="bold" color="gray">
+                            Кандидат
+                          </Text>
+                          {viewBenchmarkLive.linked_candidate_id != null && (
+                            <Text size="2" as="div">
+                              <Text weight="bold" as="span">Карточка в базе (ATS): </Text>
+                              <Link
+                                href={`/ats/vacancy/${viewBenchmarkLive.vacancy}/candidate/${viewBenchmarkLive.linked_candidate_id}`}
+                              >
+                                Открыть кандидата #{viewBenchmarkLive.linked_candidate_id}
+                              </Link>
+                            </Text>
+                          )}
+                          <Text size="2">
+                            <Text weight="bold" as="span">Суммарный опыт: </Text>
+                            {viewBenchmarkLive.total_experience_years != null
+                              ? `${viewBenchmarkLive.total_experience_years} лет`
+                              : '—'}
+                          </Text>
+                          <Text size="2">
+                            <Text weight="bold" as="span">ЗП / ожидания: </Text>
+                            {viewBenchmarkLive.salary_expectations_note ?? viewBenchmarkLive.salary_display}
+                          </Text>
+                          <Text size="2">
+                            <Text weight="bold" as="span">Области и регионы (где работал): </Text>
+                            {viewBenchmarkLive.work_regions_display ?? '—'}
+                          </Text>
+                        </Flex>
+                      </>
+                    )}
+
+                    {viewBenchmarkLive.type === 'vacancy' && (
+                      <>
+                        <Separator size="4" />
+                        <Flex direction="column" gap="2">
+                          <Text size="1" weight="bold" color="gray">
+                            Вакансия
+                          </Text>
+                          <Text size="2" as="div">
+                            <Text weight="bold" as="span">Вакансия в системе: </Text>
+                            <Link href={`/vacancies?edit=${viewBenchmarkLive.vacancy}`}>
+                              Открыть карточку вакансии
+                            </Link>
+                          </Text>
+                          {viewBenchmarkLive.hh_vacancy_id && (
+                            <Text size="2" as="div">
+                              <Text weight="bold" as="span">Источник / hh.ru: </Text>
+                              <a
+                                href={`https://hh.ru/vacancy/${viewBenchmarkLive.hh_vacancy_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Вакансия на HeadHunter
+                              </a>
+                            </Text>
+                          )}
+                          <Text size="2">
+                            <Text weight="bold" as="span">Источник в системе: </Text>
+                            {viewBenchmarkLive.vacancy_source_display ?? '—'}
+                          </Text>
+                          <Text size="2">
+                            <Text weight="bold" as="span">Грейд и вилка: </Text>
+                            {viewBenchmarkLive.grade_name} · {viewBenchmarkLive.salary_display}
+                          </Text>
+                          <Text size="2">
+                            <Text weight="bold" as="span">Описание вакансии: </Text>
+                          </Text>
+                          <Text size="2" color="gray" style={{ whiteSpace: 'pre-wrap' }}>
+                            {viewBenchmarkLive.vacancy_description ?? '—'}
+                          </Text>
+                          {viewBenchmarkLive.domain_description && (
+                            <Text size="2" color="gray" style={{ whiteSpace: 'pre-wrap' }}>
+                              <Text weight="bold" as="span" color="gray">Домен / контекст: </Text>
+                              {viewBenchmarkLive.domain_description}
+                            </Text>
+                          )}
+                        </Flex>
+                      </>
+                    )}
+
+                    <Separator size="4" />
+                    <Flex direction="column" gap="2">
+                      <Text size="1" weight="bold" color="gray">
+                        Дополнительные поля
+                      </Text>
+                      <Flex align="center" gap="2" wrap="wrap">
+                        <Text size="2" weight="bold">
+                          Формат работы:
+                        </Text>
+                        {viewBenchmarkLive.work_format
+                          ? getWorkFormatBadge(viewBenchmarkLive.work_format)
+                          : (
+                            <Text size="2" color="gray">
+                              —
+                            </Text>
+                          )}
+                      </Flex>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Компенсации: </Text>
+                        {viewBenchmarkLive.compensation ?? '—'}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Бенефиты: </Text>
+                        {viewBenchmarkLive.benefits ?? '—'}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Развитие: </Text>
+                        {viewBenchmarkLive.development ?? '—'}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Технологии: </Text>
+                        {viewBenchmarkLive.technologies ?? '—'}
+                      </Text>
+                      <Text size="2">
+                        <Text weight="bold" as="span">Домен: </Text>
+                        {viewBenchmarkLive.domain_display ?? viewBenchmarkLive.domain ?? '—'}
+                      </Text>
+                    </Flex>
+
+                    {viewBenchmarkLive.notes && (
+                      <>
+                        <Separator size="4" />
+                        <Text size="2">
+                          <Text weight="bold" as="span">Заметки: </Text>
+                          {viewBenchmarkLive.notes}
+                        </Text>
+                      </>
+                    )}
+
+                    <Flex justify="end" mt="2">
+                      <Button variant="soft" onClick={() => setViewModalOpen(false)}>
+                        Закрыть
+                      </Button>
+                    </Flex>
+                  </Flex>
+                </Box>
+              )}
+            </Dialog.Content>
+          </Dialog.Root>
+
+          <Dialog.Root open={editModalOpen} onOpenChange={setEditModalOpen}>
+            <Dialog.Content style={{ maxWidth: 'min(560px, 96vw)' }}>
+              <Dialog.Title>Редактирование бенчмарка</Dialog.Title>
+              <Dialog.Description size="2" color="gray" mb="2">
+                Мок: те же блоки, что в просмотре; изменения сохраняются локально (без API).
+              </Dialog.Description>
+              <Box className={styles.viewDialogBody}>
+                <Flex direction="column" gap="3">
+                  <Flex direction="column" gap="2">
+                    <Text size="1" weight="bold" color="gray">
+                      Общие
+                    </Text>
+                    {editBenchmarkId != null && (
+                      <Text size="2" color="gray">
+                        ID записи: {editBenchmarkId}
+                      </Text>
+                    )}
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Тип</Text>
+                      <Select.Root
+                        value={editType}
+                        onValueChange={(v) => setEditType(v as 'candidate' | 'vacancy')}
+                      >
+                        <Select.Trigger />
+                        <Select.Content>
+                          <Select.Item value="candidate">Кандидат</Select.Item>
+                          <Select.Item value="vacancy">Вакансия</Select.Item>
+                        </Select.Content>
+                      </Select.Root>
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Специализация / роль</Text>
+                      <Select.Root value={editVacancyId} onValueChange={setEditVacancyId}>
+                        <Select.Trigger />
+                        <Select.Content>
+                          {MOCK_VACANCIES.map((v) => (
+                            <Select.Item key={v.id} value={v.id.toString()}>
+                              {v.name ?? v.title}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Грейд</Text>
+                      <Select.Root value={editGradeId} onValueChange={setEditGradeId}>
+                        <Select.Trigger />
+                        <Select.Content>
+                          {MOCK_GRADES.map((g) => (
+                            <Select.Item key={g.id} value={g.id.toString()}>
+                              {g.name}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    </Flex>
+                    <Flex gap="2">
+                      <Box style={{ flex: 1 }}>
+                        <Text size="2" weight="medium" mb="1" as="div">
+                          Зарплата от
+                        </Text>
+                        <TextField.Root
+                          placeholder="200000"
+                          value={editSalaryFrom}
+                          onChange={(e) => setEditSalaryFrom(e.target.value)}
+                        />
+                      </Box>
+                      <Box style={{ flex: 1 }}>
+                        <Text size="2" weight="medium" mb="1" as="div">
+                          Зарплата до
+                        </Text>
+                        <TextField.Root
+                          placeholder="300000"
+                          value={editSalaryTo}
+                          onChange={(e) => setEditSalaryTo(e.target.value)}
+                        />
+                      </Box>
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Локация</Text>
+                      <TextField.Root
+                        placeholder="Москва"
+                        value={editLocation}
+                        onChange={(e) => setEditLocation(e.target.value)}
+                      />
+                    </Flex>
+                    <Flex align="center" gap="2">
+                      <Switch checked={editIsActive} onCheckedChange={setEditIsActive} />
+                      <Text size="2">Активная запись</Text>
+                    </Flex>
+                  </Flex>
+
+                  {editType === 'candidate' && (
+                    <>
+                      <Separator size="4" />
+                      <Flex direction="column" gap="2">
+                        <Text size="1" weight="bold" color="gray">
+                          Кандидат
+                        </Text>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">ID кандидата в базе (ATS)</Text>
+                          <TextField.Root
+                            placeholder="Например, 12042"
+                            value={editLinkedCandidateId}
+                            onChange={(e) => setEditLinkedCandidateId(e.target.value)}
+                          />
+                          <Text size="1" color="gray">
+                            Ссылка в интерфейсе: /ats/vacancy/…/candidate/…
+                          </Text>
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">Суммарный опыт (лет)</Text>
+                          <TextField.Root
+                            inputMode="numeric"
+                            placeholder="5"
+                            value={editTotalExperienceYears}
+                            onChange={(e) => setEditTotalExperienceYears(e.target.value)}
+                          />
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">ЗП / ожидания (текст)</Text>
+                          <TextArea
+                            rows={3}
+                            placeholder="Ожидания по вилке, релокации и т.д."
+                            value={editSalaryExpectationsNote}
+                            onChange={(e) => setEditSalaryExpectationsNote(e.target.value)}
+                          />
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">Области и регионы (где работал)</Text>
+                          <TextArea
+                            rows={3}
+                            placeholder="Регионы, отрасли, документированный опыт"
+                            value={editWorkRegionsDisplay}
+                            onChange={(e) => setEditWorkRegionsDisplay(e.target.value)}
+                          />
+                        </Flex>
+                      </Flex>
+                    </>
+                  )}
+
+                  {editType === 'vacancy' && (
+                    <>
+                      <Separator size="4" />
+                      <Flex direction="column" gap="2">
+                        <Text size="1" weight="bold" color="gray">
+                          Вакансия
+                        </Text>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">ID вакансии на hh.ru</Text>
+                          <TextField.Root
+                            placeholder="12xxxxxxx"
+                            value={editHhVacancyId}
+                            onChange={(e) => setEditHhVacancyId(e.target.value)}
+                          />
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">Источник в системе</Text>
+                          <TextField.Root
+                            placeholder="HeadHunter, внутренняя база…"
+                            value={editVacancySourceDisplay}
+                            onChange={(e) => setEditVacancySourceDisplay(e.target.value)}
+                          />
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">Описание вакансии</Text>
+                          <TextArea
+                            rows={5}
+                            placeholder="Полное описание, условия, стек…"
+                            value={editVacancyDescription}
+                            onChange={(e) => setEditVacancyDescription(e.target.value)}
+                          />
+                        </Flex>
+                        <Flex direction="column" gap="1">
+                          <Text size="2" weight="medium">Домен / контекст продукта</Text>
+                          <TextArea
+                            rows={3}
+                            placeholder="Домен, команда, контекст"
+                            value={editDomainDescription}
+                            onChange={(e) => setEditDomainDescription(e.target.value)}
+                          />
+                        </Flex>
+                      </Flex>
+                    </>
+                  )}
+
+                  <Separator size="4" />
+                  <Flex direction="column" gap="2">
+                    <Text size="1" weight="bold" color="gray">
+                      Дополнительные поля
+                    </Text>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Формат работы</Text>
+                      <Select.Root
+                        value={editWorkFormat || 'none'}
+                        onValueChange={(v) =>
+                          setEditWorkFormat(v === 'none' ? '' : v)
+                        }
+                      >
+                        <Select.Trigger />
+                        <Select.Content>
+                          {WORK_FORMAT_EDIT_OPTIONS.map((opt) => (
+                            <Select.Item key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Компенсации</Text>
+                      <TextField.Root
+                        value={editCompensation}
+                        onChange={(e) => setEditCompensation(e.target.value)}
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Бенефиты</Text>
+                      <TextField.Root
+                        value={editBenefits}
+                        onChange={(e) => setEditBenefits(e.target.value)}
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Развитие</Text>
+                      <TextField.Root
+                        value={editDevelopment}
+                        onChange={(e) => setEditDevelopment(e.target.value)}
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Технологии</Text>
+                      <TextField.Root
+                        value={editTechnologies}
+                        onChange={(e) => setEditTechnologies(e.target.value)}
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Домен (ключ)</Text>
+                      <TextField.Root
+                        placeholder="saas, fintech…"
+                        value={editDomainKey}
+                        onChange={(e) => setEditDomainKey(e.target.value)}
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="2" weight="medium">Домен (отображение)</Text>
+                      <TextField.Root
+                        placeholder="SaaS, FinTech…"
+                        value={editDomainDisplay}
+                        onChange={(e) => setEditDomainDisplay(e.target.value)}
+                      />
+                    </Flex>
+                  </Flex>
+
+                  <Separator size="4" />
+                  <Flex direction="column" gap="1">
+                    <Text size="2" weight="medium">Заметки</Text>
+                    <TextArea
+                      rows={3}
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                    />
+                  </Flex>
+
+                  <Flex justify="end" gap="2" mt="2">
+                    <Button variant="soft" onClick={() => setEditModalOpen(false)}>
+                      Отмена
+                    </Button>
+                    <Button onClick={handleSaveEditBenchmark}>Сохранить</Button>
+                  </Flex>
+                </Flex>
+              </Box>
+            </Dialog.Content>
+          </Dialog.Root>
+
           {/* Заголовок */}
-          <Flex justify="between" align="center">
+          <Flex justify="between" align="center" wrap="wrap" gap="3">
             <Flex direction="column" gap="1">
-              <Text size="6" weight="bold">Бенчмарки зарплат</Text>
+              <Text size="6" weight="bold">Все бенчмарки</Text>
               <Text size="2" color="gray">
-                Анализ рынка зарплат по вакансиям и грейдам
+                Таблица, фильтры и добавление записей. Обзор и графики — на дашборде.
               </Text>
             </Flex>
-            <Button size="3" onClick={() => {}}>
-              <PlusIcon width={16} height={16} />
-              Добавить бенчмарк
-            </Button>
-          </Flex>
-
-          {/* Статистика — оформление по образцу InvitesStats */}
-          {stats && (
-            <Flex gap="3" className={styles.statsGrid}>
-              <Box className={styles.statCard} data-border="total">
-                <Flex direction="column" gap="2">
-                  <Flex align="center" justify="between">
-                    <Text size="1" weight="medium" className={styles.statLabel}>
-                      ВСЕГО БЕНЧМАРКОВ
-                    </Text>
-                    <BarChartIcon width={20} height={20} className={styles.statIcon} />
+            <Flex gap="2" wrap="wrap">
+              <Button asChild size="3" variant="soft">
+                <Link href="/finance/benchmarks">
+                  <Flex align="center" gap="2">
+                    <DashboardIcon width={16} height={16} />
+                    Обзор
                   </Flex>
-                  <Text size="6" weight="bold" className={styles.statValue}>
-                    {stats.total_benchmarks}
-                  </Text>
-                </Flex>
-              </Box>
-              <Box className={styles.statCard} data-border="candidates">
-                <Flex direction="column" gap="2">
-                  <Flex align="center" justify="between">
-                    <Text size="1" weight="medium" className={styles.statLabelCandidates}>
-                      КАНДИДАТЫ
-                    </Text>
-                    <PersonIcon width={20} height={20} className={styles.statIcon} />
-                  </Flex>
-                  <Text size="6" weight="bold" className={styles.statValue}>
-                    {stats.type_stats.find(s => s.type === 'candidate')?.count || 0}
-                  </Text>
-                </Flex>
-              </Box>
-              <Box className={styles.statCard} data-border="vacancies">
-                <Flex direction="column" gap="2">
-                  <Flex align="center" justify="between">
-                    <Text size="1" weight="medium" className={styles.statLabel}>
-                      ВАКАНСИИ
-                    </Text>
-                    <BackpackIcon width={20} height={20} className={styles.statIcon} />
-                  </Flex>
-                  <Text size="6" weight="bold" className={styles.statValue}>
-                    {stats.type_stats.find(s => s.type === 'vacancy')?.count || 0}
-                  </Text>
-                </Flex>
-              </Box>
+                </Link>
+              </Button>
+              <Button size="3" onClick={() => setAddModalOpen(true)}>
+                <PlusIcon width={16} height={16} />
+                Добавить бенчмарк
+              </Button>
             </Flex>
-          )}
+          </Flex>
 
           {/* Фильтры */}
           <Card className={styles.filtersCard}>
             <Flex direction="column" gap="3">
-              <Flex gap="3" align="center" wrap="wrap">
-                <Box style={{ flex: 1, minWidth: '200px' }}>
+              <Flex gap="3" align="center" wrap="nowrap" className={styles.filtersRow}>
+                <Box className={styles.searchFieldWrap}>
                   <TextField.Root
-                    placeholder="Поиск по вакансии, грейду, локации..."
+                    placeholder="Поиск по специализации, грейду, локации..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -570,9 +1145,9 @@ export default function BenchmarksPage() {
                   </Select.Content>
                 </Select.Root>
                 <Select.Root value={vacancyFilter || 'all'} onValueChange={(value) => setVacancyFilter(value === 'all' ? '' : value)}>
-                  <Select.Trigger placeholder="Вакансия" style={{ minWidth: '150px' }} />
+                  <Select.Trigger placeholder="Специализация" style={{ minWidth: '150px' }} />
                   <Select.Content>
-                    <Select.Item value="all">Все вакансии</Select.Item>
+                    <Select.Item value="all">Все специализации</Select.Item>
                     {vacancies.map(v => (
                       <Select.Item key={v.id} value={v.id.toString()}>{v.name}</Select.Item>
                     ))}
@@ -595,14 +1170,31 @@ export default function BenchmarksPage() {
                     <Select.Item value="false">Неактивные</Select.Item>
                   </Select.Content>
                 </Select.Root>
-                <Button onClick={handleSearch}>
-                  <MagnifyingGlassIcon width={16} height={16} />
-                  Поиск
-                </Button>
-                <Button variant="soft" onClick={handleReset}>
-                  <ReloadIcon width={16} height={16} />
-                  Сброс
-                </Button>
+                <Flex align="center" gap="2" wrap="nowrap" className={styles.pageSizeActions}>
+                  <Button variant="soft" onClick={handleReset}>
+                    <ReloadIcon width={16} height={16} />
+                    Сброс
+                  </Button>
+                  <Select.Root
+                    value={String(pageSize)}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value))
+                      setPage(1)
+                    }}
+                  >
+                    <Select.Trigger
+                      style={{ minWidth: '72px' }}
+                      aria-label="Строк на странице"
+                    />
+                    <Select.Content>
+                      {PAGE_SIZE_OPTIONS.map((n) => (
+                        <Select.Item key={n} value={String(n)}>
+                          {n}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </Flex>
               </Flex>
             </Flex>
           </Card>
@@ -634,11 +1226,7 @@ export default function BenchmarksPage() {
 
           {/* Таблица бенчмарков */}
           <Card>
-            {loading ? (
-              <Box p="6" style={{ textAlign: 'center' }}>
-                <Text color="gray">Загрузка...</Text>
-              </Box>
-            ) : benchmarks.length === 0 ? (
+            {tableRows.length === 0 ? (
               <Box p="6" style={{ textAlign: 'center' }}>
                 <Text color="gray" size="3">Бенчмарки не найдены</Text>
                 <Text color="gray" size="2" mt="2">
@@ -647,11 +1235,12 @@ export default function BenchmarksPage() {
               </Box>
             ) : (
               <Box className={styles.tableContainer}>
-                <Table.Root>
+                <Box className={styles.tableNowrap}>
+                  <Table.Root>
                   <Table.Header>
                     <Table.Row>
                       <Table.ColumnHeaderCell>Тип</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Вакансия</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Специализация</Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell>Грейд</Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell className={styles.salaryColumn}>Сумма</Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell>Локация</Table.ColumnHeaderCell>
@@ -679,7 +1268,7 @@ export default function BenchmarksPage() {
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
-                    {benchmarks.map((benchmark) => (
+                    {tableRows.map((benchmark) => (
                       <Table.Row key={benchmark.id}>
                         <Table.Cell>
                           <Badge color={getTypeBadgeColor(benchmark.type)}>
@@ -751,29 +1340,79 @@ export default function BenchmarksPage() {
                           </Flex>
                         </Table.Cell>
                         <Table.Cell>
-                          <Badge color={benchmark.is_active ? 'green' : 'gray'}>
-                            {benchmark.is_active ? 'Активен' : 'Неактивен'}
-                          </Badge>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className={styles.statusBadgeClickable}
+                            title="Нажмите, чтобы переключить активность"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleBenchmarkActive(benchmark.id)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleBenchmarkActive(benchmark.id)
+                              }
+                            }}
+                          >
+                            <Badge color={benchmark.is_active ? 'green' : 'gray'}>
+                              {benchmark.is_active ? 'Активен' : 'Неактивен'}
+                            </Badge>
+                          </span>
                         </Table.Cell>
-                        <Table.Cell>
+                        <Table.Cell className={styles.actionsCell}>
                           <Flex gap="1">
                             {benchmark.hh_vacancy_id && (
                               <Button
+                                type="button"
                                 size="1"
                                 variant="soft"
-                                onClick={() => window.open(`https://hh.ru/vacancy/${benchmark.hh_vacancy_id}`, '_blank')}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  window.open(`https://hh.ru/vacancy/${benchmark.hh_vacancy_id}`, '_blank')
+                                }}
                                 title="Открыть на hh.ru"
                               >
                                 <ExternalLinkIcon width={14} height={14} />
                               </Button>
                             )}
-                            <Button size="1" variant="soft" title="Просмотр">
+                            <Button
+                              type="button"
+                              size="1"
+                              variant="soft"
+                              title="Просмотр"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openViewBenchmark(benchmark)
+                              }}
+                            >
                               <EyeOpenIcon width={14} height={14} />
                             </Button>
-                            <Button size="1" variant="soft" title="Редактировать">
+                            <Button
+                              type="button"
+                              size="1"
+                              variant="soft"
+                              title="Редактировать"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openEditBenchmark(benchmark)
+                              }}
+                            >
                               <Pencil2Icon width={14} height={14} />
                             </Button>
-                            <Button size="1" variant="soft" color="red" title="Удалить">
+                            <Button
+                              type="button"
+                              size="1"
+                              variant="soft"
+                              color="red"
+                              title="Удалить"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteBenchmark(benchmark)
+                              }}
+                            >
                               <TrashIcon width={14} height={14} />
                             </Button>
                           </Flex>
@@ -782,64 +1421,94 @@ export default function BenchmarksPage() {
                     ))}
                   </Table.Body>
                 </Table.Root>
+                </Box>
               </Box>
             )}
           </Card>
 
           {/* Пагинация */}
-          {totalPages > 1 && (
-            <Flex justify="center" align="center" className={styles.pagination}>
-              <Button
-                variant="soft"
-                size="2"
-                disabled={page === 1}
-                onClick={() => setPage(1)}
-                style={{ borderRadius: '6px 0 0 6px' }}
-              >
-                Первая
-              </Button>
-              <Button
-                variant="soft"
-                size="2"
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                style={{ borderRadius: 0, borderLeft: '1px solid var(--gray-6)' }}
-              >
-                Предыдущая
-              </Button>
-              {pageNumbers.map((num) => (
-                <Button
-                  key={num}
-                  variant={num === page ? 'solid' : 'soft'}
-                  size="2"
-                  onClick={() => setPage(num)}
-                  style={{
-                    borderRadius: 0,
-                    borderLeft: '1px solid var(--gray-6)',
-                    minWidth: '40px'
-                  }}
+          {totalFiltered > 0 && (
+            <Flex
+              justify="between"
+              align="center"
+              wrap="wrap"
+              gap="3"
+              className={styles.paginationRow}
+            >
+              <Text size="2" color="gray">
+                Показано {rangeStart}–{rangeEnd} из {totalFiltered}
+              </Text>
+              {totalPages > 1 && (
+                <Flex
+                  justify="center"
+                  align="center"
+                  wrap="wrap"
+                  gap="0"
+                  className={styles.paginationButtonGroup}
                 >
-                  {num}
-                </Button>
-              ))}
-              <Button
-                variant="soft"
-                size="2"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-                style={{ borderRadius: 0, borderLeft: '1px solid var(--gray-6)' }}
-              >
-                Следующая
-              </Button>
-              <Button
-                variant="soft"
-                size="2"
-                disabled={page >= totalPages}
-                onClick={() => setPage(totalPages)}
-                style={{ borderRadius: '0 6px 6px 0', borderLeft: '1px solid var(--gray-6)' }}
-              >
-                Последняя
-              </Button>
+                  <Button
+                    variant="soft"
+                    size="2"
+                    disabled={safePage === 1}
+                    onClick={() => setPage(1)}
+                    title="Первая страница"
+                    aria-label="Первая страница"
+                    style={{ borderRadius: '6px 0 0 6px' }}
+                  >
+                    <DoubleArrowLeftIcon width={16} height={16} />
+                  </Button>
+                  <Button
+                    variant="soft"
+                    size="2"
+                    disabled={safePage === 1}
+                    onClick={() => setPage(safePage - 1)}
+                    title="Предыдущая страница"
+                    aria-label="Предыдущая страница"
+                    style={{ borderRadius: 0, borderLeft: '1px solid var(--gray-6)' }}
+                  >
+                    <ChevronLeftIcon width={16} height={16} />
+                  </Button>
+                  {pageNumbers.map((num) => (
+                    <Button
+                      key={num}
+                      variant={num === safePage ? 'solid' : 'soft'}
+                      size="2"
+                      onClick={() => setPage(num)}
+                      aria-label={`Страница ${num}`}
+                      title={`Страница ${num}`}
+                      style={{
+                        borderRadius: 0,
+                        borderLeft: '1px solid var(--gray-6)',
+                        minWidth: '40px',
+                      }}
+                    >
+                      {num}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="soft"
+                    size="2"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage(safePage + 1)}
+                    title="Следующая страница"
+                    aria-label="Следующая страница"
+                    style={{ borderRadius: 0, borderLeft: '1px solid var(--gray-6)' }}
+                  >
+                    <ChevronRightIcon width={16} height={16} />
+                  </Button>
+                  <Button
+                    variant="soft"
+                    size="2"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage(totalPages)}
+                    title="Последняя страница"
+                    aria-label="Последняя страница"
+                    style={{ borderRadius: '0 6px 6px 0', borderLeft: '1px solid var(--gray-6)' }}
+                  >
+                    <DoubleArrowRightIcon width={16} height={16} />
+                  </Button>
+                </Flex>
+              )}
             </Flex>
           )}
         </Flex>

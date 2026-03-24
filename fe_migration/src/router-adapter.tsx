@@ -26,7 +26,7 @@ export function useRouter(): { push: (url: string) => void; replace: (url: strin
   }
 }
 
-export { useParams, useSearchParams }
+export { useLocation, useNavigate, useParams, useSearchParams }
 
 interface LinkProps extends Omit<RouterLinkProps, 'to'> {
   href: string
