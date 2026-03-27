@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Text, Button, Card, Table, TextField, Select, Dialog, Switch, Callout } from "@radix-ui/themes"
+import { Box, Flex, Text, Button, Card, Table, TextField, Select, Dialog, Switch, Callout, TextArea, Badge } from "@radix-ui/themes"
 import { useState } from "react"
 import { PlusIcon, Pencil2Icon, TrashIcon, CheckIcon, ChevronUpIcon, ChevronDownIcon, EyeOpenIcon, InfoCircledIcon } from "@radix-ui/react-icons"
 import { useToast } from "@/components/Toast/ToastContext"
@@ -8,65 +8,145 @@ import styles from './CandidateFieldsSettings.module.css'
 
 interface CandidateField {
   id: string
+  /** Уникальный ключ для API и интеграций (латиница, snake_case). */
+  fieldKey: string
   name: string
-  type: 'text' | 'number' | 'select' | 'date' | 'textarea' | 'url'
+  description?: string
+  type: 'text' | 'number' | 'select' | 'multiselect' | 'date' | 'textarea' | 'url' | 'checkbox'
   required: boolean
   order: number
-  options?: string[] // Для типа select
+  options?: string[]
   placeholder?: string
+  /** Строковое представление значения по умолчанию; для checkbox: 'true' | 'false'. */
+  defaultValue?: string
+  isActive?: boolean
 }
 
-// Моковые данные
+/** Простая генерация ключа из названия (если пользователь не задал свой). */
+function fieldKeyFromName(name: string): string {
+  const base = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 48)
+  return base || `field_${Date.now()}`
+}
+
+// Моковые данные (расширенный набор типов и атрибутов — см. RECRUITING_SETTINGS_UX_PLAN_2026-03-24.md §4)
 const mockFields: CandidateField[] = [
   {
     id: '1',
+    fieldKey: 'age',
     name: 'Возраст',
+    description: 'Полных лет',
     type: 'number',
     required: false,
     order: 1,
-    placeholder: 'Введите возраст'
+    placeholder: 'Введите возраст',
+    isActive: true,
   },
   {
     id: '2',
+    fieldKey: 'gender',
     name: 'Пол',
     type: 'select',
     required: false,
     order: 2,
-    options: ['Мужской', 'Женский', 'Не указано']
+    options: ['Мужской', 'Женский', 'Не указано'],
+    isActive: true,
   },
   {
     id: '3',
+    fieldKey: 'salary_expectations',
     name: 'Зарплатные ожидания',
     type: 'text',
     required: false,
     order: 3,
-    placeholder: 'Введите зарплатные ожидания'
+    placeholder: 'Например: от 200 000 ₽ net',
+    isActive: true,
   },
   {
     id: '4',
+    fieldKey: 'experience_years',
     name: 'Опыт работы',
     type: 'number',
     required: false,
     order: 4,
-    placeholder: 'Введите опыт работы в годах'
+    placeholder: 'Лет в профессии',
+    isActive: true,
   },
   {
     id: '5',
+    fieldKey: 'linkedin_url',
     name: 'LinkedIn профиль',
     type: 'url',
     required: false,
     order: 5,
-    placeholder: 'https://linkedin.com/in/username'
+    placeholder: 'https://linkedin.com/in/username',
+    isActive: true,
+  },
+  {
+    id: '6',
+    fieldKey: 'ready_to_relocate',
+    name: 'Готовность к переезду',
+    description: 'Булево поле для фильтрации',
+    type: 'checkbox',
+    required: false,
+    order: 6,
+    defaultValue: 'false',
+    isActive: true,
+  },
+  {
+    id: '7',
+    fieldKey: 'availability_date',
+    name: 'Дата выхода на работу',
+    type: 'date',
+    required: false,
+    order: 7,
+    isActive: true,
+  },
+  {
+    id: '8',
+    fieldKey: 'tech_stack',
+    name: 'Стек технологий',
+    type: 'multiselect',
+    required: false,
+    order: 8,
+    options: ['React', 'TypeScript', 'Node.js', 'Python', 'Go', 'Другое'],
+    isActive: true,
+  },
+  {
+    id: '9',
+    fieldKey: 'recruiter_comment',
+    name: 'Комментарий рекрутёра',
+    type: 'textarea',
+    required: false,
+    order: 9,
+    placeholder: 'Внутренние заметки',
+    isActive: true,
+  },
+  {
+    id: '10',
+    fieldKey: 'source_channel',
+    name: 'Канал привлечения',
+    type: 'select',
+    required: true,
+    order: 10,
+    options: ['hh.ru', 'LinkedIn', 'Рекомендация', 'Конференция', 'Другое'],
+    isActive: true,
   },
 ]
 
-const fieldTypes = [
+const fieldTypes: { value: CandidateField['type']; label: string }[] = [
   { value: 'text', label: 'Текст' },
   { value: 'number', label: 'Число' },
   { value: 'select', label: 'Выпадающий список' },
+  { value: 'multiselect', label: 'Мультивыбор' },
   { value: 'date', label: 'Дата' },
   { value: 'textarea', label: 'Многострочный текст' },
   { value: 'url', label: 'Ссылка' },
+  { value: 'checkbox', label: 'Да / нет (чекбокс)' },
 ]
 
 interface MockVacancy {
@@ -88,11 +168,15 @@ export default function CandidateFieldsSettings() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingField, setEditingField] = useState<CandidateField | null>(null)
   const [formData, setFormData] = useState<Partial<CandidateField>>({
+    fieldKey: '',
     name: '',
+    description: '',
     type: 'text',
     required: false,
     placeholder: '',
-    options: []
+    options: [],
+    defaultValue: undefined,
+    isActive: true,
   })
   const [newOption, setNewOption] = useState('')
   /** fieldId → vacancyId → видно ли поле в анкете/карточке по этой вакансии */
@@ -126,11 +210,15 @@ export default function CandidateFieldsSettings() {
   const handleAddField = () => {
     setEditingField(null)
     setFormData({
+      fieldKey: '',
       name: '',
+      description: '',
       type: 'text',
       required: false,
       placeholder: '',
-      options: []
+      options: [],
+      defaultValue: undefined,
+      isActive: true,
     })
     setNewOption('')
     setIsDialogOpen(true)
@@ -139,11 +227,15 @@ export default function CandidateFieldsSettings() {
   const handleEditField = (field: CandidateField) => {
     setEditingField(field)
     setFormData({
+      fieldKey: field.fieldKey,
       name: field.name,
+      description: field.description,
       type: field.type,
       required: field.required,
       placeholder: field.placeholder,
-      options: field.options || []
+      options: field.options || [],
+      defaultValue: field.defaultValue,
+      isActive: field.isActive !== false,
     })
     setNewOption('')
     setIsDialogOpen(true)
@@ -176,28 +268,50 @@ export default function CandidateFieldsSettings() {
   }
 
   const handleSaveField = () => {
-    if (!formData.name) {
+    if (!formData.name?.trim()) {
       alert('Пожалуйста, введите название поля')
       return
     }
 
+    const resolvedKey = (formData.fieldKey || '').trim() || fieldKeyFromName(formData.name)
+    const needsOptions = formData.type === 'select' || formData.type === 'multiselect'
+    const options = needsOptions ? formData.options : undefined
+
+    const base: Omit<CandidateField, 'id' | 'order'> = {
+      fieldKey: resolvedKey,
+      name: formData.name.trim(),
+      description: formData.description?.trim() || undefined,
+      type: formData.type as CandidateField['type'],
+      required: formData.required || false,
+      placeholder: formData.type === 'checkbox' ? undefined : formData.placeholder?.trim() || undefined,
+      options,
+      defaultValue:
+        formData.type === 'checkbox'
+          ? formData.defaultValue === 'true'
+            ? 'true'
+            : 'false'
+          : formData.defaultValue?.trim() || undefined,
+      isActive: formData.isActive !== false,
+    }
+
     if (editingField) {
-      // Редактирование существующего поля
-      setFields(fields.map(f => 
-        f.id === editingField.id 
-          ? { ...f, ...formData, options: formData.type === 'select' ? formData.options : undefined }
-          : f
-      ))
+      setFields(
+        fields.map((f) =>
+          f.id === editingField.id
+            ? {
+                ...f,
+                ...base,
+                options: needsOptions ? options : undefined,
+              }
+            : f
+        )
+      )
     } else {
-      // Добавление нового поля
       const newField: CandidateField = {
         id: Date.now().toString(),
-        name: formData.name!,
-        type: formData.type as CandidateField['type'],
-        required: formData.required || false,
+        ...base,
         order: fields.length + 1,
-        placeholder: formData.placeholder,
-        options: formData.type === 'select' ? formData.options : undefined
+        options: needsOptions ? options : undefined,
       }
       setFields([...fields, newField])
     }
@@ -237,14 +351,29 @@ export default function CandidateFieldsSettings() {
         <Callout.Icon>
           <InfoCircledIcon width={16} height={16} />
         </Callout.Icon>
-        <Callout.Text size="2">
-          Здесь задаётся <Text weight="bold" as="span">единый профиль полей</Text> для компании (общие правила для всех вакансий).
-          Индивидуальные настройки по конкретной вакансии — на карточке вакансии, вкладка «Дополнительные поля», например:{' '}
-          <Text as="span" style={{ fontFamily: 'var(--code-font-family, ui-monospace, monospace)', fontSize: '12px' }}>
-            /vacancies?vacancy=&lt;id&gt;&amp;mode=view&amp;tab=additionalFields
+        <Box className={styles.calloutMain}>
+          <Text size="2" as="p" style={{ margin: 0 }}>
+            Здесь задаётся <Text weight="bold" as="span">единый профиль полей</Text> для компании — общие правила для всех вакансий.
           </Text>
-          . Подробнее: <Text weight="medium" as="span">fe_migration/docs/RECRUITING_SETTINGS_UX_PLAN_2026-03-24.md</Text> (раздел 4).
-        </Callout.Text>
+          <Text size="2" as="p" style={{ margin: 0 }}>
+            Индивидуальные настройки — на карточке вакансии, вкладка «Дополнительные поля».
+          </Text>
+            <Box>
+            <Text size="2" weight="medium" mb="1" style={{ display: 'block' }}>
+              Пример пути (шаблон)
+            </Text>
+            <pre className={styles.calloutUrl}>
+              {`/vacancies?vacancy=<id>&mode=view&tab=additionalFields`}
+            </pre>
+          </Box>
+          <Text size="2" className={styles.calloutDocRef} as="p" style={{ margin: 0 }}>
+            Документация в репозитории:{' '}
+            <Text weight="medium" as="span">
+              fe_migration/docs/RECRUITING_SETTINGS_UX_PLAN_2026-03-24.md
+            </Text>
+            , раздел 4.
+          </Text>
+        </Box>
       </Callout.Root>
 
       <Card>
@@ -252,9 +381,11 @@ export default function CandidateFieldsSettings() {
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeaderCell style={{ width: '50px' }}>Порядок</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell style={{ minWidth: '120px' }}>Ключ (API)</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Название</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Тип</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Обязательное</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell style={{ minWidth: '100px' }}>Тип</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Обяз.</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Активно</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell style={{ width: '240px' }}>Действия</Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>
@@ -282,16 +413,26 @@ export default function CandidateFieldsSettings() {
                   </Flex>
                 </Table.Cell>
                 <Table.Cell>
+                  <Text size="2" style={{ fontFamily: 'var(--code-font-family, ui-monospace, monospace)' }}>
+                    {field.fieldKey}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell>
                   <Text weight="medium">{field.name}</Text>
-                  {field.placeholder && (
+                  {field.description && (
                     <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
+                      {field.description}
+                    </Text>
+                  )}
+                  {field.placeholder && (
+                    <Text size="1" color="gray" style={{ display: 'block', marginTop: '2px' }}>
                       {field.placeholder}
                     </Text>
                   )}
                 </Table.Cell>
                 <Table.Cell>
                   <Text>{fieldTypes.find(t => t.value === field.type)?.label || field.type}</Text>
-                  {field.type === 'select' && field.options && (
+                  {(field.type === 'select' || field.type === 'multiselect') && field.options && (
                     <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
                       {field.options.length} вариантов
                     </Text>
@@ -302,6 +443,13 @@ export default function CandidateFieldsSettings() {
                     <Text color="green">Да</Text>
                   ) : (
                     <Text color="gray">Нет</Text>
+                  )}
+                </Table.Cell>
+                <Table.Cell>
+                  {field.isActive !== false ? (
+                    <Badge color="green" size="1">Да</Badge>
+                  ) : (
+                    <Badge color="gray" size="1">Нет</Badge>
                   )}
                 </Table.Cell>
                 <Table.Cell>
@@ -389,6 +537,20 @@ export default function CandidateFieldsSettings() {
           <Flex direction="column" gap="3" mt="4">
             <Box>
               <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
+                Ключ поля (API) *
+              </Text>
+              <TextField.Root
+                value={formData.fieldKey || ''}
+                onChange={(e) => setFormData({ ...formData, fieldKey: e.target.value })}
+                placeholder="latin_snake_case, например salary_expectations"
+              />
+              <Text size="1" color="gray" mt="1" style={{ display: 'block' }}>
+                Если оставить пустым, ключ будет сгенерирован из названия (только латиница).
+              </Text>
+            </Box>
+
+            <Box>
+              <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
                 Название поля *
               </Text>
               <TextField.Root
@@ -400,15 +562,31 @@ export default function CandidateFieldsSettings() {
 
             <Box>
               <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
+                Описание
+              </Text>
+              <TextArea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Подсказка для рекрутера или кандидата"
+                rows={2}
+              />
+            </Box>
+
+            <Box>
+              <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
                 Тип поля *
               </Text>
               <Select.Root
                 value={formData.type}
                 onValueChange={(value) => {
-                  setFormData({ 
-                    ...formData, 
-                    type: value as CandidateField['type'],
-                    options: value === 'select' ? (formData.options || []) : undefined
+                  const next = value as CandidateField['type']
+                  const withOptions = next === 'select' || next === 'multiselect'
+                  setFormData({
+                    ...formData,
+                    type: next,
+                    options: withOptions ? formData.options || [] : undefined,
+                    placeholder: next === 'checkbox' ? undefined : formData.placeholder,
+                    defaultValue: next === 'checkbox' ? (formData.defaultValue === 'true' ? 'true' : 'false') : formData.defaultValue,
                   })
                 }}
               >
@@ -423,7 +601,7 @@ export default function CandidateFieldsSettings() {
               </Select.Root>
             </Box>
 
-            {formData.type === 'select' && (
+            {(formData.type === 'select' || formData.type === 'multiselect') && (
               <Box>
                 <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
                   Варианты выбора
@@ -465,7 +643,11 @@ export default function CandidateFieldsSettings() {
               </Box>
             )}
 
-            {(formData.type === 'text' || formData.type === 'number' || formData.type === 'textarea' || formData.type === 'url') && (
+            {(formData.type === 'text' ||
+              formData.type === 'number' ||
+              formData.type === 'textarea' ||
+              formData.type === 'url' ||
+              formData.type === 'date') && (
               <Box>
                 <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
                   Placeholder
@@ -473,7 +655,38 @@ export default function CandidateFieldsSettings() {
                 <TextField.Root
                   value={formData.placeholder || ''}
                   onChange={(e) => setFormData({ ...formData, placeholder: e.target.value })}
-                  placeholder={formData.type === 'url' ? 'Например: https://example.com' : 'Подсказка для поля'}
+                  placeholder={
+                    formData.type === 'url'
+                      ? 'Например: https://example.com'
+                      : formData.type === 'date'
+                        ? 'Например: ДД.ММ.ГГГГ'
+                        : 'Подсказка для поля'
+                  }
+                />
+              </Box>
+            )}
+
+            {formData.type === 'checkbox' && (
+              <Flex align="center" gap="2">
+                <Switch
+                  checked={formData.defaultValue === 'true'}
+                  onCheckedChange={(c) =>
+                    setFormData({ ...formData, defaultValue: c ? 'true' : 'false' })
+                  }
+                />
+                <Text size="2">Значение по умолчанию: да</Text>
+              </Flex>
+            )}
+
+            {formData.type !== 'checkbox' && (
+              <Box>
+                <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
+                  Значение по умолчанию (строка)
+                </Text>
+                <TextField.Root
+                  value={formData.defaultValue || ''}
+                  onChange={(e) => setFormData({ ...formData, defaultValue: e.target.value })}
+                  placeholder="Необязательно"
                 />
               </Box>
             )}
@@ -487,6 +700,17 @@ export default function CandidateFieldsSettings() {
               />
               <Text size="2" as="label" htmlFor="required-field" style={{ cursor: 'pointer' }}>
                 Обязательное поле
+              </Text>
+            </Flex>
+
+            <Flex align="center" gap="2">
+              <Switch
+                checked={formData.isActive !== false}
+                onCheckedChange={(c) => setFormData({ ...formData, isActive: c })}
+                id="active-field"
+              />
+              <Text size="2" as="label" htmlFor="active-field" style={{ cursor: 'pointer' }}>
+                Поле активно (учитывается в формах)
               </Text>
             </Flex>
           </Flex>

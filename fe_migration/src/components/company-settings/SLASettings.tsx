@@ -2,8 +2,9 @@
 
 import { Box, Flex, Text, Button, Card, Table, Select, Callout } from "@radix-ui/themes"
 import { useState, useEffect } from "react"
-import { ClockIcon, CheckIcon, ArrowLeftIcon, MagnifyingGlassIcon, Cross2Icon, Pencil1Icon, DownloadIcon, UploadIcon, InfoCircledIcon, ChevronLeftIcon, ChevronRightIcon, DoubleArrowLeftIcon, DoubleArrowRightIcon } from "@radix-ui/react-icons"
+import { ClockIcon, CheckIcon, ArrowLeftIcon, MagnifyingGlassIcon, Cross2Icon, Pencil1Icon, TrashIcon, DownloadIcon, UploadIcon, InfoCircledIcon, ChevronLeftIcon, ChevronRightIcon, DoubleArrowLeftIcon, DoubleArrowRightIcon } from "@radix-ui/react-icons"
 import { useRouter } from "@/router-adapter"
+import { useToast } from "@/components/Toast/ToastContext"
 import SLAEditModal from "./SLAEditModal"
 import styles from './SLASettings.module.css'
 
@@ -369,6 +370,7 @@ const mockGrades = ['Все грейды', 'Head', 'Junior', 'Junior+', 'Middle'
 
 export default function SLASettings() {
   const router = useRouter()
+  const toast = useToast()
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [selectedVacancy, setSelectedVacancy] = useState('all')
   const [selectedGrade, setSelectedGrade] = useState('all')
@@ -412,6 +414,26 @@ export default function SLASettings() {
 
   const handleSaveSLA = (updatedSLA: SLA) => {
     setSlas(prev => prev.map(s => s.id === updatedSLA.id ? updatedSLA : s))
+  }
+
+  const handleDeleteSLA = (sla: SLA) => {
+    toast.showWarning('Удалить SLA?', `Удалить запись «${sla.vacancy}» / ${sla.grade}?`, {
+      actions: [
+        { label: 'Отмена', onClick: () => {}, variant: 'soft', color: 'gray' },
+        {
+          label: 'Удалить',
+          onClick: () => {
+            setSlas((prev) => prev.filter((s) => s.id !== sla.id))
+            if (selectedSLA?.id === sla.id) {
+              setSelectedSLA(null)
+              setIsEditModalOpen(false)
+            }
+          },
+          variant: 'solid',
+          color: 'red',
+        },
+      ],
+    })
   }
 
   return (
@@ -523,54 +545,57 @@ export default function SLASettings() {
         </Flex>
 
         {isFiltersOpen && (
-          <Flex direction="column" gap="3">
-            <Flex gap="3" wrap="wrap">
-              <Box style={{ flex: 1, minWidth: '200px' }}>
-                <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
-                  Вакансия
-                </Text>
-                <Select.Root value={selectedVacancy} onValueChange={setSelectedVacancy}>
-                  <Select.Trigger style={{ width: '100%' }} />
-                  <Select.Content>
-                    <Select.Item value="all">Все вакансии</Select.Item>
-                    {mockVacancies.filter(v => v !== 'Все вакансии').map(vacancy => (
-                      <Select.Item key={vacancy} value={vacancy}>{vacancy}</Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </Box>
+          <Flex
+            gap="3"
+            wrap="wrap"
+            align="end"
+            style={{ width: '100%' }}
+          >
+            <Box style={{ flex: '1 1 160px', minWidth: 'min(100%, 160px)' }}>
+              <Text size="2" weight="medium" mb="1" style={{ display: 'block' }}>
+                Вакансия
+              </Text>
+              <Select.Root value={selectedVacancy} onValueChange={setSelectedVacancy}>
+                <Select.Trigger style={{ width: '100%' }} />
+                <Select.Content>
+                  <Select.Item value="all">Все вакансии</Select.Item>
+                  {mockVacancies.filter(v => v !== 'Все вакансии').map(vacancy => (
+                    <Select.Item key={vacancy} value={vacancy}>{vacancy}</Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+            </Box>
 
-              <Box style={{ flex: 1, minWidth: '200px' }}>
-                <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
-                  Грейд
-                </Text>
-                <Select.Root value={selectedGrade} onValueChange={setSelectedGrade}>
-                  <Select.Trigger style={{ width: '100%' }} />
-                  <Select.Content>
-                    <Select.Item value="all">Все грейды</Select.Item>
-                    {mockGrades.filter(g => g !== 'Все грейды').map(grade => (
-                      <Select.Item key={grade} value={grade}>{grade}</Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </Box>
+            <Box style={{ flex: '1 1 140px', minWidth: 'min(100%, 140px)' }}>
+              <Text size="2" weight="medium" mb="1" style={{ display: 'block' }}>
+                Грейд
+              </Text>
+              <Select.Root value={selectedGrade} onValueChange={setSelectedGrade}>
+                <Select.Trigger style={{ width: '100%' }} />
+                <Select.Content>
+                  <Select.Item value="all">Все грейды</Select.Item>
+                  {mockGrades.filter(g => g !== 'Все грейды').map(grade => (
+                    <Select.Item key={grade} value={grade}>{grade}</Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+            </Box>
 
-              <Box style={{ flex: 1, minWidth: '200px' }}>
-                <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
-                  Статус
-                </Text>
-                <Select.Root value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <Select.Trigger style={{ width: '100%' }} />
-                  <Select.Content>
-                    <Select.Item value="all">Все статусы</Select.Item>
-                    <Select.Item value="active">Активен</Select.Item>
-                    <Select.Item value="inactive">Неактивен</Select.Item>
-                  </Select.Content>
-                </Select.Root>
-              </Box>
-            </Flex>
+            <Box style={{ flex: '1 1 140px', minWidth: 'min(100%, 140px)' }}>
+              <Text size="2" weight="medium" mb="1" style={{ display: 'block' }}>
+                Статус
+              </Text>
+              <Select.Root value={selectedStatus} onValueChange={setSelectedStatus}>
+                <Select.Trigger style={{ width: '100%' }} />
+                <Select.Content>
+                  <Select.Item value="all">Все статусы</Select.Item>
+                  <Select.Item value="active">Активен</Select.Item>
+                  <Select.Item value="inactive">Неактивен</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </Box>
 
-            <Flex gap="3">
+            <Flex gap="2" style={{ flex: '0 0 auto' }}>
               <Button size="3" variant="solid" className={styles.applyButton}>
                 <MagnifyingGlassIcon width={16} height={16} />
                 Применить фильтры
@@ -634,14 +659,27 @@ export default function SLASettings() {
                   <Text size="2" color="gray">{sla.createdAt}</Text>
                 </Table.Cell>
                 <Table.Cell>
-                  <Button
-                    variant="ghost"
-                    size="1"
-                    className={styles.actionButton}
-                    onClick={() => handleEdit(sla)}
-                  >
-                    <Pencil1Icon width={14} height={14} />
-                  </Button>
+                  <Flex gap="1" align="center" justify="end">
+                    <Button
+                      variant="ghost"
+                      size="1"
+                      className={styles.actionButton}
+                      onClick={() => handleEdit(sla)}
+                      title="Редактировать"
+                    >
+                      <Pencil1Icon width={14} height={14} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="1"
+                      color="red"
+                      className={styles.actionButton}
+                      onClick={() => handleDeleteSLA(sla)}
+                      title="Удалить"
+                    >
+                      <TrashIcon width={14} height={14} />
+                    </Button>
+                  </Flex>
                 </Table.Cell>
               </Table.Row>
             ))}

@@ -1,0 +1,106 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lead {
+  color: var(--gray-11);
+  max-width: 760px;
+  line-height: 1.5;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card {
+  height: 100%;
+  border: 1px solid var(--gray-a6);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px var(--gray-a4);
+  border-color: var(--accent-a7);
+}
+
+.cardTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cardDesc {
+  color: var(--gray-11);
+  line-height: 1.45;
+}
+
+.meta {
+  color: var(--gray-10);
+  font-size: 12px;
+}
+
+.section {
+  margin-top: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.templatesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.templateCard {
+  border: 1px solid var(--gray-a6);
+}
+
+.templateTitle {
+  margin-bottom: 4px;
+}
+
+.templateMeta {
+  color: var(--gray-11);
+  font-size: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bodyPreview {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--gray-2);
+  border: 1px solid var(--gray-a5);
+  color: var(--gray-12);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.subject {
+  font-size: 12px;
+  color: var(--gray-12);
+  margin-top: 8px;
+}

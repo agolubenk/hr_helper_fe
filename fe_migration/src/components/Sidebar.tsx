@@ -242,7 +242,17 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
     return true
   }
   // 'module-settings' и дочерние — настройки модулей (/settings, /interviewers, настройки рекрутинга под /company-settings/)
-  if (item.id === 'module-settings' && (pathname?.startsWith('/settings') || pathname?.startsWith('/interviewers') || pathname?.startsWith('/company-settings/recruiting') || pathname?.startsWith('/company-settings/scorecard') || pathname?.startsWith('/company-settings/vacancy-prompt') || pathname?.startsWith('/company-settings/sla') || pathname === '/candidate-responses')) {
+  if (
+    item.id === 'module-settings' &&
+    (pathname?.startsWith('/settings') ||
+      pathname?.startsWith('/interviewers') ||
+      pathname?.startsWith('/company-settings/recruiting') ||
+      pathname?.startsWith('/company-settings/scorecard') ||
+      pathname?.startsWith('/company-settings/Scorecard') ||
+      pathname?.startsWith('/company-settings/vacancy-prompt') ||
+      pathname?.startsWith('/company-settings/sla') ||
+      pathname === '/candidate-responses')
+  ) {
     return true
   }
   if (item.id?.startsWith('module-settings-') && pathname?.startsWith('/settings/modules')) {

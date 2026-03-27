@@ -35,9 +35,9 @@ const LINKS: RecruitingHubLink[] = [
     Icon: MixerHorizontalIcon,
   },
   {
-    href: '/company-settings/recruiting/offer-template',
-    label: 'Шаблоны писем и оферов',
-    description: 'Шаблон оффера и переменные для кандидатов',
+    href: '/company-settings/recruiting/templates',
+    label: 'Шаблоны рекрутинга',
+    description: 'Офферы, письма и шаблоны сообщений кандидатам',
     Icon: FileTextIcon,
   },
   {
@@ -65,7 +65,13 @@ const LINKS: RecruitingHubLink[] = [
     Icon: FileTextIcon,
   },
   {
-    href: '/company-settings/scorecard',
+    href: '/company-settings/recruiting/vacancy-fields',
+    label: 'Дополнительные поля вакансии',
+    description: 'Единый профиль полей вакансии и правила применения',
+    Icon: FileTextIcon,
+  },
+  {
+    href: '/company-settings/Scorecard',
     label: 'Scorecard',
     description: 'Настройки scorecard для оценки кандидатов',
     Icon: StarIcon,

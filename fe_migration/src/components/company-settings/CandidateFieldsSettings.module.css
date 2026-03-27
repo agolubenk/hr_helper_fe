@@ -1,3 +1,33 @@
 .container {
   padding: 24px;
 }
+
+/* Каллаут: не сжимать длинный URL в одну строку — блок кода + переносы */
+.calloutMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calloutUrl {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--gray-3);
+  border: 1px solid var(--gray-a6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  color: var(--gray-12);
+}
+
+.calloutDocRef {
+  font-size: 12px;
+  color: var(--gray-11);
+  line-height: 1.45;
+}

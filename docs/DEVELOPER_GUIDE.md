@@ -16,15 +16,15 @@ cd frontend && npm install
 npm run dev
 ```
 
-Приложение будет доступно на http://localhost:3001 (порт по умолчанию в `vite.config`); для **3000** см. ниже.
+Приложение будет доступно на http://localhost:3001 (порт по умолчанию в `vite.config`); для **3000/3001** в корневых скриптах см. ниже.
 
 ### Скрипты в корне репозитория
 
 | Скрипт | URL |
 |--------|-----|
 | `./start-dev.sh` | Next **3001** + новый Vite **3000** |
-| `./start-dev-new.sh` | только новый фронт **3000** |
-| `./start-dev-migration.sh` | Next **3001** + fe_migration **3002** (сравнение переноса) |
+| `./start-dev-new.sh` | только новый фронт **3001** |
+| `./start-dev-migration.sh` | только `fe_migration` **3000** |
 
 ---
 

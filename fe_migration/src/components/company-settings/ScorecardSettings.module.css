@@ -20,3 +20,39 @@
   margin-left: 2px;
   margin-right: 2px;
 }
+
+/* Правая панель паттернов: прокрутка длинного списка тем, аккуратные чипы */
+.patternsPanel {
+  max-height: min(75vh, 900px);
+  display: flex;
+  flex-direction: column;
+}
+
+.patternsList {
+  overflow-y: auto;
+  padding-right: 4px;
+  min-height: 0;
+}
+
+.patternTopic {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--gray-a5);
+}
+
+.patternTopic:last-child {
+  border-bottom: none;
+}
+
+.patternTopicTitle {
+  color: var(--gray-12);
+}
+
+.patternChip {
+  font-size: 11px !important;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  height: auto !important;
+  min-height: 28px;
+  line-height: 1.3;
+}

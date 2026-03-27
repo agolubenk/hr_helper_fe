@@ -85,10 +85,14 @@ import {
   CompanySettingsRecruitingStagesPage,
   CompanySettingsRecruitingCommandsPage,
   CompanySettingsCandidateFieldsPage,
+  CompanySettingsVacancyFieldsPage,
   CompanySettingsScorecardPage,
   CompanySettingsSlaPage,
   CompanySettingsVacancyPromptPage,
   CompanySettingsRecruitingOfferTemplatePage,
+  CompanySettingsRecruitingTemplatesPage,
+  CompanySettingsRecruitingResponseTemplatesPage,
+  CompanySettingsRecruitingMessageTemplatesPage,
 } from '@/app/pages/CompanySettingsPages'
 import { ModulePlaceholderPage } from '@/app/pages/ModulePlaceholderPage'
 import { RecruitingSettingsHub } from '@/components/company-settings/recruiting/RecruitingSettingsHub'
@@ -177,11 +181,17 @@ export function App() {
             <Route path="/company-settings/recruiting/stages" element={<AppLayout {...layoutProps} pageTitle="Этапы найма и причины отказа"><CompanySettingsRecruitingStagesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/commands" element={<AppLayout {...layoutProps} pageTitle="Команды workflow"><CompanySettingsRecruitingCommandsPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/candidate-fields" element={<AppLayout {...layoutProps} pageTitle="Поля кандидатов"><CompanySettingsCandidateFieldsPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/vacancy-fields" element={<AppLayout {...layoutProps} pageTitle="Поля вакансий"><CompanySettingsVacancyFieldsPage /></AppLayout>} />
             <Route path="/company-settings/candidate-fields" element={<Navigate to="/company-settings/recruiting/candidate-fields" replace />} />
-            <Route path="/company-settings/scorecard" element={<AppLayout {...layoutProps} pageTitle="Настройки Scorecard"><CompanySettingsScorecardPage /></AppLayout>} />
+            <Route path="/company-settings/vacancy-fields" element={<Navigate to="/company-settings/recruiting/vacancy-fields" replace />} />
+            <Route path="/company-settings/scorecard" element={<Navigate to="/company-settings/Scorecard" replace />} />
+            <Route path="/company-settings/Scorecard" element={<AppLayout {...layoutProps} pageTitle="Настройки Scorecard"><CompanySettingsScorecardPage /></AppLayout>} />
             <Route path="/company-settings/sla" element={<AppLayout {...layoutProps} pageTitle="SLA для вакансий"><CompanySettingsSlaPage /></AppLayout>} />
             <Route path="/company-settings/vacancy-prompt" element={<AppLayout {...layoutProps} pageTitle="Промпт для вакансий"><CompanySettingsVacancyPromptPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/offer-template" element={<AppLayout {...layoutProps} pageTitle="Шаблон оффера"><CompanySettingsRecruitingOfferTemplatePage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/templates" element={<AppLayout {...layoutProps} pageTitle="Шаблоны рекрутинга"><CompanySettingsRecruitingTemplatesPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/response-templates" element={<AppLayout {...layoutProps} pageTitle="Шаблоны ответов кандидатам"><CompanySettingsRecruitingResponseTemplatesPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/message-templates" element={<AppLayout {...layoutProps} pageTitle="Шаблоны писем и сообщений"><CompanySettingsRecruitingMessageTemplatesPage /></AppLayout>} />
             <Route path="/company-settings/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки — обзор"><BenchmarksDashboardPage /></AppLayout>} />
             <Route
               path="/company-settings/*"

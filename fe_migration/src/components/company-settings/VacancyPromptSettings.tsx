@@ -13,6 +13,13 @@ interface PromptHistory {
   updatedBy: string
 }
 
+/** Предыдущая версия в хронологии (история: [0] — новее, [n] — старее). */
+function getPreviousVersion(history: PromptHistory[], item: PromptHistory): PromptHistory | null {
+  const idx = history.findIndex((h) => h.id === item.id)
+  if (idx === -1 || idx >= history.length - 1) return null
+  return history[idx + 1]
+}
+
 // Моковые данные
 const mockPromptData = {
   prompt: 'Проанализируй вакансию и предоставь детальную информацию о требованиях, зарплате и условиях работы.',
@@ -245,7 +252,7 @@ export default function VacancyPromptSettings() {
                           onClick={() => setHistoryDetail(item)}
                         >
                           <EyeOpenIcon width={14} height={14} />
-                          Полный текст
+                          Изменения и текст
                         </Button>
                       </Table.Cell>
                     </Table.Row>
@@ -258,35 +265,112 @@ export default function VacancyPromptSettings() {
       </Card>
 
       <Dialog.Root open={historyDetail !== null} onOpenChange={(open) => !open && setHistoryDetail(null)}>
-        <Dialog.Content style={{ maxWidth: '640px', maxHeight: '85vh' }}>
-          <Dialog.Title>Версия промпта</Dialog.Title>
-          {historyDetail && (
-            <>
-              <Flex wrap="wrap" gap="3" mt="2" mb="3">
-                <Text size="2" color="gray">
-                  {formatDate(historyDetail.updatedAt)} · {historyDetail.updatedBy}
-                </Text>
-                <Badge color={historyDetail.isActive ? 'green' : 'gray'}>
-                  {historyDetail.isActive ? 'Активен' : 'Неактивен'}
-                </Badge>
-              </Flex>
-              <Box
-                p="3"
-                style={{
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--gray-2)',
-                  maxHeight: '50vh',
-                  overflowY: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: 'var(--default-font-family, ui-monospace, monospace)',
-                  fontSize: '13px',
-                  lineHeight: 1.5,
-                }}
-              >
-                {historyDetail.prompt}
-              </Box>
-            </>
-          )}
+        <Dialog.Content style={{ maxWidth: '720px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <Dialog.Title>Обновление промпта</Dialog.Title>
+          <Dialog.Description size="2" mb="3" style={{ color: 'var(--gray-11)' }}>
+            Сравнение с предыдущей версией в истории и полный текст выбранной версии.
+          </Dialog.Description>
+          {historyDetail && (() => {
+            const prev = getPreviousVersion(history, historyDetail)
+            const promptChanged = prev ? prev.prompt !== historyDetail.prompt : true
+            const statusChanged = prev ? prev.isActive !== historyDetail.isActive : true
+
+            return (
+              <>
+                <Flex wrap="wrap" align="center" gap="3" mb="3">
+                  <Text size="2" color="gray">
+                    {formatDate(historyDetail.updatedAt)} · {historyDetail.updatedBy}
+                  </Text>
+                  <Badge color={historyDetail.isActive ? 'green' : 'gray'}>
+                    {historyDetail.isActive ? 'Активен' : 'Неактивен'}
+                  </Badge>
+                </Flex>
+
+                <Box className={styles.diffSection}>
+                  <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>
+                    Изменения в этой версии
+                  </Text>
+
+                  {!prev && (
+                    <Text size="2" color="gray">
+                      Самая ранняя запись в истории — предыдущей версии для сравнения нет.
+                    </Text>
+                  )}
+
+                  {prev && statusChanged && (
+                    <Box mb="3">
+                      <Text size="2" weight="medium" mb="1" style={{ display: 'block' }}>
+                        Статус
+                      </Text>
+                      <Text size="2">
+                        <Text color="gray" as="span">Было: </Text>
+                        {prev.isActive ? 'Активен' : 'Неактивен'}
+                        <Text as="span" mx="2">
+                          →
+                        </Text>
+                        <Text weight="medium" as="span">
+                          {historyDetail.isActive ? 'Активен' : 'Неактивен'}
+                        </Text>
+                      </Text>
+                    </Box>
+                  )}
+
+                  {prev && !statusChanged && (
+                    <Text size="2" color="gray" mb="3" style={{ display: 'block' }}>
+                      Статус не менялся относительно предыдущей версии.
+                    </Text>
+                  )}
+
+                  {prev && promptChanged && (
+                    <Box>
+                      <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>
+                        Текст промпта
+                      </Text>
+                      <Box className={styles.diffGrid}>
+                        <Box>
+                          <div className={styles.diffColLabel}>Было (предыдущая версия)</div>
+                          <Box className={`${styles.diffBox} ${styles.diffBefore}`}>{prev.prompt}</Box>
+                        </Box>
+                        <Box>
+                          <div className={styles.diffColLabel}>Стало (эта версия)</div>
+                          <Box className={`${styles.diffBox} ${styles.diffAfter}`}>
+                            {historyDetail.prompt}
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {prev && !promptChanged && (
+                    <Text size="2" color="gray" style={{ display: 'block' }}>
+                      Текст промпта совпадает с предыдущей версией.
+                    </Text>
+                  )}
+                </Box>
+
+                <Box className={styles.fullTextBlock}>
+                  <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>
+                    Полный текст версии
+                  </Text>
+                  <Box
+                    p="3"
+                    style={{
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--gray-2)',
+                      maxHeight: 'min(45vh, 320px)',
+                      overflowY: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'var(--default-font-family, ui-monospace, monospace)',
+                      fontSize: '13px',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {historyDetail.prompt}
+                  </Box>
+                </Box>
+              </>
+            )
+          })()}
           <Flex justify="end" mt="4">
             <Button variant="soft" onClick={() => setHistoryDetail(null)}>
               Закрыть

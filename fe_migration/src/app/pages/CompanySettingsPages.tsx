@@ -1,5 +1,6 @@
 import { OrgStructurePage } from '@/app/pages/company-settings/OrgStructurePage'
-import { Box, Flex, Text } from '@radix-ui/themes'
+import { Box, Card, Flex, Text } from '@radix-ui/themes'
+import { CandidateResponsesPage } from '@/app/pages/CandidateResponsesPage'
 import GeneralSettings from '@/components/company-settings/GeneralSettings'
 import GradesSettings from '@/components/company-settings/GradesSettings'
 import RatingScalesSettings from '@/components/company-settings/RatingScalesSettings'
@@ -15,6 +16,10 @@ import { UserGroupsSettings } from '@/components/company-settings/user-groups/Us
 import { CompanyUsersSettings } from '@/components/company-settings/users'
 import { AttractionRulesSettings } from '@/components/company-settings/recruiting/AttractionRulesSettings'
 import { OfferTemplateSettings } from '@/components/company-settings/recruiting/OfferTemplateSettings'
+import {
+  RecruitingMessageTemplatesSettings,
+  RecruitingTemplatesSettings,
+} from '@/components/company-settings/recruiting/RecruitingTemplatesSettings'
 import { RecruitingSubpageBackBar } from '@/components/company-settings/recruiting/RecruitingSubpageBackBar'
 import styles from './styles/CompanySettings.module.css'
 
@@ -75,6 +80,30 @@ export function CompanySettingsCandidateFieldsPage() {
   )
 }
 
+export function CompanySettingsVacancyFieldsPage() {
+  return (
+    <Box className={styles.container}>
+      <RecruitingSubpageBackBar />
+      <Text size="6" weight="bold" mb="4" style={{ display: 'block' }}>
+        Настройки дополнительных полей вакансии
+      </Text>
+      <Card>
+        <Flex direction="column" gap="2">
+          <Text size="3" weight="medium">
+            Дополнительные поля вакансии
+          </Text>
+          <Text size="2" color="gray">
+            Здесь будет настройка единого профиля дополнительных полей вакансии и правил их применения.
+          </Text>
+          <Text size="2" color="gray">
+            Индивидуальные значения по конкретной вакансии остаются в карточке вакансии.
+          </Text>
+        </Flex>
+      </Card>
+    </Box>
+  )
+}
+
 export function CompanySettingsScorecardPage() {
   return (
     <Box className={styles.container}>
@@ -91,9 +120,6 @@ export function CompanySettingsSlaPage() {
   return (
     <Box className={styles.container}>
       <RecruitingSubpageBackBar />
-      <Text size="6" weight="bold" mb="4" style={{ display: 'block' }}>
-        SLA для вакансий
-      </Text>
       <SLASettings />
     </Box>
   )
@@ -167,4 +193,32 @@ export function CompanySettingsRecruitingRulesPage() {
 
 export function CompanySettingsRecruitingOfferTemplatePage() {
   return <OfferTemplateSettings />
+}
+
+export function CompanySettingsRecruitingTemplatesPage() {
+  return (
+    <Box className={styles.container}>
+      <RecruitingSubpageBackBar />
+      <Text size="6" weight="bold" mb="4" style={{ display: 'block' }}>
+        Шаблоны рекрутинга
+      </Text>
+      <RecruitingTemplatesSettings />
+    </Box>
+  )
+}
+
+export function CompanySettingsRecruitingResponseTemplatesPage() {
+  return <CandidateResponsesPage />
+}
+
+export function CompanySettingsRecruitingMessageTemplatesPage() {
+  return (
+    <Box className={styles.container}>
+      <RecruitingSubpageBackBar />
+      <Text size="6" weight="bold" mb="4" style={{ display: 'block' }}>
+        Шаблоны писем и сообщений
+      </Text>
+      <RecruitingMessageTemplatesSettings />
+    </Box>
+  )
 }

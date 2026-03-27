@@ -25,6 +25,62 @@
   cursor: help;
 }
 
+.diffSection {
+  margin-top: 12px;
+}
+
+.diffGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+  .diffGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.diffColLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--gray-11);
+  margin-bottom: 6px;
+}
+
+.diffBox {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--default-font-family, ui-monospace, monospace);
+  max-height: min(40vh, 280px);
+  overflow: auto;
+}
+
+.diffBefore {
+  background: var(--red-3);
+  border: 1px solid var(--red-6);
+  color: var(--gray-12);
+}
+
+.diffAfter {
+  background: var(--green-3);
+  border: 1px solid var(--green-6);
+  color: var(--gray-12);
+}
+
+.fullTextBlock {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-a6);
+}
+
 @media (max-width: 768px) {
   .container {
     gap: 16px;

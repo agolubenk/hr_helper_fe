@@ -33,9 +33,9 @@
 
 'use client'
 
-import { Box, Flex, Text, Button, Card, Table, TextField, Dialog, Select, Switch, Checkbox } from "@radix-ui/themes"
+import { Box, Flex, Text, Button, Card, Table, TextField, Dialog, Select, Switch, Checkbox, Callout } from "@radix-ui/themes"
 import { useState, useEffect } from "react"
-import { PlusIcon, Pencil2Icon, TrashIcon, CheckIcon } from "@radix-ui/react-icons"
+import { PlusIcon, Pencil2Icon, TrashIcon, CheckIcon, InfoCircledIcon } from "@radix-ui/react-icons"
 import { useToast } from "@/components/Toast/ToastContext"
 import styles from './RecruitingCommandsSettings.module.css'
 
@@ -716,6 +716,24 @@ export default function RecruitingCommandsSettings() {
           </Text>
         </Flex>
       </Card>
+
+      <Callout.Root color="amber" mb="4">
+        <Callout.Icon>
+          <InfoCircledIcon width={16} height={16} />
+        </Callout.Icon>
+        <Callout.Text size="2">
+          <Text weight="bold" as="span">
+            План развития (не реализовано в текущем моке):
+          </Text>{' '}
+          конструктор workflow-процессов по аналогии с n8n; убрать из настроек отдельный блок «системных команд» в пользу системных политик продукта;
+          индивидуальные воркфлоу по <Text weight="medium" as="span">блокам HR</Text>: Recruiting, HR Ops, L&amp;D, C&amp;B, HR PR, Onboarding и др.
+          Подробнее:{' '}
+          <Text weight="medium" as="span">
+            fe_migration/docs/RECRUITING_SETTINGS_UX_PLAN_2026-03-24.md
+          </Text>
+          , §3 «Будущее развитие».
+        </Callout.Text>
+      </Callout.Root>
 
       {/* Заголовок и кнопка создания */}
       <Flex justify="between" align="center" mb="4">

@@ -64,6 +64,17 @@ const AVAILABLE_PATTERNS: Pattern[] = [
   { id: 'interviewer_name', label: 'Имя интервьюера', value: '[interviewer_name]', category: 'Интервьюер' },
 ]
 
+/** Стабильный порядок тем (групп) паттернов в правой панели */
+const PATTERN_CATEGORY_ORDER: string[] = [
+  'Текст',
+  'Вакансия',
+  'Кандидат',
+  'Грейд',
+  'Дата и время',
+  'День недели',
+  'Интервьюер',
+]
+
 // Моковые данные
 const mockCriteria: ScorecardCriteria[] = [
   {
@@ -302,6 +313,13 @@ export default function ScorecardSettings() {
     return acc
   }, {} as Record<string, Pattern[]>)
 
+  const patternCategoriesOrdered = [
+    ...PATTERN_CATEGORY_ORDER.filter((cat) => patternsByCategory[cat]?.length),
+    ...Object.keys(patternsByCategory)
+      .filter((c) => !PATTERN_CATEGORY_ORDER.includes(c))
+      .sort(),
+  ]
+
   return (
     <Flex direction="column" gap="4">
       {/* Верхняя секция предварительного просмотра */}
@@ -342,9 +360,9 @@ export default function ScorecardSettings() {
       </Card>
 
       {/* Основной контент: левая и правая панели */}
-      <Flex gap="4" align="start">
+      <Flex gap="4" align="start" wrap="wrap" style={{ width: '100%' }}>
         {/* Левая панель: Структура критериев */}
-        <Card className={styles.card} style={{ flex: 1 }}>
+        <Card className={styles.card} style={{ flex: '1 1 420px', minWidth: 0, maxWidth: '100%' }}>
           <Text size="4" weight="bold" mb="3" style={{ display: 'block' }}>
             Критерии оценки:
           </Text>
@@ -366,13 +384,28 @@ export default function ScorecardSettings() {
                   return description
                     .replace(/\[candidate_firstname\]/g, 'Иван')
                     .replace(/\[candidate_lastname\]/g, 'Иванов')
+                    .replace(/\[candidate_patronymic\]/g, 'Иванович')
+                    .replace(/\[candidate_id\]/g, '12345')
                     .replace(/\[vacancy_title\]/g, 'Frontend Engineer')
+                    .replace(/\[vacancy_id\]/g, '456')
                     .replace(/\[grade\]/g, 'Senior')
                     .replace(/\[date_day\]/g, '08')
+                    .replace(/\[date_full\]/g, '08.09.2025')
+                    .replace(/\[month_num\]/g, '09')
+                    .replace(/\[month_short_ru\]/g, 'сен')
                     .replace(/\[month_full_ru\]/g, 'сентябрь')
+                    .replace(/\[month_short_en\]/g, 'Sep')
+                    .replace(/\[month_full_en\]/g, 'September')
+                    .replace(/\[year_short\]/g, '25')
                     .replace(/\[year_full\]/g, '2025')
                     .replace(/\[weekday_short_ru\]/g, 'ПН')
+                    .replace(/\[weekday_short_en\]/g, 'Mon')
+                    .replace(/\[weekday_short_mn\]/g, 'MN')
+                    .replace(/\[weekday_short_ru_full\]/g, 'ПОН')
                     .replace(/\[weekday_full_ru\]/g, 'Понедельник')
+                    .replace(/\[weekday_full_en\]/g, 'Monday')
+                    .replace(/\[interviewer_name\]/g, 'Алексей Петров')
+                    .replace(/\[text\]/g, 'текст')
                 }
                 
                 // Для вложенных элементов: если есть собственное описание - показываем его пример, иначе пример из родителя
@@ -411,26 +444,18 @@ export default function ScorecardSettings() {
               const iconSize = item.level > 0 ? 12 : 14
               const textSize = item.level > 0 ? '1' : '2'
               
-              // Вычисляем ширину и отступы для эффекта "лестницы"
-              // Каждый последующий элемент уменьшается на 16px по ширине
-              // marginLeft компенсирует уменьшение, чтобы правый край был выровнен
-              const baseWidth = 680
-              const widthReduction = index * 16
-              const itemWidth = Math.max(baseWidth - widthReduction, 200) // Минимальная ширина 200px
-              // marginLeft только для компенсации уменьшения ширины (чтобы правый край был выровнен)
-              const marginLeft = index * 16
-              // paddingLeft для визуального отступа вложенности
+              // Отступ только по уровню вложенности; ширина — на всю колонку (без фиксированных 680px)
               const paddingLeft = item.level * 16
-              
+
               return (
                 <Box
                   key={item.id}
                   className={styles.criteriaItem}
                   style={{
-                    marginLeft: `${marginLeft}px`,
                     paddingLeft: `${paddingLeft}px`,
-                    width: `${itemWidth}px`,
-                    maxWidth: `${itemWidth}px`,
+                    width: '100%',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
                     border: selectedCriteriaId === item.id 
                       ? '2px solid var(--accent-9)' 
                       : '1px solid var(--gray-a6)',
@@ -619,8 +644,8 @@ export default function ScorecardSettings() {
           </Flex>
         </Card>
 
-        {/* Правая панель: Доступные паттерны */}
-        <Card className={styles.card} style={{ width: '400px', flexShrink: 0 }}>
+        {/* Правая панель: Доступные паттерны (темы) */}
+        <Card className={`${styles.card} ${styles.patternsPanel}`} style={{ flex: '1 1 300px', minWidth: 0, maxWidth: '100%' }}>
           <Text size="4" weight="bold" mb="3" style={{ display: 'block' }}>
             Доступные паттерны:
           </Text>
@@ -629,28 +654,32 @@ export default function ScorecardSettings() {
             Паттерны будут добавляться к существующему содержимому!
           </Text>
 
-          <Flex direction="column" gap="4">
-            {Object.entries(patternsByCategory).map(([category, patterns]) => (
-              <Box key={category}>
-                <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
-                  {category}
-                </Text>
-                <Flex wrap="wrap" gap="2">
-                  {patterns.map(pattern => (
-                    <Button
-                      key={pattern.id}
-                      variant="soft"
-                      size="1"
-                      onClick={() => handleInsertPattern(pattern.value)}
-                      title={pattern.value}
-                      style={{ fontSize: '11px' }}
-                    >
-                      {pattern.label}
-                    </Button>
-                  ))}
-                </Flex>
-              </Box>
-            ))}
+          <Flex direction="column" gap="4" className={styles.patternsList}>
+            {patternCategoriesOrdered.map((category) => {
+              const patterns = patternsByCategory[category]
+              if (!patterns?.length) return null
+              return (
+                <Box key={category} className={styles.patternTopic}>
+                  <Text size="2" weight="bold" mb="2" style={{ display: 'block' }} className={styles.patternTopicTitle}>
+                    {category}
+                  </Text>
+                  <Flex wrap="wrap" gap="2">
+                    {patterns.map((pattern) => (
+                      <Button
+                        key={pattern.id}
+                        variant="soft"
+                        size="1"
+                        onClick={() => handleInsertPattern(pattern.value)}
+                        title={pattern.value}
+                        className={styles.patternChip}
+                      >
+                        {pattern.label}
+                      </Button>
+                    ))}
+                  </Flex>
+                </Box>
+              )
+            })}
           </Flex>
         </Card>
       </Flex>
