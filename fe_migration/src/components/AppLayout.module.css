@@ -1,3 +1,14 @@
+/* Кликable подложка под сайдбаром (z-index ниже панели меню): закрывает меню */
+.sidebarMenuBackdrop {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+  cursor: default;
+}
+
 /* Как frontend MainLayout: скролл снаружи, отступы контента под фиксированный футер */
 
 .contentWrapper {

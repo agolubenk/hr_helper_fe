@@ -138,3 +138,65 @@
   box-sizing: border-box;
 }
 
+/* Кнопка меню в шапке: pin в закруглённом квадрате при наведении */
+.menuToggle {
+  position: relative;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--gray-a6);
+  border-radius: 6px;
+  padding: 6px 8px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menuTogglePin {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  margin: 0;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--gray-3);
+  color: var(--accent-11);
+  border: 1px solid var(--gray-a6);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  pointer-events: none;
+  cursor: pointer;
+  z-index: 1;
+  box-sizing: border-box;
+  font: inherit;
+  line-height: 0;
+}
+
+.menuToggle:hover .menuTogglePin {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menuTogglePin:focus-visible {
+  outline: 2px solid var(--accent-a8);
+  outline-offset: 2px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menuTogglePinActive {
+  opacity: 1;
+  pointer-events: auto;
+  background: var(--accent-4);
+  border-color: var(--accent-a8);
+  color: var(--accent-11);
+}
+

@@ -35,7 +35,7 @@
 'use client'
 
 import { Box, Flex } from "@radix-ui/themes"
-import { useState, useEffect, ReactNode } from "react"
+import { useState, useEffect, useRef, ReactNode } from "react"
 import { usePathname } from "@/router-adapter"
 import Header from "./Header"
 import Sidebar from "./Sidebar"
@@ -57,6 +57,9 @@ import styles from './AppLayout.module.css'
  * - Восстановления состояния при следующей загрузке страницы
  */
 const SIDEBAR_STATE_STORAGE_KEY = 'sidebarMenuOpen'
+const SIDEBAR_PINNED_STORAGE_KEY = 'sidebarMenuPinned'
+/** Ширина панели меню (см. Sidebar.module.css) — резервируем у контента в закреплённом режиме */
+const SIDEBAR_WIDTH_PX = 280
 
 /** Высота фиксированного футера (см. Footer.module.css) — как во frontend MainLayout */
 const FOOTER_HEIGHT = 48
@@ -183,6 +186,22 @@ export default function AppLayout({
     }
   })
 
+  const [menuPinned, setMenuPinned] = useState(() => {
+    if (typeof window === 'undefined') return false
+    if (!isDesktop()) return false
+    try {
+      return localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const [viewportDesktop, setViewportDesktop] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= DESKTOP_BREAKPOINT,
+  )
+
+  const prevPathnameRef = useRef<string | null>(null)
+
   // Хук для управления темой приложения
   const { theme, toggleTheme, lightThemeAccentColor, darkThemeAccentColor } = useTheme()
   const currentAccentColor = theme === 'light' ? lightThemeAccentColor : darkThemeAccentColor
@@ -225,6 +244,34 @@ export default function AppLayout({
     }
   }, [menuOpen])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!viewportDesktop) {
+      try {
+        localStorage.removeItem(SIDEBAR_PINNED_STORAGE_KEY)
+      } catch {
+        /* ignore */
+      }
+      return
+    }
+    try {
+      localStorage.setItem(SIDEBAR_PINNED_STORAGE_KEY, String(menuPinned))
+    } catch (error) {
+      console.error('Ошибка при сохранении закрепления меню в localStorage:', error)
+    }
+  }, [menuPinned, viewportDesktop])
+
+  useEffect(() => {
+    const path = pathname ?? ''
+    if (prevPathnameRef.current === null) {
+      prevPathnameRef.current = path
+      return
+    }
+    if (prevPathnameRef.current === path) return
+    prevPathnameRef.current = path
+    if (menuOpen && !menuPinned) setMenuOpen(false)
+  }, [pathname, menuOpen, menuPinned])
+
   /**
    * useEffect - обработчик изменения размера окна
    * 
@@ -245,16 +292,16 @@ export default function AppLayout({
     if (typeof window === 'undefined') return // SSR: пропускаем
 
     const handleResize = () => {
-      // Если переключились на мобильное устройство, закрываем меню
+      const wide = window.innerWidth >= DESKTOP_BREAKPOINT
+      setViewportDesktop(wide)
       if (window.innerWidth < DESKTOP_BREAKPOINT) {
+        setMenuPinned(false)
         setMenuOpen((prev) => {
-          // Если меню было открыто, закрываем его на мобильном устройстве
           if (prev) {
-            // На мобильных не сохраняем состояние в localStorage
             try {
               localStorage.removeItem(SIDEBAR_STATE_STORAGE_KEY)
-            } catch (error) {
-              // Игнорируем ошибки при удалении из localStorage
+            } catch {
+              /* ignore */
             }
             return false
           }
@@ -312,6 +359,18 @@ export default function AppLayout({
     setMenuOpen(!menuOpen)
   }
 
+  const handleMenuPinnedToggle = () => {
+    if (!viewportDesktop) return
+    setMenuPinned((p) => !p)
+  }
+
+  const sidebarDocked = menuOpen && menuPinned && viewportDesktop
+  const showSidebarBackdrop = menuOpen && !menuPinned
+
+  const requestCloseSidebar = () => {
+    if (!menuPinned) setMenuOpen(false)
+  }
+
   /**
    * Рендер компонента AppLayout
    * 
@@ -334,6 +393,9 @@ export default function AppLayout({
         onThemeToggle={toggleTheme}
         currentTheme={theme}
         menuOpen={menuOpen}
+        menuPinned={menuPinned}
+        onMenuPinnedToggle={handleMenuPinnedToggle}
+        allowMenuPin={viewportDesktop}
         onLogout={handleLogout}
         leftContent={leftHeaderContent}
         accentColor={currentAccentColor}
@@ -346,7 +408,20 @@ export default function AppLayout({
           - Открывается/закрывается через кнопку в Header
           - На мобильных закрывается при клике вне меню или при навигации
           - Состояние сохраняется в localStorage на десктопе */}
-      <Sidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <Sidebar isOpen={menuOpen} onClose={requestCloseSidebar} />
+      {showSidebarBackdrop ? (
+        <Box
+          className={styles.sidebarMenuBackdrop}
+          style={{
+            top: isRecrChatPage
+              ? `${HEADER_OFFSET + ATS_STATUS_BAR_HEIGHT}px`
+              : `${HEADER_OFFSET}px`,
+          }}
+          onClick={requestCloseSidebar}
+          role="presentation"
+          aria-hidden
+        />
+      ) : null}
       {/* Плавающие кнопки быстрых действий
           - Отображаются поверх контента
           - Предоставляют быстрый доступ к часто используемым функциям */}
@@ -399,9 +474,12 @@ export default function AppLayout({
               ? `calc(100vh - ${HEADER_OFFSET + ATS_STATUS_BAR_HEIGHT}px - ${FOOTER_HEIGHT}px)`
               : undefined,
             marginLeft: '34px',
-            marginRight: menuOpen ? '280px' : '24px',
-            width: menuOpen ? 'calc(100% - 280px - 34px)' : 'calc(100% - 34px - 24px)',
+            marginRight: sidebarDocked ? `${SIDEBAR_WIDTH_PX}px` : '24px',
+            width: sidebarDocked
+              ? `calc(100% - ${SIDEBAR_WIDTH_PX}px - 34px)`
+              : 'calc(100% - 34px - 24px)',
             transition: 'margin-right 0.2s ease-in-out, width 0.2s ease-in-out',
+            /* Закреплено: резерв под панель; иначе оверлей без сдвига */
           }}
         >
           {children}

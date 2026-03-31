@@ -1,7 +1,18 @@
 'use client'
 
 import { Flex, Text, Box } from '@radix-ui/themes'
-import { SunIcon, MoonIcon, PersonIcon, ExitIcon, LightningBoltIcon, BellIcon, MagnifyingGlassIcon, Cross2Icon, CheckIcon } from '@radix-ui/react-icons'
+import {
+  SunIcon,
+  MoonIcon,
+  PersonIcon,
+  ExitIcon,
+  LightningBoltIcon,
+  BellIcon,
+  MagnifyingGlassIcon,
+  Cross2Icon,
+  CheckIcon,
+  DrawingPinFilledIcon,
+} from '@radix-ui/react-icons'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link } from '@/router-adapter'
@@ -25,6 +36,11 @@ interface HeaderProps {
   currentTheme: 'light' | 'dark'
   accentColor: AccentColorValue
   menuOpen?: boolean
+  /** Закрепить открытое меню (док-панель: контент сдвигается, без оверлея) */
+  menuPinned?: boolean
+  onMenuPinnedToggle?: () => void
+  /** Показывать управление pin только на десктопе */
+  allowMenuPin?: boolean
   onLogout: () => void
   leftContent?: React.ReactNode
 }
@@ -45,6 +61,9 @@ export default function Header({
   currentTheme,
   accentColor,
   menuOpen: _menuOpen = false,
+  menuPinned = false,
+  onMenuPinnedToggle,
+  allowMenuPin = false,
   onLogout,
   leftContent,
 }: HeaderProps) {
@@ -266,22 +285,26 @@ export default function Header({
           )}
           <Box
             data-tour="header-menu"
+            className={styles.menuToggle}
             onClick={onMenuToggle}
-            style={{
-              cursor: 'pointer',
-              backgroundColor: 'transparent',
-              border: '1px solid var(--gray-a6)',
-              borderRadius: '6px',
-              padding: '6px 8px',
-              height: '34px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-            title="Меню"
+            title={menuPinned ? 'Меню (закреплено)' : 'Меню'}
             aria-label="Меню"
           >
+            {allowMenuPin ? (
+              <button
+                type="button"
+                className={`${styles.menuTogglePin} ${menuPinned ? styles.menuTogglePinActive : ''}`}
+                title={menuPinned ? 'Открепить меню (оверлей)' : 'Закрепить меню (сдвиг контента)'}
+                aria-label={menuPinned ? 'Открепить боковое меню' : 'Закрепить боковое меню'}
+                aria-pressed={menuPinned}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onMenuPinnedToggle?.()
+                }}
+              >
+                <DrawingPinFilledIcon width={10} height={10} />
+              </button>
+            ) : null}
             <LightningBoltIcon width={16} height={16} style={{ color: 'var(--gray-12)' }} />
           </Box>
 
