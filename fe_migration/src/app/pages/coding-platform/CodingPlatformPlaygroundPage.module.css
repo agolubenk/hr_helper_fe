@@ -34,6 +34,16 @@
   font-size: var(--pg-font-ui);
 }
 
+/* Полноэкранный режим (тулбар + редактор + статус-бар) */
+.ideRoot:fullscreen,
+.ideRoot:-webkit-full-screen {
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  min-height: 100%;
+}
+
 .ideMain {
   display: flex;
   flex: 1;
@@ -400,19 +410,29 @@
 .ideHighlightPre {
   position: absolute;
   inset: 0;
+  z-index: 0;
   margin: 0;
   padding: var(--space-2);
+  box-sizing: border-box;
   overflow: auto;
   pointer-events: none;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: inherit;
   line-height: inherit;
+  letter-spacing: normal;
+  word-spacing: normal;
+  font-variant-ligatures: none;
+  font-synthesis: none;
   tab-size: 2;
   white-space: pre;
   word-break: normal;
   overflow-wrap: normal;
+  /* Совпадение с textarea: резерв под скроллбар, иначе подсветка «уезжает» влево */
+  scrollbar-gutter: stable;
   scrollbar-width: none;
   color: var(--pg-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .ideHighlightPre::-webkit-scrollbar {
@@ -421,6 +441,8 @@
 }
 
 .ideHighlightCode {
+  display: block;
+  width: 100%;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -486,12 +508,19 @@
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: inherit;
   line-height: inherit;
+  letter-spacing: normal;
+  word-spacing: normal;
+  font-variant-ligatures: none;
+  font-synthesis: none;
   position: relative;
+  isolation: isolate;
   z-index: 1;
   flex: 1;
   min-height: 0;
   width: 100%;
   padding: var(--space-2);
+  box-sizing: border-box;
+  margin: 0;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -499,7 +528,14 @@
   caret-color: var(--pg-text);
   resize: none;
   tab-size: 2;
+  /* Как у .ideHighlightPre: одна и та же схема переносов и отступ под скролл */
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
   overflow: auto;
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .ideTextarea::selection {

@@ -6,6 +6,8 @@ import {
   CaretRightIcon,
   ChevronDownIcon,
   DashboardIcon,
+  EnterFullScreenIcon,
+  ExitFullScreenIcon,
   FileTextIcon,
   LayersIcon,
   PlayIcon,
@@ -47,6 +49,38 @@ if (el) {
 const DEFAULT_REACT = PLAYGROUND_MONO_DEFAULTS.react ?? ''
 
 const PREVIEW_DEBOUNCE_MS = 320
+
+type DocumentWithWebkitFs = Document & {
+  webkitFullscreenElement?: Element | null
+  webkitExitFullscreen?: () => Promise<void>
+}
+
+type HTMLElementWithWebkitFs = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void>
+}
+
+function getFullscreenElement(): Element | null {
+  const doc = document as DocumentWithWebkitFs
+  return document.fullscreenElement ?? doc.webkitFullscreenElement ?? null
+}
+
+async function exitFullscreenCompat(): Promise<void> {
+  const doc = document as DocumentWithWebkitFs
+  if (document.fullscreenElement != null && typeof document.exitFullscreen === 'function') {
+    await document.exitFullscreen()
+  } else if (typeof doc.webkitExitFullscreen === 'function') {
+    await doc.webkitExitFullscreen()
+  }
+}
+
+async function requestFullscreenCompat(el: HTMLElement): Promise<void> {
+  const node = el as HTMLElementWithWebkitFs
+  if (typeof el.requestFullscreen === 'function') {
+    await el.requestFullscreen()
+  } else if (typeof node.webkitRequestFullscreen === 'function') {
+    await node.webkitRequestFullscreen()
+  }
+}
 
 const WORKSPACE_TITLE_STORAGE_KEY = 'coding-playground-workspace-title'
 const DEFAULT_WORKSPACE_TITLE = 'Рабочая область'
@@ -144,6 +178,7 @@ export function CodingPlatformPlaygroundPage() {
   const sideSplitRef = useRef<HTMLDivElement | null>(null)
   const editorColumnRef = useRef<HTMLDivElement | null>(null)
   const sideColumnRef = useRef<HTMLDivElement | null>(null)
+  const ideRootRef = useRef<HTMLDivElement | null>(null)
 
   const [editorFontPx, setEditorFontPx] = useState(13)
   const [activityBarVisible, setActivityBarVisible] = useState(true)
@@ -155,11 +190,24 @@ export function CodingPlatformPlaygroundPage() {
   const [caret, setCaret] = useState({ line: 1, col: 1 })
   const [activityFocus, setActivityFocus] = useState<'explorer' | 'preview'>('explorer')
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true)
+  const [ideFullscreen, setIdeFullscreen] = useState(false)
 
   useEffect(() => {
     const sync = () => setEnabledIds(readEnabledCodingLanguageIds())
     window.addEventListener(CODING_LANGUAGES_CHANGED_EVENT, sync)
     return () => window.removeEventListener(CODING_LANGUAGES_CHANGED_EVENT, sync)
+  }, [])
+
+  useEffect(() => {
+    const syncFs = () => {
+      setIdeFullscreen(getFullscreenElement() === ideRootRef.current)
+    }
+    document.addEventListener('fullscreenchange', syncFs)
+    document.addEventListener('webkitfullscreenchange', syncFs as EventListener)
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFs)
+      document.removeEventListener('webkitfullscreenchange', syncFs as EventListener)
+    }
   }, [])
 
   useEffect(() => {
@@ -481,6 +529,20 @@ export function CodingPlatformPlaygroundPage() {
     }
   }, [])
 
+  const toggleIdeFullscreen = useCallback(async () => {
+    const host = ideRootRef.current
+    if (!host) return
+    try {
+      if (getFullscreenElement() === host) {
+        await exitFullscreenCompat()
+      } else {
+        await requestFullscreenCompat(host)
+      }
+    } catch {
+      /* отклонено пользователем или API недоступно */
+    }
+  }, [])
+
   const onSashMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (narrowLayout || !showSideColumn) return
@@ -692,7 +754,7 @@ export function CodingPlatformPlaygroundPage() {
 
   return (
     <CodingPlatformPageShell title="Песочница live-coding" fillAvailableHeight>
-      <Box className={ideStyles.ideRoot} data-playground-ide>
+      <Box ref={ideRootRef} className={ideStyles.ideRoot} data-playground-ide>
         <Flex className={ideStyles.ideToolbar} align="center" gap="2" wrap="nowrap">
           <div className={ideStyles.ideToolbarLead}>
             <button
@@ -736,6 +798,28 @@ export function CodingPlatformPlaygroundPage() {
               />
             </Flex>
           </div>
+
+          <Button
+            size="2"
+            variant="soft"
+            onClick={() => void toggleIdeFullscreen()}
+            aria-pressed={ideFullscreen}
+            aria-label={
+              ideFullscreen
+                ? 'Выйти из полноэкранного режима рабочей области'
+                : 'Показать рабочую область на весь экран'
+            }
+            style={{ flexShrink: 0 }}
+          >
+            <Flex align="center" gap="2">
+              {ideFullscreen ? (
+                <ExitFullScreenIcon width={14} height={14} aria-hidden />
+              ) : (
+                <EnterFullScreenIcon width={14} height={14} aria-hidden />
+              )}
+              {ideFullscreen ? 'Выйти' : 'На весь экран'}
+            </Flex>
+          </Button>
 
           <Button size="2" variant="solid" onClick={runForActive} disabled={!activeDef} style={{ flexShrink: 0 }}>
             <Flex align="center" gap="2">

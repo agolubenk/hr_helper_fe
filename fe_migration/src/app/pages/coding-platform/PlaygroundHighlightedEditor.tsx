@@ -40,7 +40,18 @@ export const PlaygroundHighlightedEditor = ({
 
   useLayoutEffect(() => {
     syncScroll()
-  }, [highlighted, syncScroll])
+  }, [highlighted, syncScroll, fontSizePx, value])
+
+  useLayoutEffect(() => {
+    const ta = taRef.current
+    const host = ta?.parentElement
+    if (!ta || !host || plain) return
+    const ro = new ResizeObserver(() => {
+      syncScroll()
+    })
+    ro.observe(host)
+    return () => ro.disconnect()
+  }, [plain, syncScroll])
 
   const fontStyle = useMemo(() => ({ fontSize: `${fontSizePx}px` }), [fontSizePx])
 
