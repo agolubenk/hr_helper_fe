@@ -1,9 +1,122 @@
-.ideChrome {
-  border: 1px solid var(--gray-a6);
+/**
+ * Стили исключительно для /coding-platform/playground.
+ * Токены и хром — в духе live-coding IDE, на базе переменных Radix / gray / accent.
+ */
+
+.ideRoot {
+  --pg-font-editor: 13px;
+  --pg-font-ui: var(--font-size-2);
+  --pg-activity-w: 44px;
+  --pg-tab-h: 36px;
+  --pg-preview-head-h: 36px;
+  --pg-border: var(--gray-a6);
+  --pg-bg-chrome: var(--gray-3);
+  --pg-bg-editor: var(--gray-1);
+  --pg-bg-side: var(--gray-2);
+  --pg-bg-activity: var(--gray-4);
+  --pg-text: var(--gray-12);
+  --pg-text-muted: var(--gray-11);
+  --pg-tab-inactive: var(--gray-2);
+  --pg-tab-active: var(--gray-1);
+  --pg-accent-bar: var(--accent-9);
+  --pg-transition: 150ms ease;
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--pg-border);
   border-radius: var(--radius-4);
   overflow: hidden;
-  background: var(--gray-2);
+  background: var(--pg-bg-side);
   box-shadow: 0 1px 0 var(--gray-a5);
+  color: var(--pg-text);
+  font-size: var(--pg-font-ui);
+}
+
+.ideMain {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ideWorkspaceTitle {
+  flex: 0 1 auto;
+  min-width: 6rem;
+  max-width: min(28rem, 42vw);
+  margin: 0;
+  padding: 0 2px;
+  border: none;
+  border-radius: var(--radius-2);
+  background: transparent;
+  color: var(--pg-text);
+  font-size: var(--font-size-2);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.ideWorkspaceTitle:hover {
+  background: var(--gray-a3);
+}
+
+.ideWorkspaceTitle:focus {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 1px;
+  background: var(--gray-2);
+}
+
+.ideActivityBar {
+  width: var(--pg-activity-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  background: var(--pg-bg-activity);
+  border-right: 1px solid var(--pg-border);
+}
+
+.ideActivityBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--pg-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--pg-transition),
+    background var(--pg-transition);
+}
+
+.ideActivityBtn:hover {
+  color: var(--pg-text);
+  background: var(--gray-a3);
+}
+
+.ideActivityBtn:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
+.ideActivityBtnActive {
+  color: var(--accent-11);
+  box-shadow: inset 0 0 0 1px var(--accent-a6);
+  background: var(--accent-a3);
+}
+
+.ideWorkspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .ideToolbar {
@@ -12,31 +125,53 @@
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--gray-a6);
-  background: var(--gray-3);
+  border-bottom: 1px solid var(--pg-border);
+  background: var(--pg-bg-chrome);
   min-height: 44px;
 }
 
-.ideToolbarMeta {
-  font-size: var(--font-size-1);
-  color: var(--gray-11);
-  margin-left: auto;
+.ideToolbarLead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  flex: 1;
+  min-width: 0;
 }
 
-.ideWorkArea {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: min(520px, calc(100vh - 300px));
+.ideActivityToggle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--radius-2);
+  background: var(--gray-2);
+  color: var(--pg-text-muted);
+  cursor: pointer;
+  transition:
+    background var(--pg-transition),
+    color var(--pg-transition);
 }
 
-.ideWorkAreaSplit {
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 40%);
+.ideActivityToggle:hover {
+  background: var(--gray-a3);
+  color: var(--pg-text);
 }
 
-@media (max-width: 960px) {
-  .ideWorkAreaSplit {
-    grid-template-columns: 1fr;
-  }
+.ideActivityToggle:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 1px;
+}
+
+.ideSplitRow {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  min-height: 0;
+  min-width: 0;
 }
 
 .ideEditorColumn {
@@ -44,33 +179,142 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--gray-1);
+  background: var(--pg-bg-editor);
+  flex-shrink: 0;
 }
 
-.idePreviewColumn {
+.ideSash {
+  width: 6px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: var(--pg-border);
+  align-self: stretch;
+  position: relative;
+  transition: background var(--pg-transition);
+}
+
+.ideSash:hover,
+.ideSashDragging {
+  background: var(--accent-8);
+}
+
+.ideSash::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+}
+
+/* Горизонтальный разделитель: превью | терминал */
+.ideSashRow {
+  height: 6px;
+  flex-shrink: 0;
+  cursor: row-resize;
+  background: var(--pg-border);
+  position: relative;
+  transition: background var(--pg-transition);
+}
+
+.ideSashRow:hover,
+.ideSashRowDragging {
+  background: var(--accent-8);
+}
+
+.ideSashRow::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+}
+
+.ideSideSplitHost {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.idePreviewColumn,
+.ideSideColumn {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 260px;
-  border-left: 1px solid var(--gray-a6);
-  background: var(--gray-2);
+  min-height: 220px;
+  flex: 1;
+  background: var(--pg-bg-side);
 }
 
-@media (max-width: 960px) {
-  .idePreviewColumn {
-    border-left: none;
-    border-top: 1px solid var(--gray-a6);
-    min-height: 240px;
-  }
+.ideSidePreview {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.idePreviewHead {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--gray-a6);
-  font-size: var(--font-size-2);
+.ideSidePreviewFill {
+  flex: 1 1 0;
+}
+
+.ideSideOutput {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ideSideOutputStacked {
+  border-top: none;
+}
+
+/* Шапка терминала визуально снизу, лог — выше */
+.ideBottomPanelReverse {
+  flex-direction: column-reverse;
+}
+
+.ideBottomPanelReverse .ideBottomPanelHead {
+  border-bottom: none;
+  border-top: 1px solid var(--pg-border);
+}
+
+.ideBottomPanelReverse.ideBottomPanelCollapsed .ideBottomPanelHead {
+  border-top-color: transparent;
+}
+
+.idePreviewChrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--pg-preview-head-h);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--pg-border);
+  background: var(--pg-bg-chrome);
+  flex-shrink: 0;
+}
+
+.idePreviewDots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.idePreviewDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.idePreviewTitle {
+  font-size: 11px;
   font-weight: 600;
-  color: var(--gray-12);
-  background: var(--gray-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
 }
 
 .idePreviewBody {
@@ -88,55 +332,327 @@
   flex-direction: column;
 }
 
+/* Область под списком вкладок: забирает всю оставшуюся высоту колонки */
+.ideTabsPanelWrap {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .ideTabsList {
   flex-shrink: 0;
-  padding: 0 var(--space-2);
-  border-bottom: 1px solid var(--gray-a6);
-  background: var(--gray-2);
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--pg-border);
+  background: var(--pg-tab-inactive);
   overflow-x: auto;
+  scrollbar-width: thin;
+  min-height: var(--pg-tab-h);
+}
+
+.ideTabTrigger {
+  flex-shrink: 0;
+  border-radius: 0 !important;
+  border: none !important;
+  border-right: 1px solid var(--pg-border) !important;
+  background: var(--pg-tab-inactive) !important;
+  color: var(--pg-text-muted) !important;
+  font-size: 13px;
+  padding: 0 var(--space-3);
+  min-height: var(--pg-tab-h);
+  box-shadow: none !important;
+}
+
+.ideTabTrigger[data-state='active'] {
+  background: var(--pg-tab-active) !important;
+  color: var(--pg-text) !important;
+  box-shadow:
+    inset 0 2px 0 0 var(--pg-accent-bar),
+    inset 0 -1px 0 0 var(--pg-tab-active) !important;
 }
 
 .ideTabContent {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  padding: var(--space-2);
+  gap: 0;
+}
+
+.ideEditorStack {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--space-2);
-  gap: var(--space-2);
+  border-radius: var(--radius-2);
+  border: 1px solid var(--pg-border);
+  background: var(--pg-bg-editor);
+  overflow: hidden;
+  line-height: 1.55;
 }
 
-.ideLabel {
-  font-size: var(--font-size-1);
-  color: var(--gray-11);
-  font-weight: 500;
+.ideHighlightPre {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: var(--space-2);
+  overflow: auto;
+  pointer-events: none;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: inherit;
+  line-height: inherit;
+  tab-size: 2;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  scrollbar-width: none;
+  color: var(--pg-text);
+}
+
+.ideHighlightPre::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.ideHighlightCode {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Prism — токены под тёмную тему Radix */
+.ideHighlightCode :global(.token.comment),
+.ideHighlightCode :global(.token.prolog),
+.ideHighlightCode :global(.token.doctype),
+.ideHighlightCode :global(.token.cdata) {
+  color: #6a9955;
+}
+
+.ideHighlightCode :global(.token.punctuation),
+.ideHighlightCode :global(.token.operator) {
+  color: #d4d4d4;
+}
+
+.ideHighlightCode :global(.token.property),
+.ideHighlightCode :global(.token.tag),
+.ideHighlightCode :global(.token.boolean),
+.ideHighlightCode :global(.token.number),
+.ideHighlightCode :global(.token.constant),
+.ideHighlightCode :global(.token.symbol),
+.ideHighlightCode :global(.token.deleted) {
+  color: #b5cea8;
+}
+
+.ideHighlightCode :global(.token.selector),
+.ideHighlightCode :global(.token.attr-name),
+.ideHighlightCode :global(.token.string),
+.ideHighlightCode :global(.token.char),
+.ideHighlightCode :global(.token.builtin),
+.ideHighlightCode :global(.token.inserted) {
+  color: #ce9178;
+}
+
+.ideHighlightCode :global(.token.entity),
+.ideHighlightCode :global(.token.url),
+.ideHighlightCode :global(.language-css .token.string),
+.ideHighlightCode :global(.style .token.string) {
+  color: #ce9178;
+}
+
+.ideHighlightCode :global(.token.atrule),
+.ideHighlightCode :global(.token.attr-value),
+.ideHighlightCode :global(.token.keyword) {
+  color: #c586c0;
+}
+
+.ideHighlightCode :global(.token.function),
+.ideHighlightCode :global(.token.class-name) {
+  color: #dcdcaa;
+}
+
+.ideHighlightCode :global(.token.regex),
+.ideHighlightCode :global(.token.important),
+.ideHighlightCode :global(.token.variable) {
+  color: #9cdcfe;
 }
 
 .ideTextarea {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: inherit;
+  line-height: inherit;
+  position: relative;
+  z-index: 1;
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
   width: 100%;
   padding: var(--space-2);
-  border-radius: var(--radius-2);
-  border: 1px solid var(--gray-a6);
-  background: var(--gray-1);
-  color: var(--gray-12);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--pg-text);
   resize: none;
+  tab-size: 2;
+  overflow: auto;
 }
 
-.ideOutput {
-  flex-shrink: 0;
-  max-height: 160px;
-  overflow: auto;
+.ideTextarea::selection {
+  background: color-mix(in srgb, var(--accent-9) 38%, transparent);
+}
+
+.ideTextarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--accent-a7);
+}
+
+.ideTextareaPlain {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: inherit;
+  line-height: inherit;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
   padding: var(--space-2);
-  border-top: 1px solid var(--gray-a6);
-  background: var(--gray-2);
+  border: none;
+  border-radius: 0;
+  background: var(--pg-bg-editor);
+  color: var(--pg-text);
+  resize: none;
+  tab-size: 2;
+  overflow: auto;
+}
+
+.ideTextareaPlain:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--accent-a7);
+}
+
+.ideBottomPanel {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--pg-border);
+  background: var(--pg-bg-side);
+}
+
+.ideBottomPanelExpanded {
+  min-height: 132px;
+  max-height: 220px;
+}
+
+.ideBottomPanelCollapsed {
+  min-height: 0;
+  max-height: none;
+}
+
+.ideBottomPanelHead {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 8px var(--space-3);
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid var(--pg-border);
+  background: var(--pg-bg-chrome);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    background var(--pg-transition),
+    border-color var(--pg-transition);
+}
+
+.ideBottomPanelHead:hover {
+  background: var(--gray-a4);
+}
+
+.ideBottomPanelHead:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: -2px;
+}
+
+.ideBottomPanelCollapsed .ideBottomPanelHead {
+  border-bottom-color: transparent;
+}
+
+.ideBottomPanelChevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--pg-text-muted);
+  transition: transform var(--pg-transition);
+}
+
+.ideBottomPanelCollapsed .ideBottomPanelChevron {
+  transform: rotate(-90deg);
+}
+
+.ideBottomPanelHeadText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ideBottomPanelHeadMain {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+}
+
+.ideBottomPanelHeadHint {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--pg-text);
+  line-height: 1.35;
+}
+
+.ideBottomPanelBody {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 12px;
+  line-height: 1.45;
   white-space: pre-wrap;
-  color: var(--gray-12);
+  color: var(--pg-text);
+}
+
+.ideBottomPanelCollapsed .ideBottomPanelBody {
+  display: none;
+}
+
+/* Панель вывода в правой колонке: делит высоту с предпросмотром */
+.ideBottomPanelInSide {
+  border-top: none;
+}
+
+.ideBottomPanelInSide.ideBottomPanelExpanded {
+  max-height: none;
+  flex: 1 1 0;
+  min-height: 112px;
+}
+
+.ideBottomPanelPlaceholder {
+  color: var(--pg-text-muted);
+  font-style: italic;
 }
 
 .ideStatusBar {
@@ -145,10 +661,10 @@
   flex-wrap: wrap;
   gap: var(--space-3);
   padding: var(--space-1) var(--space-3);
-  border-top: 1px solid var(--gray-a6);
-  background: var(--accent-a2);
+  border-top: 1px solid var(--pg-border);
+  background: var(--accent-a3);
   font-size: 11px;
-  color: var(--gray-11);
+  color: var(--pg-text-muted);
 }
 
 .langDialogRow {
@@ -158,4 +674,28 @@
 
 .langDialogRow:last-child {
   border-bottom: none;
+}
+
+@media (max-width: 960px) {
+  .ideSplitRow {
+    flex-direction: column;
+  }
+
+  .ideSash {
+    width: 100%;
+    height: 6px;
+    cursor: row-resize;
+  }
+
+  .ideEditorColumn {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: 280px;
+  }
+
+  .idePreviewColumn,
+  .ideSideColumn {
+    min-height: 240px;
+    flex: 1 1 auto;
+  }
 }

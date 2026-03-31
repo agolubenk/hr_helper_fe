@@ -4,7 +4,7 @@ import styles from '../styles/CodingPlatformPages.module.css'
 
 const ITEMS: { href: string; label: string }[] = [
   { href: '/coding-platform', label: 'Обзор' },
-  { href: '/coding-platform/languages', label: 'Языки и связи' },
+  { href: '/coding-platform/saved', label: 'Сохранённое' },
   { href: '/coding-platform/playground', label: 'Песочница' },
 ]
 
@@ -13,23 +13,36 @@ function active(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function CodingPlatformNavCard() {
+export type CodingPlatformNavCardVariant = 'card' | 'inline'
+
+export function CodingPlatformNavCard({ variant = 'card' }: { variant?: CodingPlatformNavCardVariant }) {
   const pathname = usePathname()
+
+  const nav = (
+    <nav
+      className={variant === 'inline' ? styles.navPrimaryInline : styles.navPrimary}
+      aria-label="Разделы кодинговой платформы"
+    >
+      {ITEMS.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`${styles.navLink} ${active(pathname, item.href) ? styles.navLinkActive : ''}`}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  )
+
+  if (variant === 'inline') {
+    return nav
+  }
 
   return (
     <Card size="1" variant="surface">
       <Box p="2">
-        <nav className={styles.navPrimary} aria-label="Разделы кодинговой платформы">
-          {ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.navLink} ${active(pathname, item.href) ? styles.navLinkActive : ''}`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {nav}
       </Box>
     </Card>
   )

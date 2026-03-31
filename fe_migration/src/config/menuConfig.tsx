@@ -312,10 +312,10 @@ export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
         href: '/coding-platform',
       },
       {
-        id: 'coding-platform-languages',
-        label: 'Языки и связи',
-        icon: ic(LayersIcon),
-        href: '/coding-platform/languages',
+        id: 'coding-platform-saved',
+        label: 'Сохранённое',
+        icon: ic(FileTextIcon),
+        href: '/coding-platform/saved',
       },
       {
         id: 'coding-platform-playground',

@@ -944,7 +944,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             (item.id === 'meet-archive' && pathname === '/meet/archive') ||
             (item.id === 'coding-platform' && pathname?.startsWith('/coding-platform')) ||
             (item.id === 'coding-platform-overview' && pathname === '/coding-platform') ||
-            (item.id === 'coding-platform-languages' && pathname === '/coding-platform/languages') ||
+            (item.id === 'coding-platform-saved' && pathname === '/coding-platform/saved') ||
             (item.id === 'coding-platform-playground' && pathname === '/coding-platform/playground') ||
             (item.id === 'link-builder' && pathname === '/link-builder') ||
             (item.id === 'ats' && pathname?.startsWith('/ats')) ||

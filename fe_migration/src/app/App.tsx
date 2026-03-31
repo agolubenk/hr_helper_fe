@@ -56,8 +56,8 @@ import { MeetHistoryPage } from '@/app/pages/meet/MeetHistoryPage'
 import { MeetUpcomingPage } from '@/app/pages/meet/MeetUpcomingPage'
 import { MeetArchivePage } from '@/app/pages/meet/MeetArchivePage'
 import { CodingPlatformHomePage } from '@/app/pages/coding-platform/CodingPlatformHomePage'
-import { CodingPlatformLanguagesPage } from '@/app/pages/coding-platform/CodingPlatformLanguagesPage'
 import { CodingPlatformPlaygroundPage } from '@/app/pages/coding-platform/CodingPlatformPlaygroundPage'
+import { CodingPlatformSavedPage } from '@/app/pages/coding-platform/CodingPlatformSavedPage'
 import { LinkBuilderPage } from '@/app/pages/LinkBuilderPage'
 import { LearningFeedbackPage } from '@/app/pages/LearningFeedbackPage'
 import { SettingsSecurityUsersPage } from '@/app/pages/settings-security/SettingsSecurityUsersPage'
@@ -177,11 +177,12 @@ export function App() {
             <Route path="/meet/upcoming" element={<AppLayout {...layoutProps} pageTitle="Миты — предстоящие"><MeetUpcomingPage /></AppLayout>} />
             <Route path="/meet/archive" element={<AppLayout {...layoutProps} pageTitle="Миты — архивы"><MeetArchivePage /></AppLayout>} />
             <Route path="/meet" element={<AppLayout {...layoutProps} pageTitle="Внутренние миты"><MeetHomePage /></AppLayout>} />
+            <Route path="/coding-platform/languages" element={<Navigate to="/coding-platform/saved" replace />} />
             <Route
-              path="/coding-platform/languages"
+              path="/coding-platform/saved"
               element={
-                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа — языки">
-                  <CodingPlatformLanguagesPage />
+                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа — сохранённое">
+                  <CodingPlatformSavedPage />
                 </AppLayout>
               }
             />

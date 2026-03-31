@@ -61,6 +61,12 @@ const SIDEBAR_STATE_STORAGE_KEY = 'sidebarMenuOpen'
 /** Высота фиксированного футера (см. Footer.module.css) — как во frontend MainLayout */
 const FOOTER_HEIGHT = 48
 
+/** Фиксированный header: 64px + 1px border (см. Header.tsx) — отступ контента от верха вьюпорта */
+const HEADER_OFFSET = 65
+
+/** StatusBar под header на страницах /ats */
+const ATS_STATUS_BAR_HEIGHT = 48
+
 /**
  * DESKTOP_BREAKPOINT - точка перелома для определения десктопных устройств
  * 
@@ -117,6 +123,7 @@ export default function AppLayout({
   const isAdminPage = pathname?.startsWith('/admin')
   const isAiChatPage = pathname?.startsWith('/aichat')
   const isMeetRoomPage = pathname?.startsWith('/meet/room')
+  const isCodingPlaygroundPage = pathname === '/coding-platform/playground'
 
   useEffect(() => {
     const t = (pageTitle ?? 'HR Helper').trim()
@@ -309,7 +316,7 @@ export default function AppLayout({
    * Рендер компонента AppLayout
    * 
    * Структура:
-   * - Header: верхняя панель (фиксированная, высота 64px)
+   * - Header: верхняя панель (фиксированная, 64px + 1px border → HEADER_OFFSET)
    * - StatusBar: статусная панель (только на странице ats, высота 48px)
    * - Sidebar: боковое меню (открывается/закрывается)
    * - FloatingActions: плавающие кнопки действий
@@ -347,21 +354,22 @@ export default function AppLayout({
       
       {/* Контейнер для содержимого страницы
           - height/overflow: без прокрутки у контейнера, скролл только внутри контента страниц
-          - marginTop: отступ от Header (64px) и StatusBar (48px если есть) */}
+          - marginTop: отступ от Header (HEADER_OFFSET) и StatusBar (если /ats) */}
       <Flex
         className={styles.contentWrapper}
         style={{
-          marginTop: isRecrChatPage ? '112px' : '64px',
+          marginTop: isRecrChatPage ? `${HEADER_OFFSET + ATS_STATUS_BAR_HEIGHT}px` : `${HEADER_OFFSET}px`,
           width: '100%',
           maxWidth: '100vw',
           height: isRecrChatPage
-            ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
-            : `calc(100vh - 64px - ${FOOTER_HEIGHT}px)`,
+            ? `calc(100vh - ${HEADER_OFFSET + ATS_STATUS_BAR_HEIGHT}px - ${FOOTER_HEIGHT}px)`
+            : `calc(100vh - ${HEADER_OFFSET}px - ${FOOTER_HEIGHT}px)`,
           flexDirection: 'column',
           minHeight: 0,
           transition: 'all 0.2s ease-in-out',
           overflowX: 'hidden',
-          overflowY: isAiChatPage || isMeetRoomPage ? 'hidden' : 'auto',
+          overflowY:
+            isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage ? 'hidden' : 'auto',
         }}
       >
         {/* Основной контент страницы */}
@@ -371,22 +379,24 @@ export default function AppLayout({
           style={{ 
             padding: isAdminPage
               ? `0 0 ${FOOTER_HEIGHT + 24}px 0`
-              : (isRecrChatPage || isAiChatPage || isMeetRoomPage)
+              : (isRecrChatPage || isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage)
                 ? '0'
                 : `24px 0 ${FOOTER_HEIGHT + 24}px 0`,
             borderTop: '1px solid var(--gray-a6)',
             /* Для обычных страниц высота = контент, иначе scroll на contentWrapper не получает scrollHeight */
-            ...(isRecrChatPage || isAiChatPage || isMeetRoomPage
+            ...(isRecrChatPage || isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage
               ? {
                   flex: 1,
                   minHeight: 0,
-                  ...(isMeetRoomPage ? { display: 'flex', flexDirection: 'column' as const } : {}),
+                  ...((isMeetRoomPage || isCodingPlaygroundPage)
+                    ? { display: 'flex', flexDirection: 'column' as const }
+                    : {}),
                 }
               : { flex: '0 1 auto', minHeight: 'auto' }),
             minWidth: 0,
             maxWidth: '100%',
             height: isRecrChatPage
-              ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
+              ? `calc(100vh - ${HEADER_OFFSET + ATS_STATUS_BAR_HEIGHT}px - ${FOOTER_HEIGHT}px)`
               : undefined,
             marginLeft: '34px',
             marginRight: menuOpen ? '280px' : '24px',

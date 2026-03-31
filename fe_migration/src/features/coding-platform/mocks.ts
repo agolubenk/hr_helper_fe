@@ -1,6 +1,6 @@
 import type { CodingLanguageEdge, CodingLanguageNode } from './types'
 
-/** Полная карта стеков (фильтрация по подключённым — на странице «Языки и связи»). */
+/** Полная карта стеков (см. также каталог в languageCatalog). */
 export const codingGraphNodes: CodingLanguageNode[] = [
   { id: 'html', label: 'HTML', subtitle: 'Разметка', x: 88, y: 300 },
   { id: 'css', label: 'CSS', subtitle: 'Стили', x: 88, y: 140 },
@@ -8,11 +8,26 @@ export const codingGraphNodes: CodingLanguageNode[] = [
   { id: 'ts', label: 'TypeScript', subtitle: 'Надмножество', x: 300, y: 72 },
   { id: 'react', label: 'React', subtitle: 'UI', x: 500, y: 140 },
   { id: 'node', label: 'Node.js', subtitle: 'Рантайм', x: 300, y: 360 },
-  { id: 'python', label: 'Python', subtitle: 'Live coding', x: 520, y: 260 },
+  { id: 'python', label: 'Python', subtitle: 'Скрипты', x: 520, y: 260 },
   { id: 'go', label: 'Go', subtitle: 'Systems', x: 520, y: 340 },
   { id: 'rust', label: 'Rust', subtitle: 'Systems', x: 520, y: 420 },
   { id: 'sql', label: 'SQL', subtitle: 'Данные', x: 120, y: 48 },
   { id: 'json', label: 'JSON', subtitle: 'Данные', x: 48, y: 200 },
+  { id: 'vue', label: 'Vue', subtitle: 'Фреймворк', x: 668, y: 100 },
+  { id: 'svelte', label: 'Svelte', subtitle: 'Компилятор UI', x: 668, y: 188 },
+  { id: 'angular', label: 'Angular', subtitle: 'Фреймворк', x: 668, y: 276 },
+  { id: 'java', label: 'Java', subtitle: 'JVM', x: 668, y: 364 },
+  { id: 'kotlin', label: 'Kotlin', subtitle: 'JVM', x: 560, y: 420 },
+  { id: 'csharp', label: 'C#', subtitle: '.NET', x: 668, y: 44 },
+  { id: 'php', label: 'PHP', subtitle: 'Web', x: 380, y: 408 },
+  { id: 'ruby', label: 'Ruby', subtitle: 'Web', x: 220, y: 408 },
+  { id: 'bash', label: 'Bash', subtitle: 'Shell', x: 200, y: 320 },
+  { id: 'cpp', label: 'C++', subtitle: 'Системы', x: 400, y: 44 },
+  { id: 'c', label: 'C', subtitle: 'Низкий уровень', x: 520, y: 44 },
+  { id: 'swift', label: 'Swift', subtitle: 'Apple', x: 48, y: 380 },
+  { id: 'dart', label: 'Dart', subtitle: 'Flutter', x: 140, y: 280 },
+  { id: 'docker', label: 'Docker', subtitle: 'Контейнеры', x: 400, y: 400 },
+  { id: 'markdown', label: 'Markdown', subtitle: 'Доки', x: 48, y: 124 },
 ]
 
 export const codingGraphEdges: CodingLanguageEdge[] = [
@@ -21,10 +36,24 @@ export const codingGraphEdges: CodingLanguageEdge[] = [
   { id: 'e3', fromId: 'css', toId: 'html', label: 'оформление' },
   { id: 'e4', fromId: 'js', toId: 'react', label: 'основа' },
   { id: 'e5', fromId: 'js', toId: 'node', label: 'тот же язык' },
-  { id: 'e6', fromId: 'node', toId: 'python', label: 'типичный бэкенд-пул' },
+  { id: 'e6', fromId: 'node', toId: 'python', label: 'бэкенд' },
   { id: 'e7', fromId: 'node', toId: 'go', label: 'сервисы' },
   { id: 'e8', fromId: 'go', toId: 'rust', label: 'systems' },
-  { id: 'e9', fromId: 'python', toId: 'sql', label: 'ORM / raw SQL' },
+  { id: 'e9', fromId: 'python', toId: 'sql', label: 'ORM / SQL' },
   { id: 'e10', fromId: 'js', toId: 'json', label: 'parse / API' },
   { id: 'e11', fromId: 'sql', toId: 'node', label: 'драйверы БД' },
+  { id: 'e12', fromId: 'react', toId: 'vue', label: 'альтернатива UI' },
+  { id: 'e13', fromId: 'js', toId: 'svelte', label: 'компоненты' },
+  { id: 'e14', fromId: 'ts', toId: 'angular', label: 'корп. фронт' },
+  { id: 'e15', fromId: 'node', toId: 'java', label: 'бэкенд' },
+  { id: 'e16', fromId: 'java', toId: 'kotlin', label: 'JVM' },
+  { id: 'e17', fromId: 'python', toId: 'php', label: 'скрипты web' },
+  { id: 'e18', fromId: 'node', toId: 'ruby', label: 'web-стек' },
+  { id: 'e19', fromId: 'python', toId: 'bash', label: 'автоматизация' },
+  { id: 'e20', fromId: 'go', toId: 'cpp', label: 'производительность' },
+  { id: 'e21', fromId: 'rust', toId: 'c', label: 'нативный код' },
+  { id: 'e22', fromId: 'node', toId: 'docker', label: 'образы' },
+  { id: 'e23', fromId: 'json', toId: 'markdown', label: 'документация' },
+  { id: 'e24', fromId: 'ts', toId: 'swift', label: 'типизация' },
+  { id: 'e25', fromId: 'js', toId: 'dart', label: 'фронт/mob' },
 ]

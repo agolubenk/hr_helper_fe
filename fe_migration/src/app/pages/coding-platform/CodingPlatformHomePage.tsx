@@ -14,6 +14,7 @@ import {
   writeEnabledCodingLanguageIds,
 } from '@/features/coding-platform/codingPlatformLanguagesStorage'
 import { CodingPlatformPageShell } from './CodingPlatformPageShell'
+import { CodingPlatformStackMapCard } from './CodingPlatformStackMapCard'
 import styles from '../styles/CodingPlatformPages.module.css'
 
 const PREVIEW_LABEL: Record<string, string> = {
@@ -92,7 +93,7 @@ export function CodingPlatformHomePage() {
   return (
     <CodingPlatformPageShell
       title="Кодинговая платформа"
-      description="Соберите свой набор языков и стеков, как в симуляторах технических собеседований: подключайте модули из каталога, смотрите карту связей и открывайте песочницу под выбранный рантайм."
+      description="Соберите набор языков и фреймворков: каталог ниже, карта связей и песочница с мок-раннерами. Сохранённые черновики — в разделе «Сохранённое»."
     >
       <Card size="2" mb="4" variant="surface">
         <Flex direction="column" gap="2">
@@ -212,6 +213,16 @@ export function CodingPlatformHomePage() {
           </Card>
         ))}
       </Flex>
+
+      <Separator size="4" my="4" />
+
+      <Text size="4" weight="bold" mb="2" className={styles.studioSectionTitle}>
+        Карта связей
+      </Text>
+      <Text size="2" color="gray" mb="3">
+        Узлы соответствуют каталогу; подключённые языки подсвечиваются при фильтре «только подключённые».
+      </Text>
+      <CodingPlatformStackMapCard />
     </CodingPlatformPageShell>
   )
 }

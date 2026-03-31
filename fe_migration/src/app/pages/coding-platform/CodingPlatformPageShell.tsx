@@ -6,26 +6,47 @@ import styles from '../styles/CodingPlatformPages.module.css'
 interface CodingPlatformPageShellProps {
   title: string
   description?: string
-  /** Шире обычного wrap — для IDE-песочницы */
-  wide?: boolean
   children: ReactNode
+  /** Заполнить доступную высоту под AppLayout (песочница IDE без лишнего скролла снаружи) */
+  fillAvailableHeight?: boolean
 }
 
-export function CodingPlatformPageShell({ title, description, wide, children }: CodingPlatformPageShellProps) {
+export function CodingPlatformPageShell({
+  title,
+  description,
+  children,
+  fillAvailableHeight = false,
+}: CodingPlatformPageShellProps) {
   return (
-    <Flex direction="column" gap="4" className={wide ? styles.wrapWide : styles.wrap} p={{ initial: '3', sm: '4' }}>
+    <Flex
+      direction="column"
+      gap="4"
+      className={styles.wrapWide}
+      p={{ initial: '3', sm: '4' }}
+      style={
+        fillAvailableHeight
+          ? { flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }
+          : undefined
+      }
+    >
       <Box>
-        <Heading size="6" mb="1">
-          {title}
-        </Heading>
+        <Flex align="center" justify="between" gap="4" wrap="wrap" mb={description ? '2' : '0'}>
+          <Heading size="6" style={{ margin: 0 }}>
+            {title}
+          </Heading>
+          <CodingPlatformNavCard variant="inline" />
+        </Flex>
         {description ? (
           <Text size="2" color="gray">
             {description}
           </Text>
         ) : null}
       </Box>
-      <CodingPlatformNavCard />
-      {children}
+      {fillAvailableHeight ? (
+        <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</Box>
+      ) : (
+        children
+      )}
     </Flex>
   )
 }

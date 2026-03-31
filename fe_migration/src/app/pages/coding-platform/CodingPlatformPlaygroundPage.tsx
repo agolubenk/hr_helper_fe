@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Box, Button, Checkbox, Dialog, Flex, Switch, Tabs, Text } from '@radix-ui/themes'
 import {
-  Box,
-  Button,
-  Card,
-  Checkbox,
-  Dialog,
-  Flex,
-  Switch,
-  Tabs,
-  Text,
-} from '@radix-ui/themes'
-import { PlayIcon } from '@radix-ui/react-icons'
+  CaretLeftIcon,
+  CaretRightIcon,
+  ChevronDownIcon,
+  DashboardIcon,
+  FileTextIcon,
+  LayersIcon,
+  PlayIcon,
+} from '@radix-ui/react-icons'
 import { CodingPlatformPageShell } from './CodingPlatformPageShell'
 import { getLanguageById, sortCatalog } from '@/features/coding-platform/languageCatalog'
 import type { CodingLanguageDefinition } from '@/features/coding-platform/types'
@@ -27,6 +25,7 @@ import {
   sortSelectedIds,
 } from '@/features/coding-platform/playgroundSelection'
 import ideStyles from './CodingPlatformPlaygroundPage.module.css'
+import { PlaygroundHighlightedEditor } from './PlaygroundHighlightedEditor'
 
 const DEFAULT_HTML = `<h1>Песочница</h1>
 <p id="demo">Здесь оживит JavaScript.</p>`
@@ -47,6 +46,21 @@ if (el) {
 
 const DEFAULT_REACT = PLAYGROUND_MONO_DEFAULTS.react ?? ''
 
+const PREVIEW_DEBOUNCE_MS = 320
+
+const WORKSPACE_TITLE_STORAGE_KEY = 'coding-playground-workspace-title'
+const DEFAULT_WORKSPACE_TITLE = 'Рабочая область'
+
+function readStoredWorkspaceTitle(): string {
+  if (typeof window === 'undefined') return DEFAULT_WORKSPACE_TITLE
+  try {
+    const raw = localStorage.getItem(WORKSPACE_TITLE_STORAGE_KEY)?.trim()
+    return raw && raw.length > 0 ? raw : DEFAULT_WORKSPACE_TITLE
+  } catch {
+    return DEFAULT_WORKSPACE_TITLE
+  }
+}
+
 function escapeClosingScript(js: string): string {
   return js.replace(/<\/script>/gi, '<\\/script>')
 }
@@ -64,6 +78,15 @@ function pickDefaultLang(enabledIds: string[]): string {
   return web?.id ?? defs[0]?.id ?? 'js'
 }
 
+function cursorLineCol(text: string, index: number): { line: number; col: number } {
+  const i = Math.max(0, Math.min(index, text.length))
+  const before = text.slice(0, i)
+  const lines = before.split('\n')
+  const line = lines.length
+  const col = (lines[lines.length - 1]?.length ?? 0) + 1
+  return { line, col }
+}
+
 const RUNNER_LABEL: Record<string, string> = {
   'iframe-web': 'браузер',
   'typescript-note': 'tsc (мок)',
@@ -71,15 +94,92 @@ const RUNNER_LABEL: Record<string, string> = {
   'server-mock': 'раннер (мок)',
 }
 
+function bottomPanelCopyForLang(def: CodingLanguageDefinition | undefined): { main: string; hint: string } {
+  if (!def) {
+    return { main: 'Вывод', hint: 'Выберите вкладку языка.' }
+  }
+  if (def.runner === 'iframe-web') {
+    return {
+      main: 'Терминал',
+      hint: `${def.title}: логи debounce и принудительного обновления предпросмотра (мок).`,
+    }
+  }
+  if (def.runner === 'typescript-note') {
+    return {
+      main: 'Консоль',
+      hint: `${def.title}: вывод проверки типов (мок, без реального tsc).`,
+    }
+  }
+  if (def.runner === 'server-mock') {
+    return {
+      main: 'Консоль',
+      hint: `${def.title}: stdout / stderr раннера в песочнице (мок).`,
+    }
+  }
+  return {
+    main: 'Консоль',
+    hint: `${def.title}: статическая проверка или парсинг без исполнения (мок).`,
+  }
+}
+
+function usePlaygroundNarrow(): boolean {
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 960px)')
+    const apply = () => setNarrow(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+  return narrow
+}
+
 export function CodingPlatformPlaygroundPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [enabledIds, setEnabledIds] = useState<string[]>(() => readEnabledCodingLanguageIds())
   const [langDialogOpen, setLangDialogOpen] = useState(false)
+  const [workspaceTitle, setWorkspaceTitle] = useState(readStoredWorkspaceTitle)
+  const narrowLayout = usePlaygroundNarrow()
+  const splitRowRef = useRef<HTMLDivElement | null>(null)
+  const sideSplitRef = useRef<HTMLDivElement | null>(null)
+  const editorColumnRef = useRef<HTMLDivElement | null>(null)
+  const sideColumnRef = useRef<HTMLDivElement | null>(null)
+
+  const [editorFontPx, setEditorFontPx] = useState(13)
+  const [activityBarVisible, setActivityBarVisible] = useState(true)
+  const [splitRatio, setSplitRatio] = useState(0.56)
+  const [sidePreviewRatio, setSidePreviewRatio] = useState(0.55)
+  const [sashDragging, setSashDragging] = useState(false)
+  const [sideSashDragging, setSideSashDragging] = useState(false)
+  const [debouncedSrcDoc, setDebouncedSrcDoc] = useState('')
+  const [caret, setCaret] = useState({ line: 1, col: 1 })
+  const [activityFocus, setActivityFocus] = useState<'explorer' | 'preview'>('explorer')
+  const [bottomPanelOpen, setBottomPanelOpen] = useState(true)
 
   useEffect(() => {
     const sync = () => setEnabledIds(readEnabledCodingLanguageIds())
     window.addEventListener(CODING_LANGUAGES_CHANGED_EVENT, sync)
     return () => window.removeEventListener(CODING_LANGUAGES_CHANGED_EVENT, sync)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      if (e.key === '=' || e.key === '+') {
+        e.preventDefault()
+        setEditorFontPx((n) => Math.min(n + 1, 22))
+      }
+      if (e.key === '-') {
+        e.preventDefault()
+        setEditorFontPx((n) => Math.max(n - 1, 10))
+      }
+      if (e.key === '0') {
+        e.preventDefault()
+        setEditorFontPx(13)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   const enabledSorted = useMemo(
@@ -92,6 +192,7 @@ export function CodingPlatformPlaygroundPage() {
   const langsParam = searchParams.get('langs')
   const langParam = searchParams.get('lang')
   const previewOpen = searchParams.get('preview') !== '0'
+  const outputOpen = searchParams.get('output') !== '0'
 
   const selectedIds = useMemo(() => {
     const parsed = parseLangsParam(langsParam, enabledSet)
@@ -111,11 +212,17 @@ export function CodingPlatformPlaygroundPage() {
         p.set('langs', canonical)
         p.set('lang', selectedIds[0])
         if (!p.has('preview')) p.set('preview', '1')
+        if (!p.has('output')) p.set('output', '1')
         return p
       },
       { replace: true },
     )
   }, [selectedIds, langsParam, enabledIds.length, setSearchParams])
+
+  const canWebPreview = useMemo(
+    () => selectionHasWebPreview(selectedIds, getLanguageById),
+    [selectedIds],
+  )
 
   const [activeTab, setActiveTab] = useState<string>('')
 
@@ -130,6 +237,20 @@ export function CodingPlatformPlaygroundPage() {
         (prev) => {
           const p = new URLSearchParams(prev)
           p.set('preview', open ? '1' : '0')
+          return p
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
+
+  const setOutputOpen = useCallback(
+    (open: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev)
+          p.set('output', open ? '1' : '0')
           return p
         },
         { replace: true },
@@ -186,8 +307,22 @@ export function CodingPlatformPlaygroundPage() {
   )
 
   const [mockOutput, setMockOutput] = useState('')
+  const [terminalLines, setTerminalLines] = useState<string[]>(() => [
+    'sandbox@playground:~$ мок-терминал предпросмотра. Логи появляются при обновлении iframe.',
+  ])
 
-  const showBrowser = selectionHasWebPreview(selectedIds, getLanguageById) && previewOpen
+  const appendTerminalLine = useCallback((message: string) => {
+    const stamp = new Date().toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    setTerminalLines((prev) => [...prev, `${stamp}  ${message}`].slice(-320))
+  }, [])
+
+  const showBrowser = canWebPreview && previewOpen
+  const showOutputPanel = outputOpen
+  const showSideColumn = showBrowser || showOutputPanel
 
   const jsForIframe = useMemo(() => {
     const parts: string[] = []
@@ -198,11 +333,57 @@ export function CodingPlatformPlaygroundPage() {
 
   const srcDoc = useMemo(() => buildSrcDoc(html, css, jsForIframe), [html, css, jsForIframe])
 
+  useEffect(() => {
+    if (!showBrowser) {
+      setDebouncedSrcDoc('')
+      return
+    }
+    const t = window.setTimeout(() => setDebouncedSrcDoc(srcDoc), PREVIEW_DEBOUNCE_MS)
+    return () => window.clearTimeout(t)
+  }, [srcDoc, showBrowser])
+
+  const previewDocLoggedRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!showBrowser) previewDocLoggedRef.current = null
+  }, [showBrowser])
+
+  useEffect(() => {
+    if (!showBrowser || !debouncedSrcDoc) return
+    if (previewDocLoggedRef.current === debouncedSrcDoc) return
+    previewDocLoggedRef.current = debouncedSrcDoc
+    appendTerminalLine('preview: документ применён в iframe (debounce)')
+  }, [appendTerminalLine, debouncedSrcDoc, showBrowser])
+
   const refreshPreview = useCallback(() => {
+    setDebouncedSrcDoc(srcDoc)
     setIframeKey((k) => k + 1)
-  }, [])
+  }, [srcDoc])
 
   const activeDef = activeTab ? getLanguageById(activeTab) : undefined
+
+  const activeEditorText = useMemo(() => {
+    if (!activeDef) return ''
+    if (activeDef.runner === 'iframe-web') {
+      if (activeTab === 'html') return html
+      if (activeTab === 'css') return css
+      if (activeTab === 'js') return js
+      if (activeTab === 'react') return reactCode
+    }
+    return monoCode
+  }, [activeDef, activeTab, html, css, js, reactCode, monoCode])
+
+  useEffect(() => {
+    const { line, col } = cursorLineCol(activeEditorText, 0)
+    setCaret({ line, col })
+  }, [activeTab, activeEditorText])
+
+  const updateCaretFromEvent = useCallback(
+    (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      const t = e.currentTarget
+      setCaret(cursorLineCol(t.value, t.selectionStart))
+    },
+    [],
+  )
 
   const runServerMock = useCallback(() => {
     const title = activeDef?.title ?? 'язык'
@@ -228,13 +409,26 @@ export function CodingPlatformPlaygroundPage() {
       }
       return
     }
-    setMockOutput('SQL: проверка на сервере (мок). Сохраните запрос для отправки в API.')
+    if (activeTab === 'docker') {
+      setMockOutput('Dockerfile: статическая проверка инструкций (мок). Подключите hadolint или API.')
+      return
+    }
+    if (activeTab === 'markdown') {
+      setMockOutput('Markdown: разбор заголовков и блоков кода (мок).')
+      return
+    }
+    if (activeTab === 'sql') {
+      setMockOutput('SQL: проверка на сервере (мок). Сохраните запрос для отправки в API.')
+      return
+    }
+    setMockOutput('Статическая проверка (мок).')
   }, [activeTab, monoCode])
 
   const runForActive = useCallback(() => {
     if (!activeDef) return
     if (activeDef.runner === 'iframe-web') {
       refreshPreview()
+      appendTerminalLine('run: принудительное обновление предпросмотра')
       return
     }
     if (activeDef.runner === 'typescript-note') {
@@ -246,22 +440,13 @@ export function CodingPlatformPlaygroundPage() {
       return
     }
     runStaticMock()
-  }, [activeDef, refreshPreview, runServerMock, runStaticMock, runTsMock])
+  }, [activeDef, appendTerminalLine, refreshPreview, runServerMock, runStaticMock, runTsMock])
 
   useEffect(() => {
     setMockOutput('')
   }, [activeTab])
 
-  const runLabel =
-    activeDef?.runner === 'iframe-web'
-      ? 'Обновить предпросмотр'
-      : activeDef?.runner === 'typescript-note'
-        ? 'Проверить типы (мок)'
-        : activeDef?.runner === 'static-only' && activeTab === 'json'
-          ? 'Проверить JSON'
-          : activeDef?.runner === 'static-only'
-            ? 'Проверить (мок)'
-            : 'Запустить (мок)'
+  const runLabel = 'Запустить'
 
   const linesCount = useMemo(() => {
     if (!activeDef) return 0
@@ -275,228 +460,450 @@ export function CodingPlatformPlaygroundPage() {
     return monoCode.split('\n').length
   }, [activeDef, activeTab, html, css, js, reactCode, monoCode])
 
-  return (
-    <CodingPlatformPageShell
-      wide
-      title="Песочница live-coding"
-      description="Режим IDE: несколько языков во вкладках, отдельная панель браузера при веб-стеке. Параметры URL: langs=html,css,js, preview=1|0, lang — первичный для обратной совместимости."
+  const focusFirstEditor = useCallback(() => {
+    const ta = editorColumnRef.current?.querySelector('textarea')
+    ta?.focus()
+    setActivityFocus('explorer')
+  }, [])
+
+  const focusSidePanel = useCallback(() => {
+    sideColumnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    setActivityFocus('preview')
+  }, [])
+
+  const finalizeWorkspaceTitle = useCallback((raw: string) => {
+    const next = raw.trim() || DEFAULT_WORKSPACE_TITLE
+    setWorkspaceTitle(next)
+    try {
+      localStorage.setItem(WORKSPACE_TITLE_STORAGE_KEY, next)
+    } catch {
+      /* quota / private mode */
+    }
+  }, [])
+
+  const onSashMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (narrowLayout || !showSideColumn) return
+      e.preventDefault()
+      setSashDragging(true)
+      const row = splitRowRef.current
+      if (!row) return
+      const rect = row.getBoundingClientRect()
+      const onMove = (ev: MouseEvent) => {
+        const x = ev.clientX - rect.left
+        const next = Math.min(0.82, Math.max(0.22, x / rect.width))
+        setSplitRatio(next)
+      }
+      const onUp = () => {
+        setSashDragging(false)
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
+    },
+    [narrowLayout, showSideColumn],
+  )
+
+  const onSideSashMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (narrowLayout || !showBrowser || !showOutputPanel || !bottomPanelOpen) return
+      e.preventDefault()
+      setSideSashDragging(true)
+      const host = sideSplitRef.current
+      if (!host) return
+      const rect = host.getBoundingClientRect()
+      const onMove = (ev: MouseEvent) => {
+        const y = ev.clientY - rect.top
+        const next = Math.min(0.82, Math.max(0.18, y / rect.height))
+        setSidePreviewRatio(next)
+      }
+      const onUp = () => {
+        setSideSashDragging(false)
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
+    },
+    [bottomPanelOpen, narrowLayout, showBrowser, showOutputPanel],
+  )
+
+  const previewGrow = Math.round(sidePreviewRatio * 100)
+  const outputGrow = 100 - previewGrow
+  const bottomPanelLegend = useMemo(() => bottomPanelCopyForLang(activeDef), [activeDef])
+  const bottomPanelBody =
+    activeDef?.runner === 'iframe-web'
+      ? terminalLines.join('\n')
+      : mockOutput.trim().length > 0
+        ? mockOutput
+        : null
+
+  const activeEditor = useMemo(() => {
+    if (!activeTab || !selectedIds.includes(activeTab)) return null
+    const d = getLanguageById(activeTab)
+    if (!d) return null
+    const common = {
+      fontSizePx: editorFontPx,
+      onCaret: updateCaretFromEvent,
+    } as const
+    if (d.runner === 'iframe-web') {
+      if (activeTab === 'html') {
+        return (
+          <PlaygroundHighlightedEditor
+            tabId="html"
+            value={html}
+            onChange={setHtml}
+            ariaLabel="HTML"
+            {...common}
+          />
+        )
+      }
+      if (activeTab === 'css') {
+        return (
+          <PlaygroundHighlightedEditor tabId="css" value={css} onChange={setCss} ariaLabel="CSS" {...common} />
+        )
+      }
+      if (activeTab === 'js') {
+        return (
+          <PlaygroundHighlightedEditor
+            tabId="js"
+            value={js}
+            onChange={setJs}
+            ariaLabel="JavaScript"
+            {...common}
+          />
+        )
+      }
+      if (activeTab === 'react') {
+        return (
+          <PlaygroundHighlightedEditor
+            tabId="react"
+            value={reactCode}
+            onChange={setReactCode}
+            ariaLabel="React"
+            {...common}
+          />
+        )
+      }
+    }
+    const code = monoByLang[activeTab] ?? PLAYGROUND_MONO_DEFAULTS[activeTab] ?? ''
+    return (
+      <PlaygroundHighlightedEditor
+        plain
+        tabId={activeTab}
+        value={code}
+        onChange={(next) =>
+          setMonoByLang((prev) => ({
+            ...prev,
+            [activeTab]: next,
+          }))
+        }
+        ariaLabel={d.title}
+        {...common}
+      />
+    )
+  }, [
+    activeTab,
+    selectedIds,
+    html,
+    css,
+    js,
+    reactCode,
+    monoByLang,
+    editorFontPx,
+    updateCaretFromEvent,
+  ])
+
+  const reverseTerminalChrome = showBrowser && showOutputPanel
+
+  const browserPreviewTree = (
+    <>
+      <Box className={ideStyles.idePreviewChrome}>
+        <span className={ideStyles.idePreviewTitle}>Предпросмотр</span>
+        <span className={ideStyles.idePreviewDots} aria-hidden>
+          <span className={ideStyles.idePreviewDot} style={{ background: 'var(--red-9)' }} />
+          <span className={ideStyles.idePreviewDot} style={{ background: 'var(--amber-9)' }} />
+          <span className={ideStyles.idePreviewDot} style={{ background: 'var(--green-9)' }} />
+        </span>
+      </Box>
+      <Box className={ideStyles.idePreviewBody}>
+        <iframe
+          key={iframeKey}
+          title="Предпросмотр песочницы"
+          sandbox="allow-scripts"
+          srcDoc={debouncedSrcDoc}
+          style={{
+            flex: 1,
+            minHeight: 200,
+            width: '100%',
+            border: '1px solid var(--gray-a6)',
+            borderRadius: 'var(--radius-3)',
+            background: '#fff',
+          }}
+        />
+      </Box>
+    </>
+  )
+
+  const sideOutputPanel = (
+    <div
+      className={[
+        ideStyles.ideBottomPanel,
+        ideStyles.ideBottomPanelInSide,
+        bottomPanelOpen ? ideStyles.ideBottomPanelExpanded : ideStyles.ideBottomPanelCollapsed,
+        reverseTerminalChrome ? ideStyles.ideBottomPanelReverse : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
-      <Box className={ideStyles.ideChrome}>
-        <Flex className={ideStyles.ideToolbar} align="center" gap="2" wrap="wrap">
-          <Text size="2" weight="bold">
-            Рабочая область
-          </Text>
-          <Dialog.Root open={langDialogOpen} onOpenChange={setLangDialogOpen}>
-            <Dialog.Trigger>
-              <Button size="2" variant="soft">
-                Языки и стеки…
-              </Button>
-            </Dialog.Trigger>
-            <Dialog.Content size="3" style={{ maxWidth: 440 }}>
-              <Dialog.Title>Открытые языки</Dialog.Title>
-              <Dialog.Description size="2" color="gray" mb="3">
-                Отметьте один или несколько подключённых языков. Вкладки редактора следуют порядку каталога. Минимум один
-                язык.
-              </Dialog.Description>
-              <Flex direction="column" gap="1">
-                {enabledSorted.map((l) => {
-                  const on = selectedIds.includes(l.id)
-                  return (
-                    <Flex key={l.id} align="center" justify="between" gap="3" className={ideStyles.langDialogRow}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, cursor: 'pointer' }}>
-                        <Checkbox
-                          checked={on}
-                          disabled={on && selectedIds.length <= 1}
-                          onCheckedChange={(v) => toggleLang(l.id, v === true)}
-                        />
-                        <Flex direction="column" gap="0" style={{ minWidth: 0 }}>
-                          <Text size="2" weight="medium">
-                            {l.title}
-                          </Text>
-                          <Text size="1" color="gray">
-                            {RUNNER_LABEL[l.runner] ?? l.runner}
-                          </Text>
-                        </Flex>
-                      </label>
-                    </Flex>
-                  )
-                })}
+      <button
+        type="button"
+        className={ideStyles.ideBottomPanelHead}
+        aria-expanded={bottomPanelOpen}
+        aria-controls="playground-bottom-panel-body"
+        id="playground-bottom-panel-head"
+        onClick={() => setBottomPanelOpen((o) => !o)}
+      >
+        <ChevronDownIcon className={ideStyles.ideBottomPanelChevron} width={16} height={16} aria-hidden />
+        <span className={ideStyles.ideBottomPanelHeadText}>
+          <span className={ideStyles.ideBottomPanelHeadMain}>{bottomPanelLegend.main}</span>
+          <span className={ideStyles.ideBottomPanelHeadHint}>{bottomPanelLegend.hint}</span>
+        </span>
+      </button>
+      <Box
+        id="playground-bottom-panel-body"
+        role="region"
+        aria-labelledby="playground-bottom-panel-head"
+        className={ideStyles.ideBottomPanelBody}
+      >
+        {bottomPanelBody ? (
+          bottomPanelBody
+        ) : (
+          <span className={ideStyles.ideBottomPanelPlaceholder}>
+            {activeDef?.runner === 'iframe-web'
+              ? 'Сообщения появятся после правок с включённым предпросмотром или по кнопке запуска.'
+              : 'Запустите проверку или раннер — вывод появится здесь.'}
+          </span>
+        )}
+      </Box>
+    </div>
+  )
+
+  return (
+    <CodingPlatformPageShell title="Песочница live-coding" fillAvailableHeight>
+      <Box className={ideStyles.ideRoot} data-playground-ide>
+        <Flex className={ideStyles.ideToolbar} align="center" gap="2" wrap="nowrap">
+          <div className={ideStyles.ideToolbarLead}>
+            <button
+              type="button"
+              className={ideStyles.ideActivityToggle}
+              aria-pressed={activityBarVisible}
+              aria-label={
+                activityBarVisible ? 'Скрыть панель активности' : 'Показать панель активности'
+              }
+              onClick={() => setActivityBarVisible((v) => !v)}
+            >
+              {activityBarVisible ? <CaretLeftIcon width={16} height={16} /> : <CaretRightIcon width={16} height={16} />}
+            </button>
+            <input
+              type="text"
+              className={ideStyles.ideWorkspaceTitle}
+              value={workspaceTitle}
+              onChange={(e) => setWorkspaceTitle(e.target.value)}
+              onBlur={(e) => finalizeWorkspaceTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+              maxLength={120}
+              spellCheck={false}
+              aria-label="Название рабочей области"
+            />
+
+            {canWebPreview ? (
+              <Flex align="center" gap="2">
+                <Text size="2">Браузер</Text>
+                <Switch checked={previewOpen} onCheckedChange={setPreviewOpen} aria-label="Панель предпросмотра" />
               </Flex>
-            </Dialog.Content>
-          </Dialog.Root>
+            ) : null}
 
-          {selectionHasWebPreview(selectedIds, getLanguageById) ? (
             <Flex align="center" gap="2">
-              <Text size="2">Браузер</Text>
-              <Switch checked={previewOpen} onCheckedChange={setPreviewOpen} aria-label="Панель предпросмотра" />
+              <Text size="2">Вывод</Text>
+              <Switch
+                checked={outputOpen}
+                onCheckedChange={setOutputOpen}
+                aria-label="Панель терминала или консоли"
+              />
             </Flex>
-          ) : null}
+          </div>
 
-          <Button size="2" variant="solid" onClick={runForActive} disabled={!activeDef}>
+          <Button size="2" variant="solid" onClick={runForActive} disabled={!activeDef} style={{ flexShrink: 0 }}>
             <Flex align="center" gap="2">
               <PlayIcon width={14} height={14} />
               {runLabel}
             </Flex>
           </Button>
-
-          <Text className={ideStyles.ideToolbarMeta} size="1" color="gray">
-            Вкладок: {selectedIds.length}
-            {showBrowser ? ' · предпросмотр вкл.' : ''}
-          </Text>
         </Flex>
 
-        <Box
-          className={`${ideStyles.ideWorkArea} ${showBrowser ? ideStyles.ideWorkAreaSplit : ''}`.trim()}
-        >
-          <Box className={ideStyles.ideEditorColumn}>
-            <Tabs.Root
-              className={ideStyles.ideTabsRoot}
-              value={activeTab}
-              onValueChange={setActiveTab}
-            >
-              <Tabs.List className={ideStyles.ideTabsList}>
-                {selectedIds.map((id) => {
-                  const d = getLanguageById(id)
-                  return (
-                    <Tabs.Trigger key={id} value={id}>
-                      {d?.title ?? id}
-                    </Tabs.Trigger>
-                  )
-                })}
-              </Tabs.List>
-
-              {selectedIds.map((id) => {
-                const d = getLanguageById(id)
-                if (!d) return null
-                if (d.runner === 'iframe-web' && id === 'html') {
-                  return (
-                    <Tabs.Content key={id} value="html" className={ideStyles.ideTabContent}>
-                      <Text className={ideStyles.ideLabel}>HTML</Text>
-                      <textarea
-                        className={ideStyles.ideTextarea}
-                        value={html}
-                        onChange={(e) => setHtml(e.target.value)}
-                        spellCheck={false}
-                        aria-label="HTML"
+        <Dialog.Root open={langDialogOpen} onOpenChange={setLangDialogOpen}>
+          <Dialog.Content size="3" style={{ maxWidth: 440 }}>
+            <Dialog.Title>Открытые языки</Dialog.Title>
+            <Dialog.Description size="2" color="gray" mb="3">
+              Отметьте один или несколько подключённых языков. Вкладки редактора следуют порядку каталога. Минимум один язык.
+            </Dialog.Description>
+            <Flex direction="column" gap="1">
+              {enabledSorted.map((l) => {
+                const on = selectedIds.includes(l.id)
+                return (
+                  <Flex key={l.id} align="center" justify="between" gap="3" className={ideStyles.langDialogRow}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, cursor: 'pointer' }}>
+                      <Checkbox
+                        checked={on}
+                        disabled={on && selectedIds.length <= 1}
+                        onCheckedChange={(v) => toggleLang(l.id, v === true)}
                       />
-                    </Tabs.Content>
-                  )
-                }
-                if (d.runner === 'iframe-web' && id === 'css') {
-                  return (
-                    <Tabs.Content key={id} value="css" className={ideStyles.ideTabContent}>
-                      <Text className={ideStyles.ideLabel}>CSS</Text>
-                      <textarea
-                        className={ideStyles.ideTextarea}
-                        value={css}
-                        onChange={(e) => setCss(e.target.value)}
-                        spellCheck={false}
-                        aria-label="CSS"
-                      />
-                    </Tabs.Content>
-                  )
-                }
-                if (d.runner === 'iframe-web' && id === 'js') {
-                  return (
-                    <Tabs.Content key={id} value="js" className={ideStyles.ideTabContent}>
-                      <Text className={ideStyles.ideLabel}>JavaScript</Text>
-                      <textarea
-                        className={ideStyles.ideTextarea}
-                        value={js}
-                        onChange={(e) => setJs(e.target.value)}
-                        spellCheck={false}
-                        aria-label="JavaScript"
-                      />
-                    </Tabs.Content>
-                  )
-                }
-                if (d.runner === 'iframe-web' && id === 'react') {
-                  return (
-                    <Tabs.Content key={id} value="react" className={ideStyles.ideTabContent}>
-                      <Text className={ideStyles.ideLabel}>React (доп. к JS в iframe, мок)</Text>
-                      <textarea
-                        className={ideStyles.ideTextarea}
-                        value={reactCode}
-                        onChange={(e) => setReactCode(e.target.value)}
-                        spellCheck={false}
-                        aria-label="React"
-                      />
-                    </Tabs.Content>
-                  )
-                }
-                if (d.runner !== 'iframe-web') {
-                  const code = monoByLang[id] ?? PLAYGROUND_MONO_DEFAULTS[id] ?? ''
-                  return (
-                    <Tabs.Content key={id} value={id} className={ideStyles.ideTabContent}>
-                      <Text className={ideStyles.ideLabel}>{d.title}</Text>
-                      <textarea
-                        className={ideStyles.ideTextarea}
-                        value={code}
-                        onChange={(e) =>
-                          setMonoByLang((prev) => ({
-                            ...prev,
-                            [id]: e.target.value,
-                          }))
-                        }
-                        spellCheck={false}
-                        aria-label={d.title}
-                      />
-                    </Tabs.Content>
-                  )
-                }
-                return null
+                      <Flex direction="column" gap="0" style={{ minWidth: 0 }}>
+                        <Text size="2" weight="medium">
+                          {l.title}
+                        </Text>
+                        <Text size="1" color="gray">
+                          {RUNNER_LABEL[l.runner] ?? l.runner}
+                        </Text>
+                      </Flex>
+                    </label>
+                  </Flex>
+                )
               })}
-            </Tabs.Root>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
 
-            {mockOutput ? <Box className={ideStyles.ideOutput}>{mockOutput}</Box> : null}
-          </Box>
-
-          {showBrowser ? (
-            <Box className={ideStyles.idePreviewColumn}>
-              <Box className={ideStyles.idePreviewHead}>Предпросмотр (iframe)</Box>
-              <Box className={ideStyles.idePreviewBody}>
-                <iframe
-                  key={iframeKey}
-                  title="Предпросмотр песочницы"
-                  sandbox="allow-scripts"
-                  srcDoc={srcDoc}
-                  style={{
-                    flex: 1,
-                    minHeight: 200,
-                    width: '100%',
-                    border: '1px solid var(--gray-a6)',
-                    borderRadius: 'var(--radius-3)',
-                    background: '#fff',
-                  }}
-                />
-                <Text size="1" color="gray" mt="2">
-                  sandbox=&quot;allow-scripts&quot; — изолирован от родительского окна. HTML/CSS/JS/React склеиваются в один
-                  документ.
-                </Text>
-              </Box>
-            </Box>
+        <div className={ideStyles.ideMain}>
+          {activityBarVisible ? (
+            <div className={ideStyles.ideActivityBar} aria-label="Панель активности">
+            <button
+              type="button"
+              className={`${ideStyles.ideActivityBtn} ${activityFocus === 'explorer' ? ideStyles.ideActivityBtnActive : ''}`}
+              title="Фокус на редакторе"
+              aria-label="Фокус на редакторе"
+              onClick={focusFirstEditor}
+            >
+              <FileTextIcon width={20} height={20} />
+            </button>
+            <button
+              type="button"
+              className={`${ideStyles.ideActivityBtn} ${activityFocus === 'preview' ? ideStyles.ideActivityBtnActive : ''}`}
+              title="К боковой панели"
+              aria-label="К боковой панели (предпросмотр или вывод)"
+              onClick={focusSidePanel}
+              disabled={!showSideColumn}
+            >
+              <DashboardIcon width={20} height={20} />
+            </button>
+            <button type="button" className={ideStyles.ideActivityBtn} title="Стеки (языки)" aria-label="Языки" onClick={() => setLangDialogOpen(true)}>
+              <LayersIcon width={20} height={20} />
+            </button>
+            </div>
           ) : null}
-        </Box>
+
+          <div className={ideStyles.ideWorkspace}>
+            <div ref={splitRowRef} className={ideStyles.ideSplitRow}>
+              <Box
+                ref={editorColumnRef}
+                className={ideStyles.ideEditorColumn}
+                style={
+                  !showSideColumn || narrowLayout
+                    ? { flex: 1, minWidth: 0, width: '100%' }
+                    : { width: `${splitRatio * 100}%`, minWidth: 0 }
+                }
+              >
+                <Tabs.Root className={ideStyles.ideTabsRoot} value={activeTab} onValueChange={setActiveTab}>
+                  <Tabs.List className={ideStyles.ideTabsList}>
+                    {selectedIds.map((id) => {
+                      const d = getLanguageById(id)
+                      return (
+                        <Tabs.Trigger key={id} value={id} className={ideStyles.ideTabTrigger}>
+                          {d?.title ?? id}
+                        </Tabs.Trigger>
+                      )
+                    })}
+                  </Tabs.List>
+
+                  <div className={ideStyles.ideTabsPanelWrap}>
+                    {activeTab && selectedIds.includes(activeTab) ? (
+                      <Tabs.Content key={activeTab} value={activeTab} className={ideStyles.ideTabContent}>
+                        {activeEditor}
+                      </Tabs.Content>
+                    ) : null}
+                  </div>
+                </Tabs.Root>
+              </Box>
+
+              {showSideColumn && !narrowLayout ? (
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  className={`${ideStyles.ideSash} ${sashDragging ? ideStyles.ideSashDragging : ''}`}
+                  onMouseDown={onSashMouseDown}
+                />
+              ) : null}
+
+              {showSideColumn ? (
+                <Box ref={sideColumnRef} className={ideStyles.ideSideColumn}>
+                  {showBrowser && showOutputPanel && bottomPanelOpen ? (
+                    <div ref={sideSplitRef} className={ideStyles.ideSideSplitHost}>
+                      <div
+                        className={ideStyles.ideSidePreview}
+                        style={{ flex: `${previewGrow} 1 0%`, minHeight: 0 }}
+                      >
+                        {browserPreviewTree}
+                      </div>
+                      <div
+                        role="separator"
+                        aria-orientation="horizontal"
+                        className={`${ideStyles.ideSashRow} ${sideSashDragging ? ideStyles.ideSashRowDragging : ''}`}
+                        onMouseDown={onSideSashMouseDown}
+                      />
+                      <div
+                        className={`${ideStyles.ideSideOutput} ${ideStyles.ideSideOutputStacked}`}
+                        style={{ flex: `${outputGrow} 1 0%`, minHeight: 0 }}
+                      >
+                        {sideOutputPanel}
+                      </div>
+                    </div>
+                  ) : showBrowser && showOutputPanel && !bottomPanelOpen ? (
+                    <>
+                      <div className={`${ideStyles.ideSidePreview} ${ideStyles.ideSidePreviewFill}`}>
+                        {browserPreviewTree}
+                      </div>
+                      <div className={`${ideStyles.ideSideOutput} ${ideStyles.ideSideOutputStacked}`}>
+                        {sideOutputPanel}
+                      </div>
+                    </>
+                  ) : showBrowser ? (
+                    <div className={`${ideStyles.ideSidePreview} ${ideStyles.ideSidePreviewFill}`}>
+                      {browserPreviewTree}
+                    </div>
+                  ) : showOutputPanel ? (
+                    <div className={ideStyles.ideSideOutput}>{sideOutputPanel}</div>
+                  ) : null}
+                </Box>
+              ) : null}
+            </div>
+          </div>
+        </div>
 
         <Flex className={ideStyles.ideStatusBar} align="center">
           <Text size="1">
-            UTF-8 · строк: {linesCount}
+            UTF-8 · Ln {caret.line}, Col {caret.col} · строк: {linesCount}
             {activeDef ? ` · ${activeDef.title}` : ''}
           </Text>
+          <Text size="1">{activeDef ? RUNNER_LABEL[activeDef.runner] ?? activeDef.runner : '—'}</Text>
           <Text size="1">
-            {activeDef ? RUNNER_LABEL[activeDef.runner] ?? activeDef.runner : '—'}
+            шрифт {editorFontPx}px · мок-слой (без реального API)
           </Text>
-          <Text size="1">мок-слой (без реального API)</Text>
         </Flex>
       </Box>
-
-      <Card size="2" mt="3">
-        <Text size="2" color="gray">
-          Примеры ссылок:{' '}
-          <code>/coding-platform/playground?lang=html</code> (автодобавит langs для веб-стека),{' '}
-          <code>?langs=html,css,ts&amp;preview=1</code>, <code>?preview=0</code> — только редакторы.
-        </Text>
-      </Card>
     </CodingPlatformPageShell>
   )
 }
