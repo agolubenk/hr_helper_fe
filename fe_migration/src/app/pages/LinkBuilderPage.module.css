@@ -1,0 +1,38 @@
+.hero {
+  border-radius: var(--radius-4);
+  padding: var(--space-5) var(--space-4);
+  background: linear-gradient(135deg, var(--gray-a3), var(--accent-a3));
+  border: 1px solid var(--gray-a6);
+}
+
+.heroTitle {
+  margin: 0 0 var(--space-1);
+  letter-spacing: -0.03em;
+}
+
+.heroRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin-top: var(--space-3);
+}
+
+.heroField {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.heroField :global(.rt-TextFieldInput):focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
+.heroCta {
+  flex: 0 0 auto;
+}
+
+.heroCta:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}

@@ -946,7 +946,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             (item.id === 'coding-platform-overview' && pathname === '/coding-platform') ||
             (item.id === 'coding-platform-languages' && pathname === '/coding-platform/languages') ||
             (item.id === 'coding-platform-playground' && pathname === '/coding-platform/playground') ||
-            (item.id === 'coding-link-builder' && pathname === '/coding-platform/link-builder') ||
+            (item.id === 'link-builder' && pathname === '/link-builder') ||
             (item.id === 'ats' && pathname?.startsWith('/ats')) ||
             (item.id === 'workflow-chat' && pathname === '/workflow') ||
             (item.id === 'invites' && pathname?.startsWith('/invites')) ||

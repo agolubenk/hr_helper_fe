@@ -58,7 +58,7 @@ import { MeetArchivePage } from '@/app/pages/meet/MeetArchivePage'
 import { CodingPlatformHomePage } from '@/app/pages/coding-platform/CodingPlatformHomePage'
 import { CodingPlatformLanguagesPage } from '@/app/pages/coding-platform/CodingPlatformLanguagesPage'
 import { CodingPlatformPlaygroundPage } from '@/app/pages/coding-platform/CodingPlatformPlaygroundPage'
-import { CodingPlatformLinkBuilderPage } from '@/app/pages/coding-platform/CodingPlatformLinkBuilderPage'
+import { LinkBuilderPage } from '@/app/pages/LinkBuilderPage'
 import { LearningFeedbackPage } from '@/app/pages/LearningFeedbackPage'
 import { SettingsSecurityUsersPage } from '@/app/pages/settings-security/SettingsSecurityUsersPage'
 import { SettingsSecurityRolesPage } from '@/app/pages/settings-security/SettingsSecurityRolesPage'
@@ -193,11 +193,12 @@ export function App() {
                 </AppLayout>
               }
             />
+            <Route path="/coding-platform/link-builder" element={<Navigate to="/link-builder" replace />} />
             <Route
-              path="/coding-platform/link-builder"
+              path="/link-builder"
               element={
-                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа — Link-билдер">
-                  <CodingPlatformLinkBuilderPage />
+                <AppLayout {...layoutProps} pageTitle="Link-билдер">
+                  <LinkBuilderPage />
                 </AppLayout>
               }
             />

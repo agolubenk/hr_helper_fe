@@ -113,6 +113,8 @@ export function isImplementedAppRoute(href: string): boolean {
 
   if (p === '/coding-platform' || p.startsWith('/coding-platform/')) return true
 
+  if (p === '/link-builder') return true
+
   if (p === '/invites' || p.startsWith('/invites/')) return true
 
   if (p.startsWith('/vacancies/salary-ranges')) return true

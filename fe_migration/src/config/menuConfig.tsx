@@ -107,6 +107,7 @@ export const MENU_LEVEL1_ORDER: string[] = [
   'integrations',
   'meet-system',
   'coding-platform',
+  'link-builder',
 ]
 
 export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
@@ -325,10 +326,10 @@ export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
     ],
   },
   {
-    id: 'coding-link-builder',
+    id: 'link-builder',
     label: 'Link-билдер',
     icon: ic(Link2Icon),
-    href: '/coding-platform/link-builder',
+    href: '/link-builder',
   },
 ]
 
@@ -352,14 +353,14 @@ export const MENU_LEVEL1_TO_LABEL: Record<string, string> = {
   integrations: 'Интеграции и автоматизации',
   'meet-system': 'Внутренние миты (разделы)',
   'coding-platform': 'Кодинговая платформа',
-  'coding-link-builder': 'Link-билдер',
+  'link-builder': 'Link-билдер',
 }
 
 /** Порядок групп на главной (без home) */
 /** Без `meet-system`: подразделы учитываются в том же продуктовом блоке, что и `meet-home`. */
 export const HOME_PAGE_GROUP_ORDER = MENU_LEVEL1_ORDER.filter(
   (id) =>
-    id !== 'home' && id !== 'meet-system' && id !== 'coding-platform' && id !== 'coding-link-builder',
+    id !== 'home' && id !== 'meet-system' &&     id !== 'coding-platform' && id !== 'link-builder',
 )
 
 /** Варианты фильтра модулей на главной странице */
@@ -385,7 +386,8 @@ function getFilterModule(blockId: string): string {
   if (/^analytics-|^reporting-/.test(blockId)) return 'Отчёты и аналитика'
   if (/^integrations-/.test(blockId)) return 'Интеграции и автоматизации'
   if (/^meet-/.test(blockId)) return 'Внутренние миты'
-  if (/^coding-platform-/.test(blockId) || blockId === 'coding-link-builder') return 'Кодинговая платформа'
+  if (/^coding-platform-/.test(blockId)) return 'Кодинговая платформа'
+  if (blockId === 'link-builder') return 'Link-билдер'
   if (/^settings-|^company-settings|^module-settings|^recruiting-settings|^company-settings-/.test(blockId)) return 'Настройки компании'
   return 'Сотрудники' // fallback
 }
@@ -439,7 +441,7 @@ const MENU_AFTER_FIRST_SEPARATOR = MENU_LEVEL1_ORDER.filter(
     !MENU_BEFORE_FIRST_SEPARATOR.includes(id) &&
     id !== 'meet-system' &&
     id !== 'coding-platform' &&
-    id !== 'coding-link-builder',
+    id !== 'link-builder',
 )
 
 /** Пункты 1 уровня в порядке отображения. Сепараторы между секциями. */
@@ -447,7 +449,8 @@ export const MENU_SECTIONS: { label: string; itemIds: string[] }[] = [
   { label: 'Основное меню', itemIds: MENU_BEFORE_FIRST_SEPARATOR },
   { label: 'Модули', itemIds: MENU_AFTER_FIRST_SEPARATOR },
   { label: 'Внутренние миты', itemIds: ['meet-system'] },
-  { label: 'Кодинговая платформа', itemIds: ['coding-platform', 'coding-link-builder'] },
+  { label: 'Кодинговая платформа', itemIds: ['coding-platform'] },
+  { label: 'Link-билдер', itemIds: ['link-builder'] },
 ]
 
 /** Все блоки главной страницы: основной меню + меню настроек */

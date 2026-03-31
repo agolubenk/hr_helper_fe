@@ -1,0 +1,46 @@
+.formAnchor {
+  scroll-margin-top: var(--space-4);
+}
+
+.formCard :global(.rt-TextFieldInput):focus-visible,
+.formCard :global(.rt-TextArea):focus-visible,
+.formCard :global(.rt-SelectTrigger):focus-visible,
+.submitBtn:focus-visible {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
+.fieldInvalid :global(.rt-TextFieldInput) {
+  box-shadow: inset 0 0 0 1px var(--red-9);
+}
+
+.selectTrigger {
+  width: 100%;
+  max-width: 320px;
+}
+
+.formStatus {
+  border-radius: var(--radius-3);
+  background: var(--accent-a3);
+  border: 1px solid var(--accent-a6);
+}
+
+.formStatusError {
+  background: var(--red-a3);
+  border-color: var(--red-a7);
+}
+
+.submitBtn {
+  min-width: 140px;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.submitBtnSuccess {
+  background-color: var(--green-9);
+}
+
+.submitBtnError {
+  box-shadow: inset 0 0 0 1px var(--red-9);
+}

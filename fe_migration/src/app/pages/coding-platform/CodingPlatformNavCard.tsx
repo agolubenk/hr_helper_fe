@@ -6,7 +6,6 @@ const ITEMS: { href: string; label: string }[] = [
   { href: '/coding-platform', label: 'Обзор' },
   { href: '/coding-platform/languages', label: 'Языки и связи' },
   { href: '/coding-platform/playground', label: 'Песочница' },
-  { href: '/coding-platform/link-builder', label: 'Link-билдер' },
 ]
 
 function active(pathname: string, href: string): boolean {

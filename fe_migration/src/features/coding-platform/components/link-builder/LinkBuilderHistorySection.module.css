@@ -1,0 +1,27 @@
+.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  word-break: break-all;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow: auto;
+}
+
+.cards {
+  display: none;
+}
+
+.card {
+  border: 1px solid var(--gray-a6);
+}
+
+@media (max-width: 768px) {
+  .tableWrap {
+    display: none;
+  }
+
+  .cards {
+    display: flex;
+  }
+}
