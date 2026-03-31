@@ -399,12 +399,51 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   border-radius: var(--radius-2);
   border: 1px solid var(--pg-border);
   background: var(--pg-bg-editor);
   overflow: hidden;
-  line-height: 1.55;
+}
+
+.ideLineGutter {
+  flex-shrink: 0;
+  width: 2.75rem;
+  min-width: 2.5rem;
+  padding: var(--space-2) var(--space-1) var(--space-2) var(--space-2);
+  box-sizing: border-box;
+  overflow: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  border-right: 1px solid var(--pg-border);
+  background: var(--pg-bg-chrome);
+  color: var(--pg-text-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: inherit;
+  line-height: inherit;
+  text-align: right;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ideLineGutter::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.ideLineGutterLine {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ideEditorPane {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .ideHighlightPre {
@@ -562,7 +601,11 @@
   color: var(--pg-text);
   resize: none;
   tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .ideTextareaPlain:focus {
@@ -710,6 +753,22 @@
 
 .langDialogRow:last-child {
   border-bottom: none;
+}
+
+.ideBrowserTooltipContent {
+  max-width: min(22rem, 92vw);
+  padding: var(--space-2) var(--space-3);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--gray-12);
+  background: var(--gray-2);
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a6);
+  box-shadow: var(--shadow-4);
+}
+
+.ideBrowserTooltipArrow {
+  fill: var(--gray-2);
 }
 
 @media (max-width: 960px) {

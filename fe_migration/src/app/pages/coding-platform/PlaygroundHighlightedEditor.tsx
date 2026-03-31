@@ -24,6 +24,14 @@ export const PlaygroundHighlightedEditor = ({
 }: PlaygroundHighlightedEditorProps) => {
   const preRef = useRef<HTMLPreElement>(null)
   const taRef = useRef<HTMLTextAreaElement>(null)
+  const gutterRef = useRef<HTMLDivElement>(null)
+
+  const lineCount = useMemo(() => Math.max(1, value.split('\n').length), [value])
+
+  const gutterLines = useMemo(
+    () => Array.from({ length: lineCount }, (_, i) => i + 1),
+    [lineCount],
+  )
 
   const highlighted = useMemo(
     () => (plain ? '' : highlightPlaygroundCode(tabId, value)),
@@ -33,19 +41,25 @@ export const PlaygroundHighlightedEditor = ({
   const syncScroll = useCallback(() => {
     const ta = taRef.current
     const pre = preRef.current
-    if (!ta || !pre) return
-    pre.scrollTop = ta.scrollTop
-    pre.scrollLeft = ta.scrollLeft
+    const gutter = gutterRef.current
+    if (!ta) return
+    const y = ta.scrollTop
+    const x = ta.scrollLeft
+    if (pre) {
+      pre.scrollTop = y
+      pre.scrollLeft = x
+    }
+    if (gutter) gutter.scrollTop = y
   }, [])
 
   useLayoutEffect(() => {
     syncScroll()
-  }, [highlighted, syncScroll, fontSizePx, value])
+  }, [highlighted, syncScroll, fontSizePx, value, lineCount])
 
   useLayoutEffect(() => {
     const ta = taRef.current
     const host = ta?.parentElement
-    if (!ta || !host || plain) return
+    if (!ta || !host) return
     const ro = new ResizeObserver(() => {
       syncScroll()
     })
@@ -53,43 +67,63 @@ export const PlaygroundHighlightedEditor = ({
     return () => ro.disconnect()
   }, [plain, syncScroll])
 
-  const fontStyle = useMemo(() => ({ fontSize: `${fontSizePx}px` }), [fontSizePx])
+  const editorMetricsStyle = useMemo(
+    () => ({ fontSize: `${fontSizePx}px`, lineHeight: 1.55 as const }),
+    [fontSizePx],
+  )
+
+  const gutter = (
+    <div ref={gutterRef} className={ideStyles.ideLineGutter} aria-hidden>
+      {gutterLines.map((num) => (
+        <div key={num} className={ideStyles.ideLineGutterLine}>
+          {num}
+        </div>
+      ))}
+    </div>
+  )
 
   if (plain) {
     return (
-      <div className={ideStyles.ideEditorStack} style={fontStyle}>
-        <textarea
-          ref={taRef}
-          className={ideStyles.ideTextareaPlain}
-          value={value}
-          spellCheck={false}
-          aria-label={ariaLabel}
-          onChange={(e) => onChange(e.target.value)}
-          onSelect={onCaret}
-          onKeyUp={onCaret}
-          onClick={onCaret}
-        />
+      <div className={ideStyles.ideEditorStack} style={editorMetricsStyle}>
+        {gutter}
+        <div className={ideStyles.ideEditorPane}>
+          <textarea
+            ref={taRef}
+            className={ideStyles.ideTextareaPlain}
+            value={value}
+            spellCheck={false}
+            aria-label={ariaLabel}
+            onChange={(e) => onChange(e.target.value)}
+            onScroll={syncScroll}
+            onSelect={onCaret}
+            onKeyUp={onCaret}
+            onClick={onCaret}
+          />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className={ideStyles.ideEditorStack} style={fontStyle}>
-      <pre ref={preRef} className={ideStyles.ideHighlightPre} aria-hidden tabIndex={-1}>
-        <code className={ideStyles.ideHighlightCode} dangerouslySetInnerHTML={{ __html: highlighted }} />
-      </pre>
-      <textarea
-        ref={taRef}
-        className={ideStyles.ideTextarea}
-        value={value}
-        spellCheck={false}
-        aria-label={ariaLabel}
-        onChange={(e) => onChange(e.target.value)}
-        onScroll={syncScroll}
-        onSelect={onCaret}
-        onKeyUp={onCaret}
-        onClick={onCaret}
-      />
+    <div className={ideStyles.ideEditorStack} style={editorMetricsStyle}>
+      {gutter}
+      <div className={ideStyles.ideEditorPane}>
+        <pre ref={preRef} className={ideStyles.ideHighlightPre} aria-hidden tabIndex={-1}>
+          <code className={ideStyles.ideHighlightCode} dangerouslySetInnerHTML={{ __html: highlighted }} />
+        </pre>
+        <textarea
+          ref={taRef}
+          className={ideStyles.ideTextarea}
+          value={value}
+          spellCheck={false}
+          aria-label={ariaLabel}
+          onChange={(e) => onChange(e.target.value)}
+          onScroll={syncScroll}
+          onSelect={onCaret}
+          onKeyUp={onCaret}
+          onClick={onCaret}
+        />
+      </div>
     </div>
   )
 }

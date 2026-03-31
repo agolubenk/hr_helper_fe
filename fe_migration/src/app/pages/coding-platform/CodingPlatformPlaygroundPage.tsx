@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import * as Tooltip from '@radix-ui/react-tooltip'
 import { Box, Button, Checkbox, Dialog, Flex, Switch, Tabs, Text } from '@radix-ui/themes'
 import {
   CaretLeftIcon,
@@ -19,6 +20,12 @@ import {
   CODING_LANGUAGES_CHANGED_EVENT,
   readEnabledCodingLanguageIds,
 } from '@/features/coding-platform/codingPlatformLanguagesStorage'
+import {
+  readPlaygroundAutosavePref,
+  readPlaygroundDraft,
+  writePlaygroundAutosavePref,
+  writePlaygroundDraft,
+} from '@/features/coding-platform/playgroundDraftStorage'
 import { PLAYGROUND_MONO_DEFAULTS } from '@/features/coding-platform/playgroundDefaults'
 import {
   defaultSelectionForLangParam,
@@ -27,6 +34,7 @@ import {
   sortSelectedIds,
 } from '@/features/coding-platform/playgroundSelection'
 import ideStyles from './CodingPlatformPlaygroundPage.module.css'
+import { PlaygroundFloppyDiskIcon } from './PlaygroundFloppyDiskIcon'
 import { PlaygroundHighlightedEditor } from './PlaygroundHighlightedEditor'
 
 const DEFAULT_HTML = `<h1>Песочница</h1>
@@ -191,6 +199,7 @@ export function CodingPlatformPlaygroundPage() {
   const [activityFocus, setActivityFocus] = useState<'explorer' | 'preview'>('explorer')
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true)
   const [ideFullscreen, setIdeFullscreen] = useState(false)
+  const [draftAutosave, setDraftAutosave] = useState(readPlaygroundAutosavePref)
 
   useEffect(() => {
     const sync = () => setEnabledIds(readEnabledCodingLanguageIds())
@@ -339,13 +348,18 @@ export function CodingPlatformPlaygroundPage() {
     [pushSelection, selectedIds],
   )
 
-  const [html, setHtml] = useState(DEFAULT_HTML)
-  const [css, setCss] = useState(DEFAULT_CSS)
-  const [js, setJs] = useState(DEFAULT_JS)
-  const [reactCode, setReactCode] = useState(DEFAULT_REACT)
+  const draftSnapshot = useMemo(() => readPlaygroundDraft(), [])
+
+  const [html, setHtml] = useState(() => draftSnapshot?.html ?? DEFAULT_HTML)
+  const [css, setCss] = useState(() => draftSnapshot?.css ?? DEFAULT_CSS)
+  const [js, setJs] = useState(() => draftSnapshot?.js ?? DEFAULT_JS)
+  const [reactCode, setReactCode] = useState(() => draftSnapshot?.reactCode ?? DEFAULT_REACT)
   const [iframeKey, setIframeKey] = useState(0)
 
-  const [monoByLang, setMonoByLang] = useState<Record<string, string>>(() => ({ ...PLAYGROUND_MONO_DEFAULTS }))
+  const [monoByLang, setMonoByLang] = useState<Record<string, string>>(() => ({
+    ...PLAYGROUND_MONO_DEFAULTS,
+    ...draftSnapshot?.monoByLang,
+  }))
   const monoCode = monoByLang[activeTab] ?? PLAYGROUND_MONO_DEFAULTS[activeTab] ?? ''
   const setMonoCode = useCallback(
     (text: string) => {
@@ -542,6 +556,26 @@ export function CodingPlatformPlaygroundPage() {
       /* отклонено пользователем или API недоступно */
     }
   }, [])
+
+  const persistDraft = useCallback(() => {
+    writePlaygroundDraft({ html, css, js, reactCode, monoByLang })
+  }, [html, css, js, reactCode, monoByLang])
+
+  const toggleDraftAutosave = useCallback(() => {
+    setDraftAutosave((prev) => {
+      const next = !prev
+      writePlaygroundAutosavePref(next)
+      return next
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!draftAutosave) return
+    const t = window.setTimeout(() => {
+      persistDraft()
+    }, 720)
+    return () => clearTimeout(t)
+  }, [draftAutosave, persistDraft])
 
   const onSashMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -783,10 +817,38 @@ export function CodingPlatformPlaygroundPage() {
             />
 
             {canWebPreview ? (
-              <Flex align="center" gap="2">
-                <Text size="2">Браузер</Text>
-                <Switch checked={previewOpen} onCheckedChange={setPreviewOpen} aria-label="Панель предпросмотра" />
-              </Flex>
+              <Tooltip.Provider delayDuration={400}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <Flex align="center" gap="2" style={{ flexShrink: 0, width: 'fit-content' }}>
+                      <Text
+                        size="2"
+                        onDoubleClick={(e) => {
+                          e.preventDefault()
+                          toggleDraftAutosave()
+                        }}
+                        style={{ cursor: 'help', userSelect: 'none' }}
+                      >
+                        Браузер{draftAutosave ? ' · авто' : ''}
+                      </Text>
+                      <Switch checked={previewOpen} onCheckedChange={setPreviewOpen} aria-label="Панель предпросмотра" />
+                    </Flex>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className={ideStyles.ideBrowserTooltipContent}
+                      side="bottom"
+                      align="start"
+                      sideOffset={8}
+                    >
+                      Переключатель показывает или скрывает предпросмотр в браузере. Двойной щелчок по подписи «Браузер»
+                      {draftAutosave ? ' выключает ' : ' включает '}
+                      автосохранение черновика в памяти браузера (все вкладки и код).
+                      <Tooltip.Arrow className={ideStyles.ideBrowserTooltipArrow} width={11} height={5} />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </Tooltip.Provider>
             ) : null}
 
             <Flex align="center" gap="2">
@@ -865,28 +927,43 @@ export function CodingPlatformPlaygroundPage() {
         <div className={ideStyles.ideMain}>
           {activityBarVisible ? (
             <div className={ideStyles.ideActivityBar} aria-label="Панель активности">
-            <button
-              type="button"
-              className={`${ideStyles.ideActivityBtn} ${activityFocus === 'explorer' ? ideStyles.ideActivityBtnActive : ''}`}
-              title="Фокус на редакторе"
-              aria-label="Фокус на редакторе"
-              onClick={focusFirstEditor}
-            >
-              <FileTextIcon width={20} height={20} />
-            </button>
-            <button
-              type="button"
-              className={`${ideStyles.ideActivityBtn} ${activityFocus === 'preview' ? ideStyles.ideActivityBtnActive : ''}`}
-              title="К боковой панели"
-              aria-label="К боковой панели (предпросмотр или вывод)"
-              onClick={focusSidePanel}
-              disabled={!showSideColumn}
-            >
-              <DashboardIcon width={20} height={20} />
-            </button>
-            <button type="button" className={ideStyles.ideActivityBtn} title="Стеки (языки)" aria-label="Языки" onClick={() => setLangDialogOpen(true)}>
-              <LayersIcon width={20} height={20} />
-            </button>
+              <button
+                type="button"
+                className={ideStyles.ideActivityBtn}
+                title="Сохранить черновик в памяти браузера"
+                aria-label="Сохранить черновик в памяти браузера"
+                onClick={persistDraft}
+              >
+                <PlaygroundFloppyDiskIcon width={20} height={20} />
+              </button>
+              <button
+                type="button"
+                className={`${ideStyles.ideActivityBtn} ${activityFocus === 'explorer' ? ideStyles.ideActivityBtnActive : ''}`}
+                title="Фокус на редакторе"
+                aria-label="Фокус на редакторе"
+                onClick={focusFirstEditor}
+              >
+                <FileTextIcon width={20} height={20} />
+              </button>
+              <button
+                type="button"
+                className={`${ideStyles.ideActivityBtn} ${activityFocus === 'preview' ? ideStyles.ideActivityBtnActive : ''}`}
+                title="К боковой панели"
+                aria-label="К боковой панели (предпросмотр или вывод)"
+                onClick={focusSidePanel}
+                disabled={!showSideColumn}
+              >
+                <DashboardIcon width={20} height={20} />
+              </button>
+              <button
+                type="button"
+                className={ideStyles.ideActivityBtn}
+                title="Стеки (языки)"
+                aria-label="Языки"
+                onClick={() => setLangDialogOpen(true)}
+              >
+                <LayersIcon width={20} height={20} />
+              </button>
             </div>
           ) : null}
 
