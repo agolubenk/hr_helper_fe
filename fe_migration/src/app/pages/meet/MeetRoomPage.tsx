@@ -15,6 +15,7 @@ import {
   CheckIcon,
   CopyIcon,
   GearIcon,
+  DotFilledIcon,
 } from '@radix-ui/react-icons'
 import { useRouter } from '@/router-adapter'
 import { mockActiveMeetRoom } from '@/features/meet/mocks'
@@ -78,6 +79,7 @@ export function MeetRoomPage() {
   const [micMuted, setMicMuted] = useState(false)
   const [camOn, setCamOn] = useState(true)
   const [sharing, setSharing] = useState(false)
+  const [recordingOn, setRecordingOn] = useState(false)
 
   const [chatInternal, setChatInternal] = useState(base.chatInternal)
   const [chatExternal, setChatExternal] = useState(base.chatExternal)
@@ -369,9 +371,16 @@ export function MeetRoomPage() {
             <Text size="2" weight="medium">
               Эфир
             </Text>
-            <Badge color={sharing ? 'grass' : 'gray'} variant="soft">
-              {sharing ? 'Демонстрация экрана (мок)' : 'Демонстрация выключена'}
-            </Badge>
+            <Flex align="center" gap="2" wrap="wrap" justify="end">
+              <Badge color={sharing ? 'grass' : 'gray'} variant="soft">
+                {sharing ? 'Демонстрация экрана (мок)' : 'Демонстрация выключена'}
+              </Badge>
+              {recordingOn ? (
+                <Badge color="red" variant="soft">
+                  Идёт запись встречи
+                </Badge>
+              ) : null}
+            </Flex>
           </Box>
           <Box
             className={[styles.stageBody, STAGE_BODY_LAYOUT_CLASS[stageLayout]].filter(Boolean).join(' ')}
@@ -502,6 +511,24 @@ export function MeetRoomPage() {
                       <PanelCycleIcon width={panelIconSlot.size} height={panelIconSlot.size} />
                     </span>
                   </button>
+
+                  <IconButton
+                    size="3"
+                    variant={recordingOn ? 'solid' : 'soft'}
+                    color={recordingOn ? 'red' : undefined}
+                    radius="full"
+                    className={styles.floatingBarButton}
+                    title={
+                      recordingOn ? 'Остановить запись встречи (мок)' : 'Начать запись встречи (мок)'
+                    }
+                    aria-label={
+                      recordingOn ? 'Остановить запись встречи' : 'Начать запись встречи'
+                    }
+                    aria-pressed={recordingOn}
+                    onClick={() => setRecordingOn((v) => !v)}
+                  >
+                    <DotFilledIcon width={18} height={18} />
+                  </IconButton>
 
                   <Box className={styles.floatingBarSep} aria-hidden />
 

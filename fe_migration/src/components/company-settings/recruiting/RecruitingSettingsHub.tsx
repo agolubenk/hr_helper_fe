@@ -13,8 +13,11 @@ import {
   MixerHorizontalIcon,
   Cross2Icon,
   PlusIcon,
-  PersonIcon,
   StarIcon,
+  ArrowTopRightIcon,
+  BoxIcon,
+  LockClosedIcon,
+  EnvelopeClosedIcon,
 } from '@radix-ui/react-icons'
 import { Link } from '@/router-adapter'
 import { RECRUITING_HUB_PATH } from '@/components/company-settings/recruiting/recruitingNavState'
@@ -29,92 +32,163 @@ interface RecruitingHubLink {
   Icon: ElementType
 }
 
-const LINKS: RecruitingHubLink[] = [
+interface RecruitingHubSection {
+  title: string
+  links: RecruitingHubLink[]
+}
+
+const HUB_SECTIONS: RecruitingHubSection[] = [
   {
-    href: '/company-settings/recruiting/stages',
-    label: 'Статусы воронки',
-    description: 'Этапы найма, причины отказа и порядок в воронке',
-    Icon: MixerHorizontalIcon,
+    title: 'Процесс найма',
+    links: [
+      {
+        href: '/company-settings/recruiting/stages',
+        label: 'Статусы воронки',
+        description: 'Этапы найма, причины отказа и порядок в воронке',
+        Icon: MixerHorizontalIcon,
+      },
+      {
+        href: '/company-settings/sla',
+        label: 'SLA',
+        description: 'Сроки и контрольные точки по вакансиям',
+        Icon: ClockIcon,
+      },
+      {
+        href: '/company-settings/Scorecard',
+        label: 'Scorecard',
+        description: 'Настройки scorecard для оценки кандидатов',
+        Icon: StarIcon,
+      },
+      {
+        href: '/company-settings/rating-scales',
+        label: 'Шкалы оценок',
+        description: 'Шкалы для интервью и обратной связи',
+        Icon: BarChartIcon,
+      },
+    ],
   },
   {
-    href: '/company-settings/recruiting/templates',
-    label: 'Шаблоны рекрутинга',
-    description: 'Офферы, письма и шаблоны сообщений кандидатам',
-    Icon: FileTextIcon,
+    title: 'Вакансии',
+    links: [
+      {
+        href: '/company-settings/recruiting/vacancy-types',
+        label: 'Типы вакансий',
+        description: 'Типы и классификация вакансий',
+        Icon: BoxIcon,
+      },
+      {
+        href: '/company-settings/vacancy-prompt',
+        label: 'Единый промпт для вакансий',
+        description: 'Общий промпт для описаний и анализа вакансий',
+        Icon: FileTextIcon,
+      },
+      {
+        href: '/company-settings/recruiting/permissions',
+        label: 'Права по вакансиям',
+        description: 'Кто может видеть и редактировать вакансии',
+        Icon: LockClosedIcon,
+      },
+    ],
   },
   {
-    href: '/company-settings/recruiting/company-blacklist',
-    label: 'Черный список компаний',
-    description: 'Компании, из которых не берём кандидатов (алиасы, юрлица, дочерние)',
-    Icon: Cross2Icon,
+    title: 'Кандидаты и источники',
+    links: [
+      {
+        href: '/company-settings/recruiting/sources',
+        label: 'Источники кандидатов',
+        description: 'Каналы и источники привлечения',
+        Icon: ArrowTopRightIcon,
+      },
+      {
+        href: '/company-settings/recruiting/company-blacklist',
+        label: 'Черный список компаний',
+        description: 'Компании, из которых не берём кандидатов (алиасы, юрлица, дочерние)',
+        Icon: Cross2Icon,
+      },
+      {
+        href: '/company-settings/recruiting/company-whitelist-donors',
+        label: 'Белый список компаний / доноры',
+        description: 'Компании-доноры (алиасы, юрлица, дочерние) и фильтры по профилям',
+        Icon: PlusIcon,
+      },
+    ],
   },
   {
-    href: '/company-settings/recruiting/company-whitelist-donors',
-    label: 'Белый список компаний / доноры',
-    description: 'Компании-доноры (алиасы, юрлица, дочерние) и фильтры по профилям',
-    Icon: PlusIcon,
+    title: 'Коммуникации и документы',
+    links: [
+      {
+        href: '/company-settings/recruiting/response-templates',
+        label: 'Шаблоны ответов кандидатам',
+        description: 'Тексты и сценарии ответов кандидатам',
+        Icon: ChatBubbleIcon,
+      },
+      {
+        href: '/company-settings/recruiting/offer-template',
+        label: 'Шаблон оффера',
+        description: 'Структура и блоки оффера',
+        Icon: FileTextIcon,
+      },
+      {
+        href: '/company-settings/recruiting/message-templates',
+        label: 'Шаблоны писем и сообщений',
+        description: 'Почтовые и мессенджер-шаблоны',
+        Icon: EnvelopeClosedIcon,
+      },
+    ],
   },
   {
-    href: '/interviewers',
-    label: 'Интервьюеры',
-    description: 'База интервьюеров и доступ к интервью',
-    Icon: PersonIcon,
-  },
-  {
-    href: '/company-settings/recruiting/rules',
-    label: 'Правила привлечения',
-    description: 'Бонусы и условия для источников привлечения кандидатов',
-    Icon: GearIcon,
-  },
-  {
-    href: '/company-settings/recruiting/commands',
-    label: 'Команды workflow',
-    description: 'Команды и сценарии в процессе подбора',
-    Icon: ListBulletIcon,
-  },
-  {
-    href: '/company-settings/recruiting/candidate-fields',
-    label: 'Дополнительные поля кандидатов',
-    description: 'Кастомные поля анкеты и карточки кандидата',
-    Icon: FileTextIcon,
-  },
-  {
-    href: '/company-settings/recruiting/vacancy-fields',
-    label: 'Дополнительные поля вакансии',
-    description: 'Единый профиль полей вакансии и правила применения',
-    Icon: FileTextIcon,
-  },
-  {
-    href: '/company-settings/Scorecard',
-    label: 'Scorecard',
-    description: 'Настройки scorecard для оценки кандидатов',
-    Icon: StarIcon,
-  },
-  {
-    href: '/company-settings/rating-scales',
-    label: 'Шкалы оценок',
-    description: 'Шкалы для интервью и обратной связи',
-    Icon: BarChartIcon,
-  },
-  {
-    href: '/company-settings/sla',
-    label: 'SLA',
-    description: 'Сроки и контрольные точки по вакансиям',
-    Icon: ClockIcon,
-  },
-  {
-    href: '/company-settings/vacancy-prompt',
-    label: 'Единый промпт для вакансий',
-    description: 'Общий промпт для описаний и анализа вакансий',
-    Icon: FileTextIcon,
-  },
-  {
-    href: '/candidate-responses',
-    label: 'Ответы кандидатам',
-    description: 'Шаблоны и сценарии ответов кандидатам',
-    Icon: ChatBubbleIcon,
+    title: 'Автоматизация и данные',
+    links: [
+      {
+        href: '/company-settings/recruiting/rules',
+        label: 'Автоматизация сорсинга',
+        description: 'Бонусы и условия для источников привлечения кандидатов',
+        Icon: GearIcon,
+      },
+      {
+        href: '/company-settings/recruiting/commands',
+        label: 'Команды workflow',
+        description: 'Команды и сценарии в процессе подбора',
+        Icon: ListBulletIcon,
+      },
+      {
+        href: '/company-settings/recruiting/candidate-fields',
+        label: 'Дополнительные поля кандидатов',
+        description: 'Кастомные поля анкеты и карточки кандидата',
+        Icon: FileTextIcon,
+      },
+      {
+        href: '/company-settings/recruiting/vacancy-fields',
+        label: 'Дополнительные поля вакансии',
+        description: 'Единый профиль полей вакансии и правила применения',
+        Icon: FileTextIcon,
+      },
+    ],
   },
 ]
+
+function HubCard({ href, label, description, Icon }: RecruitingHubLink) {
+  return (
+    <Link href={href} className={styles.cardLink} linkState={hubNavState}>
+      <Card size="2" className={styles.card}>
+        <Flex className={styles.cardInner}>
+          <div className={styles.titleRow}>
+            <Box className={styles.iconWrap}>
+              <Icon width={20} height={20} />
+            </Box>
+            <ArrowRightIcon width={16} height={16} className={styles.chevron} />
+          </div>
+          <Text size="3" weight="medium">
+            {label}
+          </Text>
+          <Text size="2" color="gray">
+            {description}
+          </Text>
+        </Flex>
+      </Card>
+    </Link>
+  )
+}
 
 export function RecruitingSettingsHub() {
   return (
@@ -124,32 +198,22 @@ export function RecruitingSettingsHub() {
           Настройки рекрутинга
         </Text>
         <Text size="3" color="gray">
-          Выберите раздел: карточки ведут на страницы настроек модуля рекрутинга
+          Разделы сгруппированы по домену: карточки ведут на страницы настроек модуля
         </Text>
       </Box>
 
-      <Flex wrap="wrap" gap="3">
-        {LINKS.map(({ href, label, description, Icon }) => (
-          <Link key={href} href={href} className={styles.cardLink} linkState={hubNavState}>
-            <Card size="2" className={styles.card}>
-              <Flex className={styles.cardInner}>
-                <div className={styles.titleRow}>
-                  <Box className={styles.iconWrap}>
-                    <Icon width={20} height={20} />
-                  </Box>
-                  <ArrowRightIcon width={16} height={16} className={styles.chevron} />
-                </div>
-                <Text size="3" weight="medium">
-                  {label}
-                </Text>
-                <Text size="2" color="gray">
-                  {description}
-                </Text>
-              </Flex>
-            </Card>
-          </Link>
-        ))}
-      </Flex>
+      {HUB_SECTIONS.map((section) => (
+        <Box key={section.title} className={styles.section}>
+          <Text size="4" weight="bold" as="h2" className={styles.sectionTitle} mb="3">
+            {section.title}
+          </Text>
+          <Flex wrap="wrap" gap="3" className={styles.sectionCards}>
+            {section.links.map((link) => (
+              <HubCard key={link.href} {...link} />
+            ))}
+          </Flex>
+        </Box>
+      ))}
     </Box>
   )
 }

@@ -458,10 +458,10 @@ export function AttractionRulesSettings() {
         <Box>
           <Flex align="center" gap="2" mb="2">
             <Text size="2">📋</Text>
-            <Text size="8" weight="bold">Правила привлечения</Text>
+            <Text size="8" weight="bold">Автоматизация сорсинга</Text>
           </Flex>
           <Text size="3" color="gray">
-            Управление правилами привлечения кандидатов: настройка бонусов и условий для различных источников
+            Управление правилами и автоматизацией сорсинга: бонусы и условия для источников привлечения кандидатов
           </Text>
         </Box>
 

@@ -61,7 +61,6 @@ const SETTINGS_DOMAIN_ROOT: Partial<Record<string, string>> = {
 const BASIC_SETTINGS_CHILD_ROOT: Partial<Record<string, string | null>> = {
   'company-general': null,
   'company-calendar': 'calendar',
-  'company-org-model': 'employee-relations',
 }
 
 function effectiveSettingsContext(itemId: string, parentCtx: string | null): string | null {

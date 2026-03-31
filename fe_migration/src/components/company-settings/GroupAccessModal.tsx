@@ -372,7 +372,7 @@ export default function GroupAccessModal({
    * recruitingSettingsAccess - детальные права доступа для настроек рекрутинга
    * 
    * Содержит детальные настройки доступа к разделам настроек рекрутинга:
-   * - Правила привлечения (просмотр/редактирование)
+   * - Автоматизация сорсинга (просмотр/редактирование)
    * - Этапы найма и причины отказа (просмотр/редактирование)
    * - Команды workflow (просмотр/редактирование)
    * - Дополнительные поля кандидатов (просмотр/редактирование)
@@ -928,7 +928,7 @@ export default function GroupAccessModal({
                               <>
                                 <Table.Row>
                                   <Table.Cell style={{ paddingLeft: 40, backgroundColor: 'var(--gray-2)' }}>
-                                    <Text size="1" weight="medium" color="gray">Правила привлечения</Text>
+                                    <Text size="1" weight="medium" color="gray">Автоматизация сорсинга</Text>
                                   </Table.Cell>
                                   <Table.Cell style={{ textAlign: 'center', backgroundColor: 'var(--gray-2)' }}>
                                     <Checkbox

@@ -245,7 +245,7 @@ export function App() {
                 </AppLayout>
               }
             />
-            <Route path="/company-settings/recruiting/rules" element={<AppLayout {...layoutProps} pageTitle="Правила привлечения"><CompanySettingsRecruitingRulesPage /></AppLayout>} />
+            <Route path="/company-settings/recruiting/rules" element={<AppLayout {...layoutProps} pageTitle="Автоматизация сорсинга"><CompanySettingsRecruitingRulesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/stages" element={<AppLayout {...layoutProps} pageTitle="Этапы найма и причины отказа"><CompanySettingsRecruitingStagesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/commands" element={<AppLayout {...layoutProps} pageTitle="Команды workflow"><CompanySettingsRecruitingCommandsPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/candidate-fields" element={<AppLayout {...layoutProps} pageTitle="Поля кандидатов"><CompanySettingsCandidateFieldsPage /></AppLayout>} />

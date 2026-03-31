@@ -178,10 +178,6 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
   if (item.id === 'vacancies-requests' && pathname.startsWith('/hiring-requests')) {
     return true
   }
-  // 'recruiting-settings-interviewers' активен на странице интервьюеров (в настройках рекрутинга)
-  if (item.id === 'recruiting-settings-interviewers' && pathname.startsWith('/interviewers')) {
-    return true
-  }
   // 'integrations-huntflow' активен на странице Huntflow
   if (item.id === 'integrations-huntflow' && pathname.startsWith('/huntflow')) {
     return true

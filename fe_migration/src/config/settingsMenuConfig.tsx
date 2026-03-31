@@ -88,7 +88,6 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
         children: [
           { id: 'company-general', label: 'Общие настройки компании', icon: ic(GearIcon), href: '/company-settings' },
           { id: 'company-calendar', label: 'Рабочий календарь', icon: ic(CalendarIcon), href: '/company-settings/calendar' },
-          { id: 'company-org-model', label: 'Организационная модель', icon: ic(LayersIcon), href: '/company-settings/org-model' },
         ],
       },
       {
@@ -100,7 +99,6 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
           { id: 'company-settings-grades', label: 'Грейды и грейдовые модели', icon: ic(PersonIcon), href: '/company-settings/grades' },
           { id: 'specializations-settings', label: 'Специализации и карьерные треки', icon: ic(LayersIcon), href: '/specializations' },
           { id: 'company-settings-lifecycle', label: 'Жизненный цикл сотрудника', icon: ic(MixerHorizontalIcon), href: '/company-settings/employee-lifecycle' },
-          { id: 'company-settings-custom-fields', label: 'Пользовательские поля', icon: ic(FileTextIcon), href: '/settings/custom-fields' },
         ],
       },
       {
@@ -114,33 +112,58 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
             icon: ic(ChatBubbleIcon),
             href: '/company-settings/recruiting',
             children: [
-              { id: 'recruiting-settings-stages', label: 'Статусы воронки', icon: <RatingScalesIcon />, href: '/company-settings/recruiting/stages' },
-              { id: 'recruiting-settings-sources', label: 'Источники кандидатов', icon: ic(ArrowTopRightIcon), href: '/company-settings/recruiting/sources' },
               {
-                id: 'recruiting-settings-templates',
-                label: 'Шаблоны рекрутинга',
+                id: 'recruiting-settings-process',
+                label: 'Процесс найма',
+                icon: ic(MixerHorizontalIcon),
+                children: [
+                  { id: 'recruiting-settings-stages', label: 'Статусы воронки', icon: <RatingScalesIcon />, href: '/company-settings/recruiting/stages' },
+                  { id: 'recruiting-settings-sla', label: 'SLA', icon: ic(ClockIcon), href: '/company-settings/sla' },
+                  { id: 'recruiting-settings-scorecard', label: 'Scorecard', icon: <RatingScalesIcon />, href: '/company-settings/Scorecard' },
+                  { id: 'recruiting-settings-rating-scales', label: 'Шкалы оценок', icon: <RatingScalesIcon />, href: '/company-settings/rating-scales' },
+                ],
+              },
+              {
+                id: 'recruiting-settings-vacancies',
+                label: 'Вакансии',
+                icon: ic(BoxIcon),
+                children: [
+                  { id: 'recruiting-settings-vacancy-types', label: 'Типы вакансий', icon: ic(BoxIcon), href: '/company-settings/recruiting/vacancy-types' },
+                  { id: 'recruiting-settings-vacancy-prompt', label: 'Единый промпт для вакансий', icon: ic(FileTextIcon), href: '/company-settings/vacancy-prompt' },
+                  { id: 'recruiting-settings-vacancy-permissions', label: 'Права по вакансиям', icon: ic(LockClosedIcon), href: '/company-settings/recruiting/permissions' },
+                ],
+              },
+              {
+                id: 'recruiting-settings-candidates-sources',
+                label: 'Кандидаты и источники',
+                icon: ic(ArrowTopRightIcon),
+                children: [
+                  { id: 'recruiting-settings-sources', label: 'Источники кандидатов', icon: ic(ArrowTopRightIcon), href: '/company-settings/recruiting/sources' },
+                  { id: 'recruiting-settings-company-blacklist', label: 'Черный список компаний', icon: ic(Cross2Icon), href: '/company-settings/recruiting/company-blacklist' },
+                  { id: 'recruiting-settings-company-whitelist-donors', label: 'Белый список компаний / доноры', icon: ic(PlusIcon), href: '/company-settings/recruiting/company-whitelist-donors' },
+                ],
+              },
+              {
+                id: 'recruiting-settings-comms',
+                label: 'Коммуникации и документы',
                 icon: ic(FileTextIcon),
-                href: '/company-settings/recruiting/templates',
                 children: [
                   { id: 'recruiting-settings-templates-response', label: 'Шаблоны ответов кандидатам', icon: ic(ChatBubbleIcon), href: '/company-settings/recruiting/response-templates' },
                   { id: 'recruiting-settings-templates-offer', label: 'Шаблон оффера', icon: ic(FileTextIcon), href: '/company-settings/recruiting/offer-template' },
                   { id: 'recruiting-settings-templates-messages', label: 'Шаблоны писем и сообщений', icon: ic(EnvelopeClosedIcon), href: '/company-settings/recruiting/message-templates' },
                 ],
               },
-              { id: 'recruiting-settings-vacancy-types', label: 'Типы вакансий', icon: ic(BoxIcon), href: '/company-settings/recruiting/vacancy-types' },
-              { id: 'recruiting-settings-vacancy-permissions', label: 'Права по вакансиям', icon: ic(LockClosedIcon), href: '/company-settings/recruiting/permissions' },
-              { id: 'recruiting-settings-interviewers', label: 'Интервьюеры', icon: ic(PersonIcon), href: '/interviewers' },
-              { id: 'recruiting-settings-rules', label: 'Правила привлечения', icon: ic(GearIcon), href: '/company-settings/recruiting/rules' },
-              { id: 'recruiting-settings-commands', label: 'Команды workflow', icon: ic(MixerHorizontalIcon), href: '/company-settings/recruiting/commands' },
-              { id: 'recruiting-settings-candidate-fields', label: 'Дополнительные поля кандидатов', icon: ic(FileTextIcon), href: '/company-settings/recruiting/candidate-fields' },
-              { id: 'recruiting-settings-company-blacklist', label: 'Черный список компаний', icon: ic(Cross2Icon), href: '/company-settings/recruiting/company-blacklist' },
-              { id: 'recruiting-settings-company-whitelist-donors', label: 'Белый список компаний / доноры', icon: ic(PlusIcon), href: '/company-settings/recruiting/company-whitelist-donors' },
-              { id: 'recruiting-settings-vacancy-fields', label: 'Дополнительные поля вакансии', icon: ic(FileTextIcon), href: '/company-settings/recruiting/vacancy-fields' },
-              { id: 'recruiting-settings-scorecard', label: 'Scorecard', icon: <RatingScalesIcon />, href: '/company-settings/Scorecard' },
-              { id: 'recruiting-settings-rating-scales', label: 'Шкалы оценок', icon: <RatingScalesIcon />, href: '/company-settings/rating-scales' },
-              { id: 'recruiting-settings-sla', label: 'SLA', icon: ic(ClockIcon), href: '/company-settings/sla' },
-              { id: 'recruiting-settings-vacancy-prompt', label: 'Единый промпт для вакансий', icon: ic(FileTextIcon), href: '/company-settings/vacancy-prompt' },
-              { id: 'recruiting-settings-candidate-responses', label: 'Ответы кандидатам', icon: ic(ChatBubbleIcon), href: '/candidate-responses' },
+              {
+                id: 'recruiting-settings-automation-data',
+                label: 'Автоматизация и данные',
+                icon: ic(GearIcon),
+                children: [
+                  { id: 'recruiting-settings-rules', label: 'Автоматизация сорсинга', icon: ic(GearIcon), href: '/company-settings/recruiting/rules' },
+                  { id: 'recruiting-settings-commands', label: 'Команды workflow', icon: ic(MixerHorizontalIcon), href: '/company-settings/recruiting/commands' },
+                  { id: 'recruiting-settings-candidate-fields', label: 'Дополнительные поля кандидатов', icon: ic(FileTextIcon), href: '/company-settings/recruiting/candidate-fields' },
+                  { id: 'recruiting-settings-vacancy-fields', label: 'Дополнительные поля вакансии', icon: ic(FileTextIcon), href: '/company-settings/recruiting/vacancy-fields' },
+                ],
+              },
             ],
           },
           {
