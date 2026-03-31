@@ -1,0 +1,20 @@
+.wrapper {
+  max-width: 720px;
+}
+
+.lead {
+  max-width: 62ch;
+}
+
+.card {
+  border: 1px solid var(--gray-6);
+}
+
+.selectTrigger {
+  width: 100%;
+}
+
+.textArea {
+  width: 100%;
+  min-height: 0;
+}

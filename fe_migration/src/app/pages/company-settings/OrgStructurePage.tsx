@@ -1,6 +1,7 @@
 import { Flex, Text, Button, Box, TextField, TextArea, Select, Badge, Tabs, DropdownMenu, Dialog, Spinner } from '@radix-ui/themes'
 import { PlusIcon, MinusIcon, Crosshair1Icon, ChevronDownIcon, ChevronRightIcon, Pencil1Icon, TrashIcon, CheckIcon, Cross2Icon, MagnifyingGlassIcon, DownloadIcon, UploadIcon, ImageIcon, FileTextIcon, TableIcon, CodeIcon } from '@radix-ui/react-icons'
 import { useState, useEffect, useRef, useCallback, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { useValidatedSearchParam } from '@/shared/hooks/useUrlSearchState'
 import { useToast } from '@/components/Toast/ToastContext'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
@@ -25,6 +26,8 @@ interface Department {
 const ZOOM_MIN = 0.5
 const ZOOM_MAX = 1.5
 const ZOOM_STEP = 0.1
+
+const ORG_VIEWS = ['list', 'visual'] as const
 
 function triggerDownload(href: string, filename: string) {
   const link = document.createElement('a')
@@ -495,7 +498,10 @@ export function OrgStructurePage() {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [activeView, setActiveView] = useState<'list' | 'visual'>('list')
+  const [activeView, setActiveView] = useValidatedSearchParam('view', ORG_VIEWS, 'list', {
+    omitWhenDefault: true,
+    replace: true,
+  })
   const [newDepartment, setNewDepartment] = useState<Partial<Department>>({
     name: '',
     short_name: '',

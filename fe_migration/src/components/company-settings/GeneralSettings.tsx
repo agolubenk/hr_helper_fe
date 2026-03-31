@@ -9,6 +9,10 @@ import {
   StarFilledIcon,
 } from '@radix-ui/react-icons'
 import { useToast } from '@/components/Toast/ToastContext'
+import {
+  readStoredCompanyDisplayName,
+  writeStoredCompanyDisplayName,
+} from '@/lib/companyDisplayName'
 import styles from './GeneralSettings.module.css'
 
 /** [главный 120px, миниатюра 43, 34, 27] — при новой загрузке сдвиг вниз по очереди */
@@ -276,7 +280,7 @@ function getCompanySizeRangeForNumber(n: number): string {
 
 export default function GeneralSettings() {
   const toast = useToast()
-  const [companyName, setCompanyName] = useState(mockCompanyData.name)
+  const [companyName, setCompanyName] = useState(() => readStoredCompanyDisplayName())
   const [legalName, setLegalName] = useState(mockCompanyData.legal_name)
   const [headquartersCountry, setHeadquartersCountry] = useState(mockCompanyData.headquarters_country)
   const [headquartersCity, setHeadquartersCity] = useState(mockCompanyData.headquarters_city)
@@ -309,6 +313,11 @@ export default function GeneralSettings() {
     description: '',
     isMain: false,
   })
+
+  useEffect(() => {
+    writeStoredCompanyDisplayName(companyName)
+  }, [companyName])
+
   const handleSetMainOffice = (id: number) => {
     setOffices((prev) =>
       prev.map((office) => ({

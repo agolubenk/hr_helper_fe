@@ -105,3 +105,26 @@
     padding: 16px;
   }
 }
+
+.diffAdded {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 6px;
+  padding: 2px 6px;
+  display: inline-block;
+}
+
+.diffRemoved {
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  padding: 2px 6px;
+  display: inline-block;
+  text-decoration: line-through;
+  opacity: 0.9;
+}
+
+.diffLine {
+  display: block;
+  margin: 4px 0;
+}

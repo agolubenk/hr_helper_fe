@@ -28,7 +28,7 @@ const wikiPages: WikiPageItem[] = [
   { id: '4', title: 'Управление пользователями', description: 'Добавление, редактирование и управление пользователями системы', tags: ['#пользователи', '#настройка'], date: '01.11.2025', category: 'Пользователи', pageType: 'product_docs', relatedApp: 'accounts' },
 ]
 
-const allTags = [
+const baseTags = [
   { id: 'ai', label: '#ai', color: '#ef4444' },
   { id: 'architect', label: '#architect', color: '#ef4444' },
   { id: 'вакансии', label: '#вакансии', color: '#ef4444' },
@@ -40,6 +40,22 @@ const allTags = [
   { id: 'настройка', label: '#настройка', color: '#3b82f6' },
   { id: 'пользователи', label: '#пользователи', color: '#6b7280' },
   { id: 'финансы', label: '#финансы', color: '#06b6d4' },
+]
+
+const GENERATED_TAGS_COUNT = 54
+const tagPalette = ['#ef4444', '#84cc16', '#10b981', '#a855f7', '#f59e0b', '#3b82f6', '#6b7280', '#06b6d4']
+
+const allTags = [
+  ...baseTags,
+  ...Array.from({ length: Math.max(0, GENERATED_TAGS_COUNT - baseTags.length) }, (_, i) => {
+    const index = i + 1
+    const id = `tag_${index}`
+    return {
+      id,
+      label: `#тег${index}`,
+      color: tagPalette[index % tagPalette.length]!,
+    }
+  }),
 ]
 
 export function WikiPage() {

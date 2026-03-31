@@ -5,6 +5,7 @@ export const VALID_PROFILE_TABS: ProfileTabType[] = [
   'edit',
   'schedule',
   'theme',
+  'localization',
   'integrations',
   'quick-buttons',
   'reminder',

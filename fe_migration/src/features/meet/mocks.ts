@@ -1,0 +1,111 @@
+import type { MeetRoomMock } from './types'
+
+export const mockActiveMeetRoom: MeetRoomMock = {
+  id: 'meet-demo-7f3a',
+  title: 'Интервью: Frontend — технический этап',
+  startedAtLabel: 'Сегодня, 14:02',
+  linkedTaskId: 'task_fe_int_042',
+  meetingAtISO: '2026-03-30T14:00:00+03:00',
+  organizerId: 'p1',
+  activeSpeakerId: 'p2',
+  participants: [
+    {
+      id: 'p1',
+      name: 'Анна Волкова',
+      title: 'HR BP',
+      audience: 'internal',
+      isMuted: false,
+      isVideoOn: true,
+      isHost: true,
+    },
+    {
+      id: 'p2',
+      name: 'Игорь Смирнов',
+      title: 'Tech lead',
+      audience: 'internal',
+      isMuted: true,
+      isVideoOn: true,
+    },
+    {
+      id: 'p3',
+      name: 'John Doe',
+      title: 'Кандидат',
+      audience: 'external',
+      isMuted: false,
+      isVideoOn: true,
+    },
+    {
+      id: 'p4',
+      name: 'Мария К.',
+      title: 'Рекрутер',
+      audience: 'internal',
+      isMuted: false,
+      isVideoOn: false,
+    },
+    {
+      id: 'p5',
+      name: 'Экран Игоря',
+      audience: 'internal',
+      isMuted: true,
+      isVideoOn: false,
+      isScreenSharing: true,
+    },
+  ],
+  chatInternal: [
+    {
+      id: 'ci1',
+      author: 'Анна В.',
+      audience: 'internal',
+      text: 'Кандидат зашёл, ждём техчасть.',
+      timeLabel: '14:05',
+    },
+    {
+      id: 'ci2',
+      author: 'Игорь С.',
+      audience: 'internal',
+      text: 'Могу шарить IDE через минуту.',
+      timeLabel: '14:06',
+    },
+  ],
+  chatExternal: [
+    {
+      id: 'ce1',
+      author: 'John Doe',
+      audience: 'external',
+      text: 'Здравствуйте, слышу хорошо.',
+      timeLabel: '14:04',
+    },
+    {
+      id: 'ce2',
+      author: 'John Doe',
+      audience: 'external',
+      text: 'Готов к задаче на код.',
+      timeLabel: '14:07',
+    },
+  ],
+  commentsInternal: [
+    {
+      id: 'mi1',
+      author: 'Мария К.',
+      audience: 'internal',
+      text: 'Сильный ответ по React Query, зафиксировать в scorecard.',
+      timeLabel: '14:18',
+    },
+    {
+      id: 'mi2',
+      author: 'Анна В.',
+      audience: 'internal',
+      text: 'Перейти к системному дизайну в 14:25.',
+      timeLabel: '14:20',
+    },
+  ],
+  commentsExternal: [
+    {
+      id: 'me1',
+      author: 'John Doe',
+      audience: 'external',
+      text: 'Можно ли уточнить про on-call — раз в сколько недель?',
+      timeLabel: '14:15',
+    },
+  ],
+}

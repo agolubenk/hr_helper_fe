@@ -162,6 +162,22 @@
   cursor: pointer;
 }
 
+/* Метка ЧС / подозрения — слева сверху, не пересекается с .unviewedDot (справа) */
+.blacklistListMark {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gray-12) 0%, #0a0a0c 100%);
+  border: 2px solid var(--color-surface, var(--gray-1));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
 .candidateHeaderBadgeScroll {
   flex: 1 1 auto;
   min-width: 0;
@@ -195,18 +211,141 @@
   white-space: nowrap;
 }
 
-/* Статус: селект + «→» как одна кнопка; под ними — «Подтвердить» */
+/* Предупреждения над карточкой кандидата (дубликат / чёрный список) */
+.suspicionAlertsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.suspicionAlertsStack > * {
+  width: 100%;
+}
+
+.blacklistSuspicionBtn {
+  background: linear-gradient(180deg, var(--gray-12) 0%, #0a0a0c 100%) !important;
+  color: var(--gray-1) !important;
+  border: 1px solid var(--gray-11) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.blacklistSuspicionBtn:hover {
+  filter: brightness(1.07);
+}
+
+/* Комментарий + статус: в двух колонках комментарий = 1fr, блок контролов = по ширине контента (селект по тексту + «→»), «Подтвердить» = ширина колонки */
+.candidateStatusPanel {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+/* ≥620px внутри карточки: высота строки = max(колонки); ширина правой колонки = max-content, не фиксированная 340px */
+@container candidate-card (min-width: 620px) {
+  .candidateStatusPanel {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: stretch;
+  }
+}
+
+.candidateStatusPanelComment {
+  min-width: 0;
+  width: 100%;
+  min-height: 128px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Поле комментария заполняет колонку; в двухколоночном режиме выравнивается по высоте с .candidateStatusPanelControls */
+.candidateStatusCommentTextarea {
+  flex: 1 1 auto;
+  min-height: 128px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.candidateStatusCommentTextarea :global(textarea) {
+  flex: 1 1 auto;
+  min-height: 128px;
+  width: 100% !important;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.candidateStatusPanelControls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+}
+
+@container candidate-card (min-width: 620px) {
+  .candidateStatusPanelControls {
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Узкая карточка: селект снова на всю ширину блока контролов */
+@container candidate-card (max-width: 619px) {
+  .statusControlMerged {
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .statusControlMerged :global(.rt-SelectTrigger) {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* Строка даты + быстрые действия при статусе Accepted — одна линия, без переноса «лесенкой» */
+.candidateStatusAcceptedRow {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.candidateStatusAcceptedRow::-webkit-scrollbar {
+  height: 4px;
+}
+
+/* Статус: селект + «→» как одна кнопка; ширина строки по контенту (текст статуса + стрелка), не на всю 340px */
 .statusControlMerged {
   display: flex;
   align-items: stretch;
-  align-self: stretch;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   border-radius: var(--radius-3);
   overflow: hidden;
   box-shadow: inset 0 0 0 1px var(--gray-a6);
 }
 
 .statusControlMerged :global(.rt-SelectTrigger) {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
   border-radius: 0;
   border: none;
@@ -883,6 +1022,9 @@
   padding-right: 16px;
   box-sizing: border-box;
   width: 100%;
+  /* Ширина панели статуса / комментария — от реальной ширины карточки, не от viewport */
+  container-type: inline-size;
+  container-name: candidate-card;
 }
 
 .cardSection {
@@ -1308,4 +1450,76 @@
     flex: 0 0 auto;
     min-width: 120px;
   }
+}
+
+/* Вкладка Activity: переходы статусов и комментарии в исходном виде */
+.candidateActivityFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.candidateActivityEntry {
+  padding: 14px 16px;
+  border: 1px solid var(--gray-a6);
+  border-radius: 8px;
+  background-color: var(--gray-a2);
+}
+
+.candidateActivityEntryMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.candidateActivityCommentRaw {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-2);
+  background: var(--color-panel, var(--gray-1));
+  border: 1px solid var(--gray-a6);
+  font-size: var(--font-size-2);
+  line-height: 1.5;
+  color: var(--gray-12);
+}
+
+.candidateActivityStatusArrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Вкладка History: аудит и откат */
+.candidateHistoryFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.candidateHistoryEntry {
+  padding: 14px 16px;
+  border: 1px solid var(--gray-a6);
+  border-radius: 8px;
+  background-color: var(--gray-a2);
+}
+
+.candidateHistoryDetail {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-2);
+  background: var(--color-panel, var(--gray-1));
+  border: 1px solid var(--gray-a6);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.45;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--gray-12);
 }

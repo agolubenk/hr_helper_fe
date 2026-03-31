@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, Text, Flex } from "@radix-ui/themes"
-import { ClockIcon, OpenInNewWindowIcon } from "@radix-ui/react-icons"
+import { ClockIcon } from "@radix-ui/react-icons"
 import { useRouter } from "@/router-adapter"
 import styles from './WikiCard.module.css'
 
@@ -50,8 +50,8 @@ export default function WikiCard({ page }: WikiCardProps) {
       <Text size="4" weight="bold" className={styles.cardTitle}>
         {page.title}
       </Text>
-      
-      <Flex gap="2" wrap="wrap" my="2">
+
+      <Flex gap="2" wrap="nowrap" className={styles.tagsBlock}>
         {page.tags.map((tag, index) => (
           <Box
             key={index}
@@ -67,22 +67,18 @@ export default function WikiCard({ page }: WikiCardProps) {
           </Box>
         ))}
       </Flex>
-      
+
       <Text size="2" color="gray" className={styles.description}>
         {page.description}
       </Text>
-      
-      <Flex align="center" justify="between" mt="3" className={styles.cardFooter}>
+
+      <Flex align="center" justify="end" className={styles.metaRow}>
         <Flex align="center" gap="2">
           <ClockIcon width={14} height={14} style={{ color: 'var(--gray-9)' }} />
           <Text size="1" color="gray">
             {page.date}
           </Text>
         </Flex>
-        
-        <Box className={styles.openIcon}>
-          <OpenInNewWindowIcon width={16} height={16} style={{ color: 'var(--gray-9)' }} />
-        </Box>
       </Flex>
     </Box>
   )

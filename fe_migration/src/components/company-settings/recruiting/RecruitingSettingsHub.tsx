@@ -11,6 +11,8 @@ import {
   GearIcon,
   ListBulletIcon,
   MixerHorizontalIcon,
+  Cross2Icon,
+  PlusIcon,
   PersonIcon,
   StarIcon,
 } from '@radix-ui/react-icons'
@@ -39,6 +41,18 @@ const LINKS: RecruitingHubLink[] = [
     label: 'Шаблоны рекрутинга',
     description: 'Офферы, письма и шаблоны сообщений кандидатам',
     Icon: FileTextIcon,
+  },
+  {
+    href: '/company-settings/recruiting/company-blacklist',
+    label: 'Черный список компаний',
+    description: 'Компании, из которых не берём кандидатов (алиасы, юрлица, дочерние)',
+    Icon: Cross2Icon,
+  },
+  {
+    href: '/company-settings/recruiting/company-whitelist-donors',
+    label: 'Белый список компаний / доноры',
+    description: 'Компании-доноры (алиасы, юрлица, дочерние) и фильтры по профилям',
+    Icon: PlusIcon,
   },
   {
     href: '/interviewers',

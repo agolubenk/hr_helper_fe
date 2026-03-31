@@ -37,22 +37,116 @@
   width: 100%;
 }
 
+.filtersToggle {
+  flex-shrink: 0;
+}
+
+.filtersAdvancedHidden {
+  display: none;
+}
+
 .filtersRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--gray-6);
+}
+
+.filterCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.filterLabel {
+  white-space: nowrap;
 }
 
 .selectTrigger {
   min-width: 180px;
 }
 
-.tagsRow {
+.tagsSection {
   padding-top: 12px;
   border-top: 1px solid var(--gray-6);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tagsHeading {
+  min-width: 0;
+}
+
+.tagIcon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tagsTitle {
+  min-width: 0;
+}
+
+.tagsChips {
+  min-width: 0;
+}
+
+.tagChip {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.moreTagsButton {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 768px) {
   .filtersContainer {
     padding: 16px;
+  }
+
+  /* На мобилке убираем заголовки у выпадающих списков */
+  .filterLabel {
+    display: none;
+  }
+
+  /* Три селекта: одна строка при ширине ≥ ~360px на ячейку, иначе перенос (≤ 2 строки) */
+  .filtersRow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 10px;
+    align-items: stretch;
+  }
+
+  .filterCell {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .selectTrigger {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .filtersRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filterCell:last-child {
+    grid-column: 1 / -1;
   }
 }

@@ -1,0 +1,51 @@
+.localeCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.localeCard {
+  flex: 1 1 160px;
+  max-width: 240px;
+  min-width: 140px;
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-3);
+  padding: var(--space-3);
+  background: var(--gray-2);
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.localeCardActive {
+  border-color: var(--accent-9);
+  background: var(--accent-a3);
+}
+
+.localeCardSoon {
+  flex: 1 1 160px;
+  max-width: 280px;
+  min-width: 140px;
+  border: 1px dashed var(--gray-a8);
+  border-radius: var(--radius-3);
+  padding: var(--space-3);
+  background: var(--gray-a3);
+  box-sizing: border-box;
+}
+
+.fieldBlock {
+  margin-bottom: var(--space-4);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.rowActions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}

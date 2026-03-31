@@ -18,9 +18,7 @@
   }
 }
 
-@media (max-width: 549px) {
-  .contentWrapper {
-    height: auto !important;
-    min-height: calc(100vh - 64px - 48px);
-  }
-}
+/*
+ * Не задаём height: auto на .contentWrapper: при body { overflow: hidden } скролл должен быть
+ * внутри этой области (фиксированная высота из AppLayout + overflow-y: auto).
+ */

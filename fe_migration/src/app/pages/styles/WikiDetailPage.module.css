@@ -3,6 +3,11 @@
   padding: 24px;
 }
 
+.withFloatingBar {
+  /* чтобы фиксированная панель справа сверху не перекрывала верхний текст */
+  padding-top: 64px;
+}
+
 .detailContent {
   margin-top: 24px;
 }

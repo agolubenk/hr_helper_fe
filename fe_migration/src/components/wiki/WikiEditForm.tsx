@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Box, Flex, Text, Button, TextArea, TextField, Select, Checkbox, Switch, Dialog } from "@radix-ui/themes"
-import { ArrowLeftIcon, Pencil1Icon, TrashIcon, UploadIcon, FontBoldIcon, FontItalicIcon, CodeIcon, QuoteIcon, ListBulletIcon, HeadingIcon, InfoCircledIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons"
+import { ArrowLeftIcon, Pencil1Icon, TrashIcon, UploadIcon, FontBoldIcon, FontItalicIcon, CodeIcon, QuoteIcon, ListBulletIcon, HeadingIcon, InfoCircledIcon, CheckIcon, Cross2Icon, PlusIcon } from "@radix-ui/react-icons"
 import { useRouter } from "@/router-adapter"
 import { useToast } from "@/components/Toast/ToastContext"
 import WikiFileUploadModal from "./WikiFileUploadModal"
@@ -107,6 +107,16 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
   const contentRef = useRef<HTMLTextAreaElement>(null)
   const actionsCardRef = useRef<HTMLDivElement>(null)
   const [floatingBarVisible, setFloatingBarVisible] = useState(false)
+
+  const titleError = formData.title.length > 0 && formData.title.trim().length < 3 ? 'Минимум 3 символа' : null
+  const slugError =
+    formData.slug.length > 0 && !/^[a-z0-9-]*$/.test(formData.slug)
+      ? 'Только латинские буквы, цифры и дефисы. Используется для создания URL страницы. Необязательно.'
+      : null
+  const contentError =
+    formData.content.length > 0 && formData.content.trim().length < 10
+      ? 'Минимум 10 символов. Поддерживается Markdown форматирование.'
+      : null
 
   const helpContent = (
     <>
@@ -253,7 +263,7 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
   return (
     <Box className={styles.editContainer}>
       {/* Хлебные крошки */}
-      <Flex align="center" gap="2" mb="4">
+      <Flex align="center" gap="2" mb="4" wrap="nowrap" className={styles.breadcrumbs}>
         <Text 
           size="2" 
           color="gray" 
@@ -321,9 +331,11 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                 required
                 minLength={3}
               />
-              <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
-                Минимум 3 символа
-              </Text>
+              {titleError ? (
+                <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
+                  {titleError}
+                </Text>
+              ) : null}
             </Box>
 
             {/* URL-адрес (необязательный, статьи идентифицируются по id) */}
@@ -337,9 +349,11 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                 placeholder="nastroyki-kompanii"
                 pattern="[a-z0-9-]*"
               />
-              <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
-                Только латинские буквы, цифры и дефисы. Используется для создания URL страницы. Необязательно.
-              </Text>
+              {slugError ? (
+                <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
+                  {slugError}
+                </Text>
+              ) : null}
             </Box>
 
             {/* Категория и связанное приложение */}
@@ -395,9 +409,11 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                 maxLength={500}
                 rows={3}
               />
-              <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
-                Максимум 500 символов
-              </Text>
+              {formData.description.length > 500 ? (
+                <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
+                  Максимум 500 символов
+                </Text>
+              ) : null}
             </Box>
 
             {/* Метки (теги) — отдельный блок на всю ширину */}
@@ -503,9 +519,11 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                         size="2"
                         variant="soft"
                         onClick={() => setIsTemplateModalOpen(true)}
+                        className={styles.addTemplateButton}
                         style={{ backgroundColor: 'var(--gray-3)', color: 'var(--gray-11)' }}
                       >
-                        Добавить шаблон
+                        <PlusIcon width={14} height={14} className={styles.addTemplateButtonIcon} />
+                        <span className={styles.addTemplateButtonLabel}>Добавить шаблон</span>
                       </Button>
                     </Flex>
                     </Flex>
@@ -528,9 +546,11 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                     </Text>
                   </Box>
                 )}
-                <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
-                  Минимум 10 символов. Поддерживается Markdown форматирование.
-                </Text>
+                {contentError ? (
+                  <Text size="1" color="gray" style={{ display: 'block', marginTop: '4px' }}>
+                    {contentError}
+                  </Text>
+                ) : null}
               </Box>
               {/* /Содержание */}
             </Box>
@@ -553,7 +573,7 @@ export default function WikiEditForm({ initialData, isNew = false }: WikiEditFor
                     Меньше значение = выше в списке
                   </Text>
                 </Box>
-                <Box className={styles.field} style={{ flex: 1, display: 'flex', alignItems: 'center', paddingTop: '24px' }}>
+                <Box className={`${styles.field} ${styles.publishedField}`} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                   <Flex align="center" gap="2">
                     <Checkbox
                       checked={formData.isPublished}

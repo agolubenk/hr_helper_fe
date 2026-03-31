@@ -39,6 +39,7 @@
 import { Box, Flex, Text, Button, Card, Table, TextField, Dialog, Tabs, Checkbox, Select } from "@radix-ui/themes"
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { useState } from "react"
+import { useValidatedSearchParam } from '@/shared/hooks/useUrlSearchState'
 import { PlusIcon, Pencil2Icon, TrashIcon, CheckIcon, MixerHorizontalIcon, InfoCircledIcon } from "@radix-ui/react-icons"
 import { Link } from "@/router-adapter"
 import { useToast } from "@/components/Toast/ToastContext"
@@ -199,9 +200,14 @@ const defaultColors = [
   '#EF4444', '#F59E0B', '#6B7280', '#EC4899', '#14B8A6'
 ]
 
+const RECRUITING_STAGES_TABS = ['stages', 'reasons'] as const
+
 export default function RecruitingStagesSettings() {
   const toast = useToast()
-  const [activeTab, setActiveTab] = useState<'stages' | 'reasons'>('stages')
+  const [activeTab, setActiveTab] = useValidatedSearchParam('tab', RECRUITING_STAGES_TABS, 'stages', {
+    omitWhenDefault: true,
+    replace: true,
+  })
   
   // Состояние для этапов
   const [stages, setStages] = useState<HiringStage[]>(mockStages)

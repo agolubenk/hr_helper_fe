@@ -5,6 +5,7 @@ import {
   CalendarIcon,
   LightningBoltIcon,
   ColorWheelIcon,
+  GlobeIcon,
   ClipboardIcon,
   FileTextIcon,
   LockClosedIcon,
@@ -17,6 +18,7 @@ export type ProfileTabType =
   | 'edit'
   | 'schedule'
   | 'theme'
+  | 'localization'
   | 'integrations'
   | 'quick-buttons'
   | 'reminder'
@@ -33,6 +35,7 @@ const menuItems: { id: ProfileTabType; label: string; icon: React.ReactNode }[] 
   { id: 'edit', label: 'Редактировать', icon: <Pencil1Icon width={14} height={14} /> },
   { id: 'schedule', label: 'Расписание', icon: <CalendarIcon width={14} height={14} /> },
   { id: 'theme', label: 'Темы и оформление', icon: <ColorWheelIcon width={14} height={14} /> },
+  { id: 'localization', label: 'Языки и локализации', icon: <GlobeIcon width={14} height={14} /> },
   { id: 'integrations', label: 'Интеграции и API', icon: <IntegrationsIcon size={14} /> },
   { id: 'quick-buttons', label: 'Быстрые кнопки', icon: <LightningBoltIcon width={14} height={14} /> },
   { id: 'reminder', label: 'Напоминание', icon: <LockClosedIcon width={14} height={14} /> },

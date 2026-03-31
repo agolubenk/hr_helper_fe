@@ -9,12 +9,16 @@ import GlobalSearch from '@/components/GlobalSearch/GlobalSearch'
 import type { EntityData, ScopeType } from '@/components/GlobalSearch/GlobalSearch'
 import { LogoRobot } from '@/components/logo'
 import type { AccentColorValue } from '@/components/profile/AccentColorSettings'
+import {
+  readStoredCompanyDisplayName,
+  subscribeCompanyDisplayName,
+} from '@/lib/companyDisplayName'
+import { HeaderLocaleControl } from '@/components/HeaderLocaleControl'
 import styles from './Header.module.css'
 
 const NARROW_BREAKPOINT = 550
 
 interface HeaderProps {
-  pageTitle: string
   userName?: string
   onMenuToggle?: () => void
   onThemeToggle: () => void
@@ -35,7 +39,6 @@ function buildVacanciesSearch(query: string, scope: ScopeType | null): string {
 }
 
 export default function Header({
-  pageTitle,
   userName = 'Голубенко Андрей',
   onMenuToggle,
   onThemeToggle,
@@ -73,6 +76,12 @@ export default function Header({
   const [shortcutKey, setShortcutKey] = useState<'⌘S' | 'Ctrl+S'>('Ctrl+S')
   const [isNarrow, setIsNarrow] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [companyDisplayName, setCompanyDisplayName] = useState(() => readStoredCompanyDisplayName())
+
+  useEffect(() => {
+    setCompanyDisplayName(readStoredCompanyDisplayName())
+    return subscribeCompanyDisplayName(setCompanyDisplayName)
+  }, [])
 
   useEffect(() => {
     const check = () => setIsNarrow(window.innerWidth < NARROW_BREAKPOINT)
@@ -230,11 +239,11 @@ export default function Header({
           </Link>
           {leftContent}
           <Text size="5" weight="bold" className={styles.pageTitle} style={{ flexShrink: 0 }}>
-            {pageTitle}
+            {companyDisplayName}
           </Text>
         </Flex>
 
-        <Flex align="center" gap="3" style={{ flexShrink: 0 }}>
+        <Flex align="center" gap={isNarrow ? '2' : '3'} style={{ flexShrink: 1, minWidth: 0 }}>
           {isNarrow ? (
             <Box
               className={styles.searchButton}
@@ -318,6 +327,8 @@ export default function Header({
             )}
           </Box>
 
+          <HeaderLocaleControl compactTrigger={isNarrow} />
+
           <Flex
             align="center"
             style={{
@@ -326,13 +337,15 @@ export default function Header({
               overflow: 'hidden',
               backgroundColor: 'transparent',
               height: '34px',
+              flexShrink: 1,
+              minWidth: 0,
             }}
           >
             <Flex
               data-tour="header-profile"
               align="center"
               gap="2"
-              px="3"
+              px={isNarrow ? '2' : '3'}
               onMouseEnter={() => setUserHover(true)}
               onMouseLeave={() => setUserHover(false)}
               style={{
@@ -345,14 +358,24 @@ export default function Header({
                 display: 'flex',
                 alignItems: 'center',
                 transition: 'background-color 0.2s ease-in-out',
+                minWidth: 0,
+                flex: '0 1 auto',
               }}
               onClick={handleUserClick}
             >
               <PersonIcon width={16} height={16} style={{ color: '#3b82f6', flexShrink: 0 }} />
-              <Text size="2" className={styles.userFullName} style={{ color: '#3b82f6', whiteSpace: 'nowrap', fontWeight: 400 }}>
+              <Text
+                size="2"
+                className={`${styles.userFullName} ${styles.profileNameClip}`}
+                style={{ color: '#3b82f6', fontWeight: 400 }}
+              >
                 {userName}
               </Text>
-              <Text size="2" className={styles.userName} style={{ color: '#3b82f6', whiteSpace: 'nowrap', fontWeight: 400 }}>
+              <Text
+                size="2"
+                className={`${styles.userName} ${styles.profileNameClip}`}
+                style={{ color: '#3b82f6', fontWeight: 400 }}
+              >
                 {firstName}
               </Text>
             </Flex>

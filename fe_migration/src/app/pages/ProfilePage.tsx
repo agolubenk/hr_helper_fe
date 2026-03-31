@@ -9,6 +9,7 @@ import { ScheduleSettingsPage } from '@/components/profile/ScheduleSettingsPage'
 import IntegrationsPage from '@/components/profile/IntegrationsPage'
 import QuickButtonsPage from '@/components/profile/QuickButtonsPage'
 import AccentColorSettings from '@/components/profile/AccentColorSettings'
+import { ProfileLanguagesSettings } from '@/components/profile/ProfileLanguagesSettings'
 import QuickTasksSettings from '@/components/profile/QuickTasksSettings'
 import ReminderPage from '@/components/profile/ReminderPage'
 import { ProfileRequestsPage } from '@/components/profile/ProfileRequestsPage'
@@ -230,6 +231,8 @@ export function ProfilePage() {
             <QuickTasksSettings />
           </Flex>
         )
+      case 'localization':
+        return <ProfileLanguagesSettings />
       case 'integrations':
         return <IntegrationsPage />
       case 'quick-buttons':

@@ -9,7 +9,7 @@
  * - Сохранение состояния меню в localStorage
  * 
  * Функциональность:
- * - Header: верхняя панель с заголовком, поиском, уведомлениями, темой, пользователем
+ * - Header: верхняя панель с названием компании (десктоп), поиском, уведомлениями, темой, пользователем
  * - Sidebar: боковое меню навигации (открывается/закрывается)
  * - FloatingActions: плавающие кнопки действий
  * - StatusBar: статусная панель (показывается только на странице ats)
@@ -17,7 +17,7 @@
  * - Адаптивное поведение меню (на мобильных всегда закрыто, на десктопе сохраняется состояние)
  * 
  * Связи:
- * - Header: отображает заголовок страницы, поиск, уведомления, переключатель темы
+ * - Header: название компании из настроек, поиск, уведомления, переключатель темы
  * - Sidebar: боковое меню навигации
  * - FloatingActions: плавающие кнопки быстрых действий
  * - StatusBar: статусная панель для страницы ats
@@ -43,6 +43,10 @@ import FloatingActions from "./FloatingActions"
 import StatusBar from "./StatusBar"
 import { Footer } from "./navigation/Footer/Footer"
 import { useTheme } from "./ThemeProvider"
+import {
+  applyDocumentLangFromPreferences,
+  subscribeUserAndCompanyLocaleChanges,
+} from '@/features/system-settings/userLocalePreferences'
 import styles from './AppLayout.module.css'
 
 /**
@@ -73,7 +77,7 @@ const DESKTOP_BREAKPOINT = 768 // Мобильные устройства < 768p
  * 
  * Структура:
  * - children: содержимое страницы (ReactNode)
- * - pageTitle: заголовок страницы (отображается в Header)
+ * - pageTitle: заголовок страницы (document.title; в шапке — название компании из настроек)
  * - userName: имя пользователя (отображается в Header)
  * - onLogout: обработчик выхода из системы (опционально)
  */
@@ -111,11 +115,19 @@ export default function AppLayout({
   // Проверка, является ли текущая страница ats (для показа StatusBar)
   const isRecrChatPage = pathname?.startsWith('/ats')
   const isAdminPage = pathname?.startsWith('/admin')
+  const isAiChatPage = pathname?.startsWith('/aichat')
+  const isMeetRoomPage = pathname?.startsWith('/meet/room')
 
   useEffect(() => {
     const t = (pageTitle ?? 'HR Helper').trim()
     document.title = t === 'HR Helper' ? 'HR Helper' : `${t} — HR Helper`
   }, [pageTitle])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    applyDocumentLangFromPreferences()
+    return subscribeUserAndCompanyLocaleChanges(applyDocumentLangFromPreferences)
+  }, [])
 
   /**
    * isDesktop - проверка, является ли устройство десктопом
@@ -306,11 +318,10 @@ export default function AppLayout({
   return (
     <>
       {/* Верхняя панель приложения
-          - Отображает заголовок страницы, поиск, уведомления, переключатель темы, пользователя
+          - Название компании (десктоп), поиск, уведомления, переключатель темы, пользователя
           - Кнопка меню для открытия/закрытия Sidebar
           - Фиксированная позиция, высота 64px */}
       <Header
-        pageTitle={pageTitle}
         userName={userName}
         onMenuToggle={handleMenuToggle}
         onThemeToggle={toggleTheme}
@@ -350,7 +361,7 @@ export default function AppLayout({
           minHeight: 0,
           transition: 'all 0.2s ease-in-out',
           overflowX: 'hidden',
-          overflowY: 'auto',
+          overflowY: isAiChatPage || isMeetRoomPage ? 'hidden' : 'auto',
         }}
       >
         {/* Основной контент страницы */}
@@ -360,14 +371,20 @@ export default function AppLayout({
           style={{ 
             padding: isAdminPage
               ? `0 0 ${FOOTER_HEIGHT + 24}px 0`
-              : isRecrChatPage
+              : (isRecrChatPage || isAiChatPage || isMeetRoomPage)
                 ? '0'
                 : `24px 0 ${FOOTER_HEIGHT + 24}px 0`,
             borderTop: '1px solid var(--gray-a6)',
-            flex: 1,
+            /* Для обычных страниц высота = контент, иначе scroll на contentWrapper не получает scrollHeight */
+            ...(isRecrChatPage || isAiChatPage || isMeetRoomPage
+              ? {
+                  flex: 1,
+                  minHeight: 0,
+                  ...(isMeetRoomPage ? { display: 'flex', flexDirection: 'column' as const } : {}),
+                }
+              : { flex: '0 1 auto', minHeight: 'auto' }),
             minWidth: 0,
             maxWidth: '100%',
-            minHeight: 0,
             height: isRecrChatPage
               ? `calc(100vh - 112px - ${FOOTER_HEIGHT}px)`
               : undefined,

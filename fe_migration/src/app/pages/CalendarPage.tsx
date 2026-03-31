@@ -31,12 +31,13 @@
  * - При выборе офиса фильтрует события (в будущей реализации)
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Box, Flex, Text, Button, Card, Table, Select, Badge, Dialog, Separator, Tabs, TextField } from '@radix-ui/themes'
 import { 
   CalendarIcon, 
   ChevronLeftIcon, 
   ChevronRightIcon,
+  GearIcon,
   ClockIcon,
   PersonIcon,
   VideoIcon,
@@ -51,6 +52,8 @@ import {
   CopyIcon
 } from "@radix-ui/react-icons"
 import { useToast } from '@/components/Toast/ToastContext'
+import { useNavigate } from '@/router-adapter'
+import { useOptionalSearchParam, useValidatedSearchParam } from '@/shared/hooks/useUrlSearchState'
 import SlotsPanel from '@/components/workflow/SlotsPanel'
 import styles from './styles/CalendarPage.module.css'
 
@@ -114,6 +117,80 @@ interface CalendarEvent {
   allDay?: boolean
 }
 
+const CALENDAR_PAGE_MOCK_EVENTS: CalendarEvent[] = [
+  {
+    id: '1',
+    title: 'Интервью: Иван Иванов',
+    start: new Date(2026, 0, 26, 14, 0),
+    end: new Date(2026, 0, 26, 15, 30),
+    type: 'interview',
+    candidate: 'Иван Иванов',
+    interviewer: 'Андрей Голубенко',
+    format: 'online',
+    vacancy: 'Frontend Engineer (React)',
+    status: 'confirmed',
+    location: 'Google Meet',
+    description:
+      'Техническое интервью с кандидатом на позицию Frontend Engineer. Обсуждение опыта работы с React, TypeScript, и архитектурой приложений.',
+    meetLink: 'https://meet.google.com/abc-defg-hij',
+    creatorEmail: 'andrey@example.com',
+    creatorName: 'Андрей Голубенко',
+    attendees: [
+      { email: 'andrey@example.com', name: 'Андрей Голубенко', responseStatus: 'accepted', organizer: true },
+      { email: 'ivan@example.com', name: 'Иван Иванов', responseStatus: 'accepted' },
+      { email: 'maria@example.com', name: 'Мария Сидорова', responseStatus: 'tentative' },
+    ],
+    allDay: false,
+  },
+  {
+    id: '2',
+    title: 'HR-скрининг: Мария Козлова',
+    start: new Date(2026, 0, 26, 10, 0),
+    end: new Date(2026, 0, 26, 10, 30),
+    type: 'screening',
+    candidate: 'Мария Козлова',
+    interviewer: 'Андрей Голубенко',
+    format: 'online',
+    vacancy: 'Fullstack Engineer',
+    status: 'confirmed',
+    location: 'Google Meet',
+    description: 'HR-скрининг кандидата. Проверка мотивации, ожиданий по зарплате, готовности к работе.',
+    meetLink: 'https://meet.google.com/xyz-uvw-rst',
+    creatorEmail: 'andrey@example.com',
+    creatorName: 'Андрей Голубенко',
+    attendees: [
+      { email: 'andrey@example.com', name: 'Андрей Голубенко', responseStatus: 'accepted', organizer: true },
+      { email: 'maria.koz@example.com', name: 'Мария Козлова', responseStatus: 'accepted' },
+    ],
+    allDay: false,
+  },
+  {
+    id: '3',
+    title: 'Интервью: Егор Говсь',
+    start: new Date(2026, 0, 27, 16, 0),
+    end: new Date(2026, 0, 27, 17, 30),
+    type: 'interview',
+    candidate: 'Егор Говсь',
+    interviewer: 'Иван Петров',
+    format: 'office',
+    vacancy: 'Backend Engineer (Python)',
+    status: 'tentative',
+    location: 'Офис, ул. Ленина, 10, каб. 205',
+    description: 'Очное техническое интервью. Обсуждение опыта работы с Python, Django, базами данных.',
+    creatorEmail: 'ivan@example.com',
+    creatorName: 'Иван Петров',
+    attendees: [
+      { email: 'ivan@example.com', name: 'Иван Петров', responseStatus: 'accepted', organizer: true },
+      { email: 'egor@example.com', name: 'Егор Говсь', responseStatus: 'tentative' },
+    ],
+    allDay: false,
+  },
+]
+
+const CALENDAR_MAIN_TABS = ['calendar', 'list', 'slots'] as const
+const CALENDAR_VIEW_MODES = ['month', 'week', 'day'] as const
+const CALENDAR_OFFICE_IDS = ['minsk', 'warsaw', 'gomel'] as const
+
 /**
  * CalendarPage - компонент страницы календаря
  * 
@@ -128,94 +205,41 @@ interface CalendarEvent {
  * - searchQuery: поисковый запрос для фильтрации событий
  */
 export function CalendarPage() {
-  // Текущая дата для отображения календаря (по умолчанию - сегодня)
+  const navigate = useNavigate()
   const [currentDate, setCurrentDate] = useState(new Date())
-  // Режим отображения: 'month' - месяц, 'week' - неделя, 'day' - день
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month')
-  // Выбранный офис для фильтрации событий
-  const [selectedOffice, setSelectedOffice] = useState<'minsk' | 'warsaw' | 'gomel'>('minsk')
-  // Выбранное событие для детального просмотра в модальном окне
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
-  // Флаг открытия модального окна детального просмотра события
-  const [eventModalOpen, setEventModalOpen] = useState(false)
-  // Флаг синхронизации с Google Calendar (показывает индикатор загрузки)
-  const [isSyncing, setIsSyncing] = useState(false)
-  // Активная вкладка: 'calendar' - календарь, 'list' - список событий, 'slots' - слоты
-  const [activeTab, setActiveTab] = useState<'calendar' | 'list' | 'slots'>('calendar')
-  // Поисковый запрос для фильтрации событий в списке
-  const [searchQuery, setSearchQuery] = useState('')
-  // Хук для отображения уведомлений
-  const toast = useToast()
+  const [activeTab, setActiveTab] = useValidatedSearchParam(
+    'tab',
+    CALENDAR_MAIN_TABS,
+    'calendar',
+    { omitWhenDefault: true, replace: true }
+  )
+  const [viewMode, setViewMode] = useValidatedSearchParam(
+    'calMode',
+    CALENDAR_VIEW_MODES,
+    'month',
+    { omitWhenDefault: true, replace: true }
+  )
+  const [selectedOffice, setSelectedOffice] = useValidatedSearchParam(
+    'office',
+    CALENDAR_OFFICE_IDS,
+    'minsk',
+    { omitWhenDefault: true, replace: true }
+  )
+  const [eventId, setEventId] = useOptionalSearchParam('event', { replace: true })
+  const selectedEvent = useMemo(() => {
+    if (!eventId) return null
+    return CALENDAR_PAGE_MOCK_EVENTS.find((e) => e.id === eventId) ?? null
+  }, [eventId])
 
-  // Моковые данные событий
-  const mockEvents: CalendarEvent[] = [
-    {
-      id: '1',
-      title: 'Интервью: Иван Иванов',
-      start: new Date(2026, 0, 26, 14, 0),
-      end: new Date(2026, 0, 26, 15, 30),
-      type: 'interview',
-      candidate: 'Иван Иванов',
-      interviewer: 'Андрей Голубенко',
-      format: 'online',
-      vacancy: 'Frontend Engineer (React)',
-      status: 'confirmed',
-      location: 'Google Meet',
-      description: 'Техническое интервью с кандидатом на позицию Frontend Engineer. Обсуждение опыта работы с React, TypeScript, и архитектурой приложений.',
-      meetLink: 'https://meet.google.com/abc-defg-hij',
-      creatorEmail: 'andrey@example.com',
-      creatorName: 'Андрей Голубенко',
-      attendees: [
-        { email: 'andrey@example.com', name: 'Андрей Голубенко', responseStatus: 'accepted', organizer: true },
-        { email: 'ivan@example.com', name: 'Иван Иванов', responseStatus: 'accepted' },
-        { email: 'maria@example.com', name: 'Мария Сидорова', responseStatus: 'tentative' }
-      ],
-      allDay: false
-    },
-    {
-      id: '2',
-      title: 'HR-скрининг: Мария Козлова',
-      start: new Date(2026, 0, 26, 10, 0),
-      end: new Date(2026, 0, 26, 10, 30),
-      type: 'screening',
-      candidate: 'Мария Козлова',
-      interviewer: 'Андрей Голубенко',
-      format: 'online',
-      vacancy: 'Fullstack Engineer',
-      status: 'confirmed',
-      location: 'Google Meet',
-      description: 'HR-скрининг кандидата. Проверка мотивации, ожиданий по зарплате, готовности к работе.',
-      meetLink: 'https://meet.google.com/xyz-uvw-rst',
-      creatorEmail: 'andrey@example.com',
-      creatorName: 'Андрей Голубенко',
-      attendees: [
-        { email: 'andrey@example.com', name: 'Андрей Голубенко', responseStatus: 'accepted', organizer: true },
-        { email: 'maria.koz@example.com', name: 'Мария Козлова', responseStatus: 'accepted' }
-      ],
-      allDay: false
-    },
-    {
-      id: '3',
-      title: 'Интервью: Егор Говсь',
-      start: new Date(2026, 0, 27, 16, 0),
-      end: new Date(2026, 0, 27, 17, 30),
-      type: 'interview',
-      candidate: 'Егор Говсь',
-      interviewer: 'Иван Петров',
-      format: 'office',
-      vacancy: 'Backend Engineer (Python)',
-      status: 'tentative',
-      location: 'Офис, ул. Ленина, 10, каб. 205',
-      description: 'Очное техническое интервью. Обсуждение опыта работы с Python, Django, базами данных.',
-      creatorEmail: 'ivan@example.com',
-      creatorName: 'Иван Петров',
-      attendees: [
-        { email: 'ivan@example.com', name: 'Иван Петров', responseStatus: 'accepted', organizer: true },
-        { email: 'egor@example.com', name: 'Егор Говсь', responseStatus: 'tentative' }
-      ],
-      allDay: false
-    },
-  ]
+  useEffect(() => {
+    if (eventId && !CALENDAR_PAGE_MOCK_EVENTS.some((e) => e.id === eventId)) {
+      setEventId(null)
+    }
+  }, [eventId, setEventId])
+
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const toast = useToast()
 
   /**
    * offices - список офисов для фильтрации событий
@@ -402,7 +426,7 @@ export function CalendarPage() {
    */
   const getEventsForDate = (date: Date | null) => {
     if (!date) return []
-    return mockEvents.filter(event => {
+    return CALENDAR_PAGE_MOCK_EVENTS.filter(event => {
       const eventDate = new Date(event.start)
       return eventDate.toDateString() === date.toDateString()
     })
@@ -460,8 +484,7 @@ export function CalendarPage() {
    * @param event - событие календаря, на которое кликнули
    */
   const handleEventClick = (event: CalendarEvent) => {
-    setSelectedEvent(event)
-    setEventModalOpen(true)
+    setEventId(event.id)
   }
 
   /**
@@ -574,7 +597,7 @@ export function CalendarPage() {
   const days = getDaysInMonth(currentDate)
 
   // Фильтрация событий для списка
-  const filteredEvents = mockEvents.filter(event => {
+  const filteredEvents = CALENDAR_PAGE_MOCK_EVENTS.filter(event => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
@@ -668,6 +691,10 @@ export function CalendarPage() {
           </Flex>
 
           <Flex align="center" gap="3">
+            <Button variant="soft" size="2" onClick={() => navigate('/calendar/settings')}>
+              <GearIcon width={16} height={16} />
+              <Text size="2">Настройки</Text>
+            </Button>
             {/* Кнопка синхронизации */}
             <Button
               variant="soft"
@@ -805,7 +832,7 @@ export function CalendarPage() {
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {mockEvents.map(event => (
+                  {CALENDAR_PAGE_MOCK_EVENTS.map(event => (
                     <Table.Row 
                       key={event.id}
                       style={{ cursor: 'pointer' }}
@@ -1021,7 +1048,12 @@ export function CalendarPage() {
         </Tabs.Root>
 
         {/* Модальное окно для детального просмотра события */}
-        <Dialog.Root open={eventModalOpen} onOpenChange={setEventModalOpen}>
+        <Dialog.Root
+          open={selectedEvent !== null}
+          onOpenChange={(open) => {
+            if (!open) setEventId(null)
+          }}
+        >
           <Dialog.Content style={{ maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' }}>
             {selectedEvent && (
               <>
@@ -1173,7 +1205,7 @@ export function CalendarPage() {
                 </Box>
 
                 <Flex gap="3" justify="end" mt="4">
-                  <Button variant="soft" onClick={() => setEventModalOpen(false)}>
+                  <Button variant="soft" onClick={() => setEventId(null)}>
                     Закрыть
                   </Button>
                 </Flex>

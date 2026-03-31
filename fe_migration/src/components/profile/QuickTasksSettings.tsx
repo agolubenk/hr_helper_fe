@@ -14,6 +14,12 @@ export default function QuickTasksSettings() {
     if (typeof window === 'undefined') return
     const storedEnabled = localStorage.getItem(STORAGE_KEY_ENABLED)
     const storedCollapsed = localStorage.getItem(STORAGE_KEY_COLLAPSED)
+    if (storedEnabled === null) {
+      localStorage.setItem(STORAGE_KEY_ENABLED, 'true')
+    }
+    if (storedCollapsed === null) {
+      localStorage.setItem(STORAGE_KEY_COLLAPSED, 'false')
+    }
     if (storedEnabled !== null) setEnabled(storedEnabled === 'true')
     if (storedCollapsed !== null) setCollapsed(storedCollapsed === 'true')
   }, [])

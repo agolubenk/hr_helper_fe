@@ -12,9 +12,24 @@ interface ChatHistoryProps {
   onChatSelect: (chatId: string) => void
   onNewChat: () => void
   onChatDelete: (chatId: string) => void
+  /** Для модалки: заголовок снаружи */
+  hideHeader?: boolean
+  /** Показывать удаление без hover (тач) */
+  alwaysShowDelete?: boolean
+  /** Скрыть нижний блок «Новый чат» (кнопка снаружи, напр. на плавающей панели) */
+  hideNewChatButton?: boolean
 }
 
-export default function ChatHistory({ chats, selectedChatId, onChatSelect, onNewChat, onChatDelete }: ChatHistoryProps) {
+export default function ChatHistory({
+  chats,
+  selectedChatId,
+  onChatSelect,
+  onNewChat,
+  onChatDelete,
+  hideHeader = false,
+  alwaysShowDelete = false,
+  hideNewChatButton = false,
+}: ChatHistoryProps) {
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null)
   const [hoveredDelete, setHoveredDelete] = useState<string | null>(null)
 
@@ -24,19 +39,25 @@ export default function ChatHistory({ chats, selectedChatId, onChatSelect, onNew
   }
 
   return (
-    <Flex direction="column" height="100%" className={styles.chatHistory}>
-      {/* Заголовок */}
-      <Box className={styles.header}>
-        <Flex align="center" gap="2">
-          <Box className={styles.headerIcon}>
-            <ChatBubbleIcon width={20} height={20} />
-          </Box>
-          <Text size="3" weight="bold" style={{ color: '#ffffff' }}>История чатов</Text>
-        </Flex>
-      </Box>
+    <Flex
+      direction="column"
+      height="100%"
+      className={`${styles.chatHistory} ${hideHeader ? styles.chatHistoryNoHeader : ''} ${hideNewChatButton ? styles.chatHistoryPopover : ''}`}
+    >
+      {!hideHeader && (
+        <Box className={styles.header}>
+          <Flex align="center" gap="2">
+            <Box className={styles.headerIcon}>
+              <ChatBubbleIcon width={20} height={20} />
+            </Box>
+            <Text size="3" weight="bold" style={{ color: '#ffffff' }}>
+              История чатов
+            </Text>
+          </Flex>
+        </Box>
+      )}
 
-      {/* Список чатов */}
-      <Box className={styles.chatsList} style={{ flex: 1 }}>
+      <Box className={styles.chatsList} style={{ flex: 1, minHeight: 0 }}>
         {chats.map((chat) => {
           const isSelected = chat.id === selectedChatId
           const isHovered = hoveredChatId === chat.id
@@ -63,7 +84,7 @@ export default function ChatHistory({ chats, selectedChatId, onChatSelect, onNew
                     </Text>
                   )}
                 </Box>
-                {isHovered && (
+                {(isHovered || alwaysShowDelete) && (
                   <Box
                     className={styles.deleteIcon}
                     onClick={(e) => handleDeleteClick(e, chat.id)}
@@ -80,17 +101,14 @@ export default function ChatHistory({ chats, selectedChatId, onChatSelect, onNew
         })}
       </Box>
 
-      {/* Кнопка "Новый чат" */}
-      <Box className={styles.newChatButtonContainer}>
-        <Button
-          className={styles.newChatButton}
-          onClick={onNewChat}
-          size="3"
-        >
-          <PlusIcon width={16} height={16} />
-          Новый чат
-        </Button>
-      </Box>
+      {!hideNewChatButton && (
+        <Box className={styles.newChatButtonContainer}>
+          <Button className={styles.newChatButton} onClick={onNewChat} size="3">
+            <PlusIcon width={16} height={16} />
+            Новый чат
+          </Button>
+        </Box>
+      )}
     </Flex>
   )
 }

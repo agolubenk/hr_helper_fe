@@ -182,9 +182,11 @@ export default function WikiTagSelector({
         </Flex>
       ) : null}
 
-      <Text size="1" color="gray" style={{ display: 'block', marginTop: '8px' }}>
-        Выберите существующие метки или создайте новую
-      </Text>
+      {selectedTags.length === 0 ? (
+        <Text size="1" color="gray" style={{ display: 'block', marginTop: '8px' }}>
+          Выберите существующие метки или создайте новую
+        </Text>
+      ) : null}
     </Box>
   )
 }

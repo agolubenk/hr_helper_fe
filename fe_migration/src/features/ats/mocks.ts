@@ -78,6 +78,58 @@ function defaultExperienceVersionHistory(): CandidateExperienceVersionEntry[] {
   ]
 }
 
+/** Совпадение опыта кандидата с записью из чёрного списка компаний (мок) */
+export interface BlacklistSuspicionMatch {
+  companyName: string
+  matchReason: string
+  /** Откуда взята строка опыта (резюме / профиль) */
+  sourceLabel?: string
+}
+
+/** Запись ленты «Активность» на карточке кандидата (мок + накопление в сессии) */
+export type AtsCandidateActivityKind = 'status_transition' | 'comment' | 'resume_added' | 'system'
+
+export interface AtsCandidateActivityEntry {
+  id: string
+  kind: AtsCandidateActivityKind
+  /** ISO-8601 для сортировки и отображения */
+  atIso: string
+  authorLabel: string
+  fromStatus?: string
+  toStatus?: string
+  /** Комментарий в том виде, как ввёл пользователь (переносы строк сохраняются) */
+  commentRaw?: string
+  /** Если статус «Отказ» и выбрана причина */
+  rejectionReason?: string
+  /** Для нестатусных событий */
+  title?: string
+  subtitle?: string
+}
+
+/** Снимок полей для отката после «Подтвердить» (вкладка History) */
+export interface AtsCandidateAuditRevert {
+  candidateId: string
+  merge: Partial<{
+    status: string
+    statusColor: string
+    offerApplicationId?: string
+    offerStartDate?: string
+  }>
+  unsetKeys?: Array<'offerApplicationId' | 'offerStartDate'>
+}
+
+export interface AtsCandidateAuditEntry {
+  id: string
+  atIso: string
+  authorLabel: string
+  summary: string
+  /** Подробный лог действия (мультистрочный) */
+  detail: string
+  undone: boolean
+  /** null — отмена недоступна (архивные записи или только комментарий) */
+  revert: AtsCandidateAuditRevert | null
+}
+
 /** Как в старом приложении: один список всех кандидатов, vacancy — название вакансии */
 export interface AtsCandidate {
   id: string
@@ -110,6 +162,11 @@ export interface AtsCandidate {
   emails?: string[]
   phones?: string[]
   hasDuplicateSuspicion?: boolean
+  /** Подозрение: компании из опыта пересекаются с чёрным списком рекрутинга */
+  hasBlacklistSuspicion?: boolean
+  blacklistSuspicionMatches?: BlacklistSuspicionMatch[]
+  /** Подтверждённо в чёрном списке — отдельная метка в списке кандидатов */
+  isBlacklisted?: boolean
   /** Соцсети: linkedin, telegram, github и т.д. */
   social?: Record<string, string | string[]>
   /** Рейтинг кандидата (1–5) — как в old */
@@ -134,6 +191,10 @@ export interface AtsCandidate {
    * Общая хронология снимков опыта по кандидату (v0 — самый ранний). Одна строка версий для обеих подвкладок.
    */
   experienceVersionHistory?: CandidateExperienceVersionEntry[]
+  /** История активности (вкладка Activity); новые записи дополняются из UI при «Подтвердить» */
+  activityLog?: AtsCandidateActivityEntry[]
+  /** Журнал аудита (вкладка History): подробные логи и откат подтверждений статуса */
+  auditLog?: AtsCandidateAuditEntry[]
 }
 
 export function getExperienceTabInfo(
@@ -404,6 +465,19 @@ export const MOCK_CANDIDATES: AtsCandidate[] = [
     phones: ['+1 (555) 123-4567'],
     location: 'New York, USA',
     hasDuplicateSuspicion: true,
+    hasBlacklistSuspicion: true,
+    blacklistSuspicionMatches: [
+      {
+        companyName: 'ООО «ТехноБлок»',
+        matchReason: 'Юрлицо в чёрном списке компании (рекрутинг)',
+        sourceLabel: 'Опыт в резюме — LinkedIn',
+      },
+      {
+        companyName: 'ООО «СтройИнвест Альфа»',
+        matchReason: 'Совпадение с алиасом / дочерней структурой из чёрного списка',
+        sourceLabel: 'Опыт в резюме — файл PDF',
+      },
+    ],
     vacancy: 'Frontend Senior',
     applied: 'Jan 15, 2026',
     updated: 'Jan 18, 2026',
@@ -424,6 +498,99 @@ export const MOCK_CANDIDATES: AtsCandidate[] = [
       { version: 1, dateDisplay: '13.02.24', sourceSnapshot: 'rabota.by' },
       { version: 2, dateDisplay: '19.07.25', sourceSnapshot: 'Файл (самодельное резюме)' },
       { version: 3, dateDisplay: '14.03.26', sourceSnapshot: 'LinkedIn' },
+    ],
+    activityLog: [
+      {
+        id: 'act-1',
+        kind: 'resume_added',
+        atIso: '2026-01-15T14:22:00.000Z',
+        authorLabel: 'Система',
+        title: 'Резюме добавлено в воронку',
+        subtitle: 'Источник: LinkedIn · заявка на вакансию Frontend Senior',
+      },
+      {
+        id: 'act-2',
+        kind: 'status_transition',
+        atIso: '2026-01-16T09:05:00.000Z',
+        authorLabel: 'Иванова Мария',
+        fromStatus: 'New',
+        toStatus: 'Under Review',
+        commentRaw:
+          'Первичный просмотр резюме.\nСоответствует стеку: **React**, *TypeScript*, опыт с *design system*.\n\nДоговорились о созвоне на чт.',
+      },
+      {
+        id: 'act-3',
+        kind: 'status_transition',
+        atIso: '2026-01-17T11:40:00.000Z',
+        authorLabel: 'Петров Алексей',
+        fromStatus: 'Under Review',
+        toStatus: 'Interview',
+        commentRaw:
+          'Скрининг HR пройден.\nКомментарий кандидата по зарплатным ожиданиям зафиксирован как в переписке:\n150–200k USD.\n\n<u>Следующий шаг</u>: тех. интервью.',
+      },
+      {
+        id: 'act-4',
+        kind: 'comment',
+        atIso: '2026-01-18T08:15:00.000Z',
+        authorLabel: 'Голубенко Андрей',
+        commentRaw:
+          'Напоминание себе перед интервью:\n- пройтись по тестовому заданию\n- проверить [ссылка на GitHub](https://example.com)\n\nБез смены статуса.',
+      },
+    ],
+    auditLog: [
+      {
+        id: 'audit-mock-1',
+        atIso: '2026-01-15T14:22:03.120Z',
+        authorLabel: 'Система · ATS ingest',
+        summary: 'Импорт карточки кандидата',
+        detail: [
+          'action=APPLICATION_CREATED',
+          'source_channel=linkedin_job_apply',
+          'vacancy_external_id=fe-senior-001',
+          'payload.resume_sha256=<mock>',
+          'result=duplicate_check_passed',
+          'notes: запись создана без ручного вмешательства; откат недоступен.',
+        ].join('\n'),
+        undone: false,
+        revert: null,
+      },
+      {
+        id: 'audit-mock-2',
+        atIso: '2026-01-16T09:05:11.000Z',
+        authorLabel: 'Иванова Мария · user_id=hr-042',
+        summary: 'UI: подтверждение статуса New → Under Review',
+        detail: [
+          'action=CONFIRM_STATUS',
+          'ui.context=candidate_card.status_panel',
+          'transition.before=New',
+          'transition.after=Under Review',
+          'offer.application_id=∅',
+          'offer.start_date=∅',
+          'rejection.reason=∅',
+          'comment.length_chars=142',
+          'comment.raw_stored=true',
+          'audit.retention_days=365 (мок)',
+        ].join('\n'),
+        undone: false,
+        revert: null,
+      },
+      {
+        id: 'audit-mock-3',
+        atIso: '2026-01-17T11:40:22.000Z',
+        authorLabel: 'Петров Алексей · user_id=hr-018',
+        summary: 'UI: подтверждение статуса Under Review → Interview',
+        detail: [
+          'action=CONFIRM_STATUS',
+          'ui.context=candidate_card.status_panel',
+          'transition.before=Under Review',
+          'transition.after=Interview',
+          'sla.next_step=schedule_tech_interview',
+          'calendar.suggested_slots_sent=false (мок)',
+          'comment.length_chars=198',
+        ].join('\n'),
+        undone: false,
+        revert: null,
+      },
     ],
   },
   {
@@ -932,6 +1099,31 @@ export const MOCK_CANDIDATES: AtsCandidate[] = [
     source: 'Behance',
   },
 ]
+
+/** Стартовая карта ленты Activity по id кандидата (копия из моков) */
+export function initialCandidateActivityLogMap(
+  candidates: AtsCandidate[],
+): Record<string, AtsCandidateActivityEntry[]> {
+  const m: Record<string, AtsCandidateActivityEntry[]> = {}
+  for (const c of candidates) {
+    if (c.activityLog?.length) {
+      m[c.id] = c.activityLog.map((e) => ({ ...e }))
+    }
+  }
+  return m
+}
+
+export function initialCandidateAuditLogMap(
+  candidates: AtsCandidate[],
+): Record<string, AtsCandidateAuditEntry[]> {
+  const m: Record<string, AtsCandidateAuditEntry[]> = {}
+  for (const c of candidates) {
+    if (c.auditLog?.length) {
+      m[c.id] = c.auditLog.map((e) => ({ ...e }))
+    }
+  }
+  return m
+}
 
 /** Подсчёт кандидатов по статусам */
 export function getStatusCounts(): Record<string, number> {

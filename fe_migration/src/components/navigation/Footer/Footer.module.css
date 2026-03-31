@@ -57,6 +57,7 @@
   background-color: var(--gray-3);
   border: 1px solid var(--gray-a5);
   color: var(--gray-12);
+  line-height: 1.65;
 }
 
 .trayBadge:hover {
@@ -90,6 +91,24 @@
   cursor: pointer;
 }
 
+/* Live-индикатор для активного мита (вместо крестика) */
+.trayLiveDot {
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 999px;
+  background: var(--accent-9);
+  box-shadow: 0 0 0 0 var(--accent-a7);
+  animation: trayPulse 1.15s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes trayPulse {
+  0% { opacity: 0.55; transform: scale(0.92); box-shadow: 0 0 0 0 var(--accent-a7); }
+  45% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 6px transparent; }
+  100% { opacity: 0.55; transform: scale(0.92); box-shadow: 0 0 0 0 transparent; }
+}
+
 .trayBadge:hover .trayBadgeClose {
   opacity: 0.7;
 }
@@ -108,7 +127,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  /* Как у .trayBadge — та же высота ряда (~30px) */
+  padding: 4px 10px 4px 8px;
   border-radius: 6px;
   font-size: 12px;
   background-color: var(--gray-3);
@@ -116,6 +136,8 @@
   color: var(--gray-11);
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
+  line-height: 1.65;
+  box-sizing: border-box;
 }
 
 .trayMoreBtn:hover {
@@ -125,8 +147,9 @@
 }
 
 .trayMoreCount {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.65;
   color: var(--gray-10);
 }
 
@@ -159,13 +182,15 @@
 .trayDropdownItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 6px;
+  /* Как у .trayBadge — одна визуальная строка и та же высота ряда в футере (~30px) */
+  padding: 4px 10px 4px 8px;
   border-radius: 6px;
   background-color: var(--gray-3);
   border: 1px solid var(--gray-a5);
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .trayDropdownItem:hover {
@@ -191,11 +216,17 @@
   text-overflow: ellipsis;
   font-size: 12px;
   color: var(--gray-12);
+  line-height: 1.65;
 }
 
 .trayDropdownRemove {
   flex-shrink: 0;
-  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  padding: 0;
+  line-height: 1;
   background: none;
   border: none;
   color: var(--gray-10);
@@ -230,6 +261,24 @@
   .trayBadge {
     max-width: 140px;
     padding: 3px 8px 3px 6px;
+    font-size: 11px;
+  }
+
+  .trayDropdownItem {
+    padding: 3px 8px 3px 6px;
+    gap: 6px;
+  }
+
+  .trayDropdownText {
+    font-size: 11px;
+  }
+
+  .trayMoreBtn {
+    padding: 3px 8px 3px 6px;
+    font-size: 11px;
+  }
+
+  .trayMoreCount {
     font-size: 11px;
   }
 }

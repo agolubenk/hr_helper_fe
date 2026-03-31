@@ -34,6 +34,27 @@
   display: none;
 }
 
+/* Сжатие длинных ФИО / имени при нехватке места в хедере */
+.profileNameClip {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14rem;
+}
+
+@media (max-width: 900px) {
+  .profileNameClip {
+    max-width: 9rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .profileNameClip {
+    max-width: 6rem;
+  }
+}
+
 .logoutText {
   display: inline-block;
 }

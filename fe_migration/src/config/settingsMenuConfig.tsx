@@ -24,6 +24,9 @@ import {
   ArrowRightIcon,
   EnvelopeClosedIcon,
   ActivityLogIcon,
+  Cross2Icon,
+  PlusIcon,
+  Link2Icon,
 } from '@radix-ui/react-icons'
 import { IntegrationsIcon } from '@/components/icons/IntegrationsIcon'
 import { Box } from '@radix-ui/themes'
@@ -84,7 +87,6 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
         icon: ic(GearIcon),
         children: [
           { id: 'company-general', label: 'Общие настройки компании', icon: ic(GearIcon), href: '/company-settings' },
-          { id: 'company-groups-legal', label: 'Группы компаний и юрлица', icon: ic(BoxIcon), href: '/company-settings/legal-entities' },
           { id: 'company-calendar', label: 'Рабочий календарь', icon: ic(CalendarIcon), href: '/company-settings/calendar' },
           { id: 'company-org-model', label: 'Организационная модель', icon: ic(LayersIcon), href: '/company-settings/org-model' },
         ],
@@ -131,6 +133,8 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
               { id: 'recruiting-settings-rules', label: 'Правила привлечения', icon: ic(GearIcon), href: '/company-settings/recruiting/rules' },
               { id: 'recruiting-settings-commands', label: 'Команды workflow', icon: ic(MixerHorizontalIcon), href: '/company-settings/recruiting/commands' },
               { id: 'recruiting-settings-candidate-fields', label: 'Дополнительные поля кандидатов', icon: ic(FileTextIcon), href: '/company-settings/recruiting/candidate-fields' },
+              { id: 'recruiting-settings-company-blacklist', label: 'Черный список компаний', icon: ic(Cross2Icon), href: '/company-settings/recruiting/company-blacklist' },
+              { id: 'recruiting-settings-company-whitelist-donors', label: 'Белый список компаний / доноры', icon: ic(PlusIcon), href: '/company-settings/recruiting/company-whitelist-donors' },
               { id: 'recruiting-settings-vacancy-fields', label: 'Дополнительные поля вакансии', icon: ic(FileTextIcon), href: '/company-settings/recruiting/vacancy-fields' },
               { id: 'recruiting-settings-scorecard', label: 'Scorecard', icon: <RatingScalesIcon />, href: '/company-settings/Scorecard' },
               { id: 'recruiting-settings-rating-scales', label: 'Шкалы оценок', icon: <RatingScalesIcon />, href: '/company-settings/rating-scales' },
@@ -279,7 +283,8 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
         children: [
           { id: 'settings-modules', label: 'Модули (вкл/выкл)', icon: ic(GearIcon), href: '/settings/modules' },
           { id: 'system-localization', label: 'Локализация и переводы', icon: ic(GlobeIcon), href: '/company-settings/system/localization' },
-          { id: 'system-email-gateways', label: 'Email/SMS/мессенджер-шлюзы', icon: ic(EnvelopeClosedIcon), href: '/company-settings/system/gateways' },
+          { id: 'system-email-gateways', label: 'Почта и мессенджер-шлюзы', icon: ic(EnvelopeClosedIcon), href: '/company-settings/system/gateways' },
+          { id: 'system-outbound-api-webhooks', label: 'Исходящие API и вебхуки', icon: ic(Link2Icon), href: '/company-settings/system/outbound' },
           { id: 'system-sandbox', label: 'Песочница/стенд', icon: ic(BoxIcon), href: '/company-settings/system/sandbox' },
         ],
       },

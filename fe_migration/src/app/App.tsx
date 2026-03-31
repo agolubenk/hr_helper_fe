@@ -7,6 +7,7 @@ import { WorkflowPage } from '@/app/pages/WorkflowPage'
 import { AIChatPage } from '@/app/pages/AIChatPage'
 import { HuntflowPage } from '@/app/pages/HuntflowPage'
 import { CalendarPage } from '@/app/pages/CalendarPage'
+import { CalendarSettingsPage } from '@/app/pages/CalendarSettingsPage'
 import { SearchPage } from '@/app/pages/SearchPage'
 import { InterviewersPage } from '@/app/pages/InterviewersPage'
 import { CandidateResponsesPage } from '@/app/pages/CandidateResponsesPage'
@@ -39,6 +40,30 @@ import { ProjectsPage } from '@/app/pages/ProjectsPage'
 import { ProjectDetailPage } from '@/app/pages/ProjectDetailPage'
 import { ProjectsTeamsPage } from '@/app/pages/ProjectsTeamsPage'
 import { ProjectsResourcesPage } from '@/app/pages/ProjectsResourcesPage'
+import { InternalSitePage } from '@/app/pages/InternalSitePage'
+import { InternalSitePostDetailPage } from '@/app/pages/InternalSitePostDetailPage'
+import { InternalSitePostEditPage } from '@/app/pages/InternalSitePostEditPage'
+import { ModulesSettingsPage } from '@/app/pages/ModulesSettingsPage'
+import { LocalizationSettingsPage } from '@/app/pages/LocalizationSettingsPage'
+import { SandboxSettingsPage } from '@/app/pages/SandboxSettingsPage'
+import { GatewaysSettingsPage } from '@/app/pages/GatewaysSettingsPage'
+import { OutboundIntegrationsPage } from '@/app/pages/OutboundIntegrationsPage'
+import { TasksPage } from '@/app/pages/TasksPage'
+import { MeetHomePage } from '@/app/pages/meet/MeetHomePage'
+import { MeetNewLinksPage } from '@/app/pages/meet/MeetNewLinksPage'
+import { MeetRoomPage } from '@/app/pages/meet/MeetRoomPage'
+import { MeetHistoryPage } from '@/app/pages/meet/MeetHistoryPage'
+import { MeetUpcomingPage } from '@/app/pages/meet/MeetUpcomingPage'
+import { MeetArchivePage } from '@/app/pages/meet/MeetArchivePage'
+import { CodingPlatformHomePage } from '@/app/pages/coding-platform/CodingPlatformHomePage'
+import { CodingPlatformLanguagesPage } from '@/app/pages/coding-platform/CodingPlatformLanguagesPage'
+import { CodingPlatformPlaygroundPage } from '@/app/pages/coding-platform/CodingPlatformPlaygroundPage'
+import { CodingPlatformLinkBuilderPage } from '@/app/pages/coding-platform/CodingPlatformLinkBuilderPage'
+import { LearningFeedbackPage } from '@/app/pages/LearningFeedbackPage'
+import { SettingsSecurityUsersPage } from '@/app/pages/settings-security/SettingsSecurityUsersPage'
+import { SettingsSecurityRolesPage } from '@/app/pages/settings-security/SettingsSecurityRolesPage'
+import { SettingsSecurityPermissionsPage } from '@/app/pages/settings-security/SettingsSecurityPermissionsPage'
+import { SettingsSecurityGroupsPage } from '@/app/pages/settings-security/SettingsSecurityGroupsPage'
 import { mockProjectDetails } from '@/app/pages/projectsMocks'
 import { useParams } from '@/router-adapter'
 import { Error404Page } from '@/app/pages/Error404Page'
@@ -96,6 +121,7 @@ import {
 } from '@/app/pages/CompanySettingsPages'
 import { ModulePlaceholderPage } from '@/app/pages/ModulePlaceholderPage'
 import { RecruitingSettingsHub } from '@/components/company-settings/recruiting/RecruitingSettingsHub'
+import { CompanyListsSettings } from '@/components/company-settings/recruiting/CompanyListsSettings'
 
 const layoutProps = {
   pageTitle: 'HR Helper',
@@ -143,6 +169,46 @@ export function App() {
             <Route path="/aichat" element={<AppLayout {...layoutProps} pageTitle="AI Chat"><AIChatPage /></AppLayout>} />
             <Route path="/huntflow" element={<AppLayout {...layoutProps} pageTitle="Huntflow"><HuntflowPage /></AppLayout>} />
             <Route path="/calendar" element={<AppLayout {...layoutProps} pageTitle="Календарь"><CalendarPage /></AppLayout>} />
+            <Route path="/calendar/settings" element={<AppLayout {...layoutProps} pageTitle="Настройки календаря"><CalendarSettingsPage /></AppLayout>} />
+            <Route path="/tasks" element={<AppLayout {...layoutProps} pageTitle="Задачи"><TasksPage /></AppLayout>} />
+            <Route path="/meet/new-links" element={<AppLayout {...layoutProps} pageTitle="Миты — новые ссылки"><MeetNewLinksPage /></AppLayout>} />
+            <Route path="/meet/room" element={<AppLayout {...layoutProps} pageTitle="Мит"><MeetRoomPage /></AppLayout>} />
+            <Route path="/meet/history" element={<AppLayout {...layoutProps} pageTitle="Миты — история"><MeetHistoryPage /></AppLayout>} />
+            <Route path="/meet/upcoming" element={<AppLayout {...layoutProps} pageTitle="Миты — предстоящие"><MeetUpcomingPage /></AppLayout>} />
+            <Route path="/meet/archive" element={<AppLayout {...layoutProps} pageTitle="Миты — архивы"><MeetArchivePage /></AppLayout>} />
+            <Route path="/meet" element={<AppLayout {...layoutProps} pageTitle="Внутренние миты"><MeetHomePage /></AppLayout>} />
+            <Route
+              path="/coding-platform/languages"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа — языки">
+                  <CodingPlatformLanguagesPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/coding-platform/playground"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа — песочница">
+                  <CodingPlatformPlaygroundPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/coding-platform/link-builder"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа — Link-билдер">
+                  <CodingPlatformLinkBuilderPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/coding-platform"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Кодинговая платформа">
+                  <CodingPlatformHomePage />
+                </AppLayout>
+              }
+            />
             <Route path="/search" element={<AppLayout {...layoutProps} pageTitle="Поиск"><SearchPage /></AppLayout>} />
             <Route path="/interviewers" element={<AppLayout {...layoutProps} pageTitle="Интервьюеры"><InterviewersPage /></AppLayout>} />
             <Route path="/candidate-responses" element={<AppLayout {...layoutProps} pageTitle="Ответы кандидатам"><CandidateResponsesPage /></AppLayout>} />
@@ -192,7 +258,55 @@ export function App() {
             <Route path="/company-settings/recruiting/templates" element={<AppLayout {...layoutProps} pageTitle="Шаблоны рекрутинга"><CompanySettingsRecruitingTemplatesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/response-templates" element={<AppLayout {...layoutProps} pageTitle="Шаблоны ответов кандидатам"><CompanySettingsRecruitingResponseTemplatesPage /></AppLayout>} />
             <Route path="/company-settings/recruiting/message-templates" element={<AppLayout {...layoutProps} pageTitle="Шаблоны писем и сообщений"><CompanySettingsRecruitingMessageTemplatesPage /></AppLayout>} />
+            <Route
+              path="/company-settings/recruiting/company-blacklist"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Черный список компаний">
+                  <CompanyListsSettings kind="blacklist" />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/company-settings/recruiting/company-whitelist-donors"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Белый список компаний / доноры">
+                  <CompanyListsSettings kind="whitelist-donors" />
+                </AppLayout>
+              }
+            />
             <Route path="/company-settings/finance/benchmarks" element={<AppLayout {...layoutProps} pageTitle="Бенчмарки — обзор"><BenchmarksDashboardPage /></AppLayout>} />
+            <Route
+              path="/company-settings/system/localization"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Локализация и переводы">
+                  <LocalizationSettingsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/company-settings/system/gateways"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Почта и мессенджер-шлюзы">
+                  <GatewaysSettingsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/company-settings/system/outbound"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Исходящие API и вебхуки">
+                  <OutboundIntegrationsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/company-settings/system/sandbox"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Песочница / стенд">
+                  <SandboxSettingsPage />
+                </AppLayout>
+              }
+            />
             <Route
               path="/company-settings/*"
               element={<AppModulePlaceholder pageTitle="Настройки компании" />}
@@ -261,20 +375,78 @@ export function App() {
                 <Route path="*" element={<Navigate to="info" replace />} />
               </Route>
             </Route>
-            <Route path="/tasks" element={<AppModulePlaceholder pageTitle="Задачи" />} />
             <Route path="/onboarding" element={<AppModulePlaceholder pageTitle="Онбординг" />} />
             <Route path="/onboarding/*" element={<AppModulePlaceholder pageTitle="Онбординг" />} />
             <Route path="/hr-services/*" element={<AppModulePlaceholder pageTitle="HROps" />} />
             <Route path="/employees" element={<AppModulePlaceholder pageTitle="Сотрудники" />} />
             <Route path="/employees/*" element={<AppModulePlaceholder pageTitle="Сотрудники" />} />
             <Route path="/internal-vacancies" element={<AppModulePlaceholder pageTitle="Внутренние вакансии" />} />
+            <Route
+              path="/learning/feedback"
+              element={
+                <AppLayout {...layoutProps} pageTitle="L&D — обратная связь">
+                  <LearningFeedbackPage />
+                </AppLayout>
+              }
+            />
             <Route path="/learning/*" element={<AppModulePlaceholder pageTitle="L&D" />} />
             <Route path="/performance/*" element={<AppModulePlaceholder pageTitle="Эффективность" />} />
             <Route path="/compensation/*" element={<AppModulePlaceholder pageTitle="C&B" />} />
-            <Route path="/internal-site" element={<AppModulePlaceholder pageTitle="Внутренний сайт" />} />
-            <Route path="/internal-site/*" element={<AppModulePlaceholder pageTitle="Внутренний сайт" />} />
+            <Route path="/internal-site" element={<AppLayout {...layoutProps} pageTitle="Внутренний сайт"><InternalSitePage /></AppLayout>} />
+            <Route path="/internal-site/post/create" element={<AppLayout {...layoutProps} pageTitle="Создать пост"><InternalSitePostEditPage /></AppLayout>} />
+            <Route path="/internal-site/post/:slug/edit" element={<AppLayout {...layoutProps} pageTitle="Редактировать пост"><InternalSitePostEditPage /></AppLayout>} />
+            <Route path="/internal-site/post/:slug" element={<AppLayout {...layoutProps} pageTitle="Пост"><InternalSitePostDetailPage /></AppLayout>} />
+            <Route path="/internal-site/*" element={<AppLayout {...layoutProps} pageTitle="Внутренний сайт"><InternalSitePage /></AppLayout>} />
             <Route path="/hr-pr/*" element={<AppModulePlaceholder pageTitle="HR PR" />} />
             <Route path="/analytics" element={<AppModulePlaceholder pageTitle="Аналитика" />} />
+            <Route
+              path="/settings/modules"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Модули (вкл/выкл)">
+                  <ModulesSettingsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings/users/new"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Пользователи — безопасность">
+                  <SettingsSecurityUsersPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings/users"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Пользователи — безопасность">
+                  <SettingsSecurityUsersPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings/roles"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Роли и права (RBAC)">
+                  <SettingsSecurityRolesPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings/permissions"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Права доступа">
+                  <SettingsSecurityPermissionsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings/user-groups"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Группы пользователей">
+                  <SettingsSecurityGroupsPage />
+                </AppLayout>
+              }
+            />
             <Route path="/settings/*" element={<AppModulePlaceholder pageTitle="Настройки" />} />
             <Route path="/integrations/*" element={<AppModulePlaceholder pageTitle="Интеграции" />} />
             <Route path="/my-requests/*" element={<AppModulePlaceholder pageTitle="Мои заявки" />} />

@@ -6,14 +6,44 @@
   color: var(--gray-12);
 }
 
+.actions {
+  flex-shrink: 0;
+}
+
+.quickStartLabel {
+  margin-left: 0;
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 16px;
   }
   
   .title {
     font-size: 24px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .quickStartButton {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .quickStartLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 }

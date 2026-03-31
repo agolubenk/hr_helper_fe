@@ -1,0 +1,161 @@
+.ideChrome {
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-4);
+  overflow: hidden;
+  background: var(--gray-2);
+  box-shadow: 0 1px 0 var(--gray-a5);
+}
+
+.ideToolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--gray-a6);
+  background: var(--gray-3);
+  min-height: 44px;
+}
+
+.ideToolbarMeta {
+  font-size: var(--font-size-1);
+  color: var(--gray-11);
+  margin-left: auto;
+}
+
+.ideWorkArea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: min(520px, calc(100vh - 300px));
+}
+
+.ideWorkAreaSplit {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 40%);
+}
+
+@media (max-width: 960px) {
+  .ideWorkAreaSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ideEditorColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--gray-1);
+}
+
+.idePreviewColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 260px;
+  border-left: 1px solid var(--gray-a6);
+  background: var(--gray-2);
+}
+
+@media (max-width: 960px) {
+  .idePreviewColumn {
+    border-left: none;
+    border-top: 1px solid var(--gray-a6);
+    min-height: 240px;
+  }
+}
+
+.idePreviewHead {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--gray-a6);
+  font-size: var(--font-size-2);
+  font-weight: 600;
+  color: var(--gray-12);
+  background: var(--gray-3);
+}
+
+.idePreviewBody {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.ideTabsRoot {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ideTabsList {
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--gray-a6);
+  background: var(--gray-2);
+  overflow-x: auto;
+}
+
+.ideTabContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  gap: var(--space-2);
+}
+
+.ideLabel {
+  font-size: var(--font-size-1);
+  color: var(--gray-11);
+  font-weight: 500;
+}
+
+.ideTextarea {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  line-height: 1.5;
+  flex: 1;
+  min-height: 200px;
+  width: 100%;
+  padding: var(--space-2);
+  border-radius: var(--radius-2);
+  border: 1px solid var(--gray-a6);
+  background: var(--gray-1);
+  color: var(--gray-12);
+  resize: none;
+}
+
+.ideOutput {
+  flex-shrink: 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: var(--space-2);
+  border-top: 1px solid var(--gray-a6);
+  background: var(--gray-2);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  color: var(--gray-12);
+}
+
+.ideStatusBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-top: 1px solid var(--gray-a6);
+  background: var(--accent-a2);
+  font-size: 11px;
+  color: var(--gray-11);
+}
+
+.langDialogRow {
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--gray-a5);
+}
+
+.langDialogRow:last-child {
+  border-bottom: none;
+}

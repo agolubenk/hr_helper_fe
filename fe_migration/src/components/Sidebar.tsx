@@ -35,7 +35,7 @@
 import { Flex, Box, Text, Separator, DropdownMenu, IconButton, Button } from "@radix-ui/themes"
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { ChevronDownIcon, ChevronUpIcon, GearIcon, OpenInNewWindowIcon, PlusIcon } from "@radix-ui/react-icons"
-import { useState, ReactNode, useEffect, useCallback } from "react"
+import { useState, ReactNode, useEffect, useCallback, useMemo } from "react"
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './Sidebar.module.css'
 import { useTheme } from '@/components/ThemeProvider'
@@ -43,6 +43,14 @@ import { MAIN_MENU_ITEMS, MENU_SECTIONS } from '@/config/menuConfig'
 import { SETTINGS_MENU_ITEMS } from '@/config/settingsMenuConfig'
 import { PROFILE_REQUESTS_BLOCKS } from '@/config/profileRequestsConfig'
 import { shouldMarkSidebarLinkAsPlaceholder } from '@/config/sidebarLinkImplementation'
+import {
+  readModuleEnableMap,
+  COMPANY_MODULES_CHANGED_EVENT,
+} from '@/features/system-settings/moduleSettingsStorage'
+import {
+  filterMainMenuItemsForModules,
+  filterSettingsMenuForModules,
+} from '@/features/system-settings/sidebarModuleMenuFilter'
 
 /** Ключ localStorage для сохранения выбранной главной страницы (кнопка «Главная»). */
 const SIDEBAR_HOME_HREF_KEY = 'sidebarHomeHref'
@@ -233,6 +241,14 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
   if (item.id === 'tasks' && pathname.startsWith('/tasks')) {
     return true
   }
+  // «Внутренние миты» в основном блоке — только главная /meet
+  if (item.id === 'meet-home') {
+    return pathname === '/meet'
+  }
+  // Обзор кодинговой платформы — только /coding-platform (без вложенных путей)
+  if (item.id === 'coding-platform-overview') {
+    return pathname === '/coding-platform'
+  }
   // 'finance' доп. путь для compensation
   if (item.id === 'finance' && pathname.startsWith('/compensation')) {
     return true
@@ -296,7 +312,7 @@ function isItemOrChildrenActive(item: MenuItem, pathname: string | null | undefi
     return pathname === '/finance/benchmarks/all'
   }
   // Проверяем сам элемент: точное совпадение или начало пути
-  if (item.href && item.id !== 'benchmarks-dashboard') {
+  if (item.href && item.id !== 'benchmarks-dashboard' && item.id !== 'meet-home' && item.id !== 'coding-platform-overview') {
     if (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))) {
       return true
     }
@@ -636,10 +652,24 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (typeof window !== 'undefined') localStorage.setItem(SIDEBAR_PROFILE_REQUESTS_HREF_KEY, href)
   }, [])
   
-  /** menuItems — из shared/config/menuConfig */
-  const menuItems: MenuItem[] = MAIN_MENU_ITEMS as MenuItem[]
+  const [moduleEnableMap, setModuleEnableMap] = useState(readModuleEnableMap)
+  useEffect(() => {
+    const sync = () => setModuleEnableMap(readModuleEnableMap())
+    sync()
+    window.addEventListener(COMPANY_MODULES_CHANGED_EVENT, sync)
+    return () => window.removeEventListener(COMPANY_MODULES_CHANGED_EVENT, sync)
+  }, [])
 
-  const settingsItems: MenuItem[] = SETTINGS_MENU_ITEMS as MenuItem[]
+  /** Основное меню с учётом /settings/modules (вкл/выкл разделов). */
+  const menuItems: MenuItem[] = useMemo(
+    () => filterMainMenuItemsForModules(MAIN_MENU_ITEMS, moduleEnableMap) as MenuItem[],
+    [moduleEnableMap]
+  )
+
+  const settingsItems: MenuItem[] = useMemo(
+    () => filterSettingsMenuForModules(SETTINGS_MENU_ITEMS, moduleEnableMap) as MenuItem[],
+    [moduleEnableMap]
+  )
 
   /** Карта пунктов основного меню (company-settings теперь после Separator) */
   const menuItemsById = new Map(menuItems.map((i) => [i.id, i]))
@@ -655,6 +685,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { blockLabel: 'Календарь', items: [{ label: 'Календарь', href: '/calendar' }] },
     { blockLabel: 'Inbox / Workflow chat', items: [{ label: 'Workflow', href: '/workflow' }] },
     { blockLabel: 'Задачи', items: [{ label: 'Мои задачи', href: '/tasks' }] },
+    { blockLabel: 'Внутренние миты', items: [{ label: 'Главная meet', href: '/meet' }] },
+    {
+      blockLabel: 'Кодинговая платформа',
+      items: [{ label: 'Обзор платформы', href: '/coding-platform' }],
+    },
     {
       blockLabel: 'Рекрутинг',
       items: [
@@ -707,6 +742,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Программы', href: '/learning/programs' },
         { label: 'Матрица навыков', href: '/learning/skills-matrix' },
         { label: 'Планы развития', href: '/learning/idp' },
+        { label: 'Оценка знаний', href: '/learning/assessment' },
+        { label: 'Обратная связь', href: '/learning/feedback' },
         { label: 'Отчёты по обучению', href: '/learning/reports' },
       ],
     },
@@ -873,7 +910,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             - Определяем активность каждого пункта по текущему пути */}
         {menuSections.map((section, sectionIdx) => (
           <Box key={section.label}>
-            {sectionIdx === 1 && <Separator size="4" my="2" />}
+            {sectionIdx >= 1 && <Separator size="4" my="2" />}
             {section.itemIds.map((id) => {
               const item = menuItemsById.get(id)
               if (!item) return null
@@ -898,6 +935,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               pathname?.startsWith('/reporting')
             )) ||
             (item.id === 'tasks' && pathname?.startsWith('/tasks')) ||
+            (item.id === 'meet-home' && pathname === '/meet') ||
+            (item.id === 'meet-system' && pathname?.startsWith('/meet/')) ||
+            (item.id === 'meet-new-links' && pathname === '/meet/new-links') ||
+            (item.id === 'meet-room' && pathname === '/meet/room') ||
+            (item.id === 'meet-history' && pathname === '/meet/history') ||
+            (item.id === 'meet-upcoming' && pathname === '/meet/upcoming') ||
+            (item.id === 'meet-archive' && pathname === '/meet/archive') ||
+            (item.id === 'coding-platform' && pathname?.startsWith('/coding-platform')) ||
+            (item.id === 'coding-platform-overview' && pathname === '/coding-platform') ||
+            (item.id === 'coding-platform-languages' && pathname === '/coding-platform/languages') ||
+            (item.id === 'coding-platform-playground' && pathname === '/coding-platform/playground') ||
+            (item.id === 'coding-link-builder' && pathname === '/coding-platform/link-builder') ||
             (item.id === 'ats' && pathname?.startsWith('/ats')) ||
             (item.id === 'workflow-chat' && pathname === '/workflow') ||
             (item.id === 'invites' && pathname?.startsWith('/invites')) ||

@@ -25,6 +25,11 @@ import {
   GlobeIcon,
   PlusIcon,
   MixerHorizontalIcon,
+  VideoIcon,
+  Link2Icon,
+  CounterClockwiseClockIcon,
+  CodeIcon,
+  PlayIcon,
 } from '@radix-ui/react-icons'
 import { Box, Text } from '@radix-ui/themes'
 import { IntegrationsIcon } from '@/components/icons/IntegrationsIcon'
@@ -84,10 +89,11 @@ const AiChatIcon = () => (
 )
 
 /** Пункты 1 уровня (до черты) в порядке отображения. home рендерится отдельно на самом верху. */
-const MENU_LEVEL1_ORDER: string[] = [
+export const MENU_LEVEL1_ORDER: string[] = [
   'calendar',
   'workflow-chat',
   'tasks',
+  'meet-home',
   'recruiting',
   'onboarding',
   'hr-services',
@@ -99,6 +105,8 @@ const MENU_LEVEL1_ORDER: string[] = [
   'projects',
   'analytics',
   'integrations',
+  'meet-system',
+  'coding-platform',
 ]
 
 export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
@@ -106,6 +114,12 @@ export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
   { id: 'calendar', label: 'Календарь', icon: ic(CalendarIcon), href: '/calendar' },
   { id: 'workflow-chat', label: 'Inbox / Workflow chat', icon: ic(ChatBubbleIcon), href: '/workflow' },
   { id: 'tasks', label: 'Задачи', icon: ic(ClipboardIcon), href: '/tasks' },
+  {
+    id: 'meet-home',
+    label: 'Внутренние миты',
+    icon: ic(VideoIcon),
+    href: '/meet',
+  },
   {
     id: 'recruiting',
     label: 'Рекрутинг',
@@ -177,6 +191,8 @@ export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
       { id: 'learning-programs', label: 'Программы', icon: ic(ClipboardIcon), href: '/learning/programs' },
       { id: 'learning-skills', label: 'Матрица навыков', icon: ic(LayersIcon), href: '/learning/skills-matrix' },
       { id: 'learning-idp', label: 'Планы развития', icon: ic(StarIcon), href: '/learning/idp' },
+      { id: 'learning-assessment', label: 'Оценка знаний', icon: ic(DashboardIcon), href: '/learning/assessment' },
+      { id: 'learning-feedback', label: 'Обратная связь', icon: ic(ChatBubbleIcon), href: '/learning/feedback' },
       { id: 'learning-reports', label: 'Отчёты по обучению', icon: ic(BarChartIcon), href: '/learning/reports' },
     ],
   },
@@ -271,6 +287,49 @@ export const MAIN_MENU_ITEMS: MenuItemConfig[] = [
       { id: 'integrations-aichat', label: 'AI Chat / Copilot', icon: <AiChatIcon />, href: '/aichat' },
     ],
   },
+  {
+    id: 'meet-system',
+    label: 'Внутренние миты',
+    icon: ic(VideoIcon),
+    children: [
+      { id: 'meet-new-links', label: 'Новые ссылки', icon: ic(Link2Icon), href: '/meet/new-links' },
+      { id: 'meet-room', label: 'Мит', icon: ic(VideoIcon), href: '/meet/room' },
+      { id: 'meet-history', label: 'История', icon: ic(CounterClockwiseClockIcon), href: '/meet/history' },
+      { id: 'meet-upcoming', label: 'Предстоящие', icon: ic(CalendarIcon), href: '/meet/upcoming' },
+      { id: 'meet-archive', label: 'Архивы', icon: ic(StackIcon), href: '/meet/archive' },
+    ],
+  },
+  {
+    id: 'coding-platform',
+    label: 'Кодинговая платформа',
+    icon: ic(CodeIcon),
+    children: [
+      {
+        id: 'coding-platform-overview',
+        label: 'Обзор',
+        icon: ic(DashboardIcon),
+        href: '/coding-platform',
+      },
+      {
+        id: 'coding-platform-languages',
+        label: 'Языки и связи',
+        icon: ic(LayersIcon),
+        href: '/coding-platform/languages',
+      },
+      {
+        id: 'coding-platform-playground',
+        label: 'Песочница и предпросмотр',
+        icon: ic(PlayIcon),
+        href: '/coding-platform/playground',
+      },
+    ],
+  },
+  {
+    id: 'coding-link-builder',
+    label: 'Link-билдер',
+    icon: ic(Link2Icon),
+    href: '/coding-platform/link-builder',
+  },
 ]
 
 /** Маппинг id пункта меню 1 уровня -> label группы (по аналогии с меню) */
@@ -279,6 +338,7 @@ export const MENU_LEVEL1_TO_LABEL: Record<string, string> = {
   calendar: 'Календарь',
   'workflow-chat': 'Inbox / Workflow chat',
   tasks: 'Задачи',
+  'meet-home': 'Внутренние миты',
   recruiting: 'Рекрутинг',
   onboarding: 'Онбординг',
   'hr-services': 'HROps',
@@ -290,10 +350,17 @@ export const MENU_LEVEL1_TO_LABEL: Record<string, string> = {
   projects: 'Проекты и ресурсы',
   analytics: 'Отчёты и аналитика',
   integrations: 'Интеграции и автоматизации',
+  'meet-system': 'Внутренние миты (разделы)',
+  'coding-platform': 'Кодинговая платформа',
+  'coding-link-builder': 'Link-билдер',
 }
 
 /** Порядок групп на главной (без home) */
-export const HOME_PAGE_GROUP_ORDER = MENU_LEVEL1_ORDER.filter((id) => id !== 'home')
+/** Без `meet-system`: подразделы учитываются в том же продуктовом блоке, что и `meet-home`. */
+export const HOME_PAGE_GROUP_ORDER = MENU_LEVEL1_ORDER.filter(
+  (id) =>
+    id !== 'home' && id !== 'meet-system' && id !== 'coding-platform' && id !== 'coding-link-builder',
+)
 
 /** Варианты фильтра модулей на главной странице */
 export const MODULE_FILTER_OPTIONS = [
@@ -317,6 +384,8 @@ function getFilterModule(blockId: string): string {
   if (/^projects-/.test(blockId)) return 'Проекты и ресурсы'
   if (/^analytics-|^reporting-/.test(blockId)) return 'Отчёты и аналитика'
   if (/^integrations-/.test(blockId)) return 'Интеграции и автоматизации'
+  if (/^meet-/.test(blockId)) return 'Внутренние миты'
+  if (/^coding-platform-/.test(blockId) || blockId === 'coding-link-builder') return 'Кодинговая платформа'
   if (/^settings-|^company-settings|^module-settings|^recruiting-settings|^company-settings-/.test(blockId)) return 'Настройки компании'
   return 'Сотрудники' // fallback
 }
@@ -362,15 +431,23 @@ function collectItemsWithHref(
   return result
 }
 
-/** Пункты до первого сепаратора: Главная (отдельно) + Календарь, Workflow, Задачи */
-const MENU_BEFORE_FIRST_SEPARATOR = ['calendar', 'workflow-chat', 'tasks']
-/** Пункты после первого сепаратора: Рекрутинг, Онбординг и далее */
-const MENU_AFTER_FIRST_SEPARATOR = MENU_LEVEL1_ORDER.filter((id) => !MENU_BEFORE_FIRST_SEPARATOR.includes(id))
+/** Пункты до первого сепаратора: Главная (отдельно) + Календарь, Workflow, Задачи, ссылка на meet */
+const MENU_BEFORE_FIRST_SEPARATOR = ['calendar', 'workflow-chat', 'tasks', 'meet-home']
+/** Пункты после первого сепаратора: Рекрутинг, Онбординг и далее (без блока meet — он в отдельной секции) */
+const MENU_AFTER_FIRST_SEPARATOR = MENU_LEVEL1_ORDER.filter(
+  (id) =>
+    !MENU_BEFORE_FIRST_SEPARATOR.includes(id) &&
+    id !== 'meet-system' &&
+    id !== 'coding-platform' &&
+    id !== 'coding-link-builder',
+)
 
-/** Пункты 1 уровня в порядке отображения. Первый сепаратор — после «Задачи». */
+/** Пункты 1 уровня в порядке отображения. Сепараторы между секциями. */
 export const MENU_SECTIONS: { label: string; itemIds: string[] }[] = [
   { label: 'Основное меню', itemIds: MENU_BEFORE_FIRST_SEPARATOR },
   { label: 'Модули', itemIds: MENU_AFTER_FIRST_SEPARATOR },
+  { label: 'Внутренние миты', itemIds: ['meet-system'] },
+  { label: 'Кодинговая платформа', itemIds: ['coding-platform', 'coding-link-builder'] },
 ]
 
 /** Все блоки главной страницы: основной меню + меню настроек */

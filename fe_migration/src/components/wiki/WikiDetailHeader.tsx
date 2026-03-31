@@ -1,7 +1,7 @@
 'use client'
 
 import { Flex, Box, Text, Button } from "@radix-ui/themes"
-import { ArrowLeftIcon, Pencil1Icon } from "@radix-ui/react-icons"
+import { ArrowLeftIcon, Pencil1Icon, EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons"
 import { useRouter, useParams } from "@/router-adapter"
 import styles from './WikiDetailHeader.module.css'
 
@@ -9,9 +9,20 @@ interface WikiDetailHeaderProps {
   title: string
   category: string
   tags: string[]
+  /** Показать переключатель «корректированная / прежняя с подсветкой» при просмотре старой ревизии в URL */
+  showRevisionDiffToggle?: boolean
+  isDiffMode?: boolean
+  onToggleDiffMode?: () => void
 }
 
-export default function WikiDetailHeader({ title, category, tags }: WikiDetailHeaderProps) {
+export default function WikiDetailHeader({
+  title,
+  category,
+  tags,
+  showRevisionDiffToggle = false,
+  isDiffMode = false,
+  onToggleDiffMode,
+}: WikiDetailHeaderProps) {
   const router = useRouter()
   const params = useParams()
 
@@ -34,7 +45,7 @@ export default function WikiDetailHeader({ title, category, tags }: WikiDetailHe
           <Text size="6" weight="bold" className={styles.pageTitle}>
             {title}
           </Text>
-          <Flex gap="2" wrap="wrap" mt="2">
+          <Flex gap="2" wrap="nowrap" mt="2" className={styles.headerTagsRow}>
             {tags.map((tag, index) => (
               <Box
                 key={index}
@@ -67,6 +78,26 @@ export default function WikiDetailHeader({ title, category, tags }: WikiDetailHe
             <span className={styles.backBtnTextPart1}>Вернуться</span>
             <span className={styles.backBtnTextPart2}> к списку</span>
           </Button>
+
+          {showRevisionDiffToggle && onToggleDiffMode != null ? (
+            <Button
+              type="button"
+              size="3"
+              variant="soft"
+              style={{
+                backgroundColor: 'var(--gray-3)',
+                color: 'var(--gray-11)',
+              }}
+              title={isDiffMode ? 'Показать прежний текст без подсветки' : 'Показать изменения относительно актуальной версии'}
+              aria-label={isDiffMode ? 'Выключить просмотр изменений' : 'Включить просмотр изменений'}
+              onClick={onToggleDiffMode}
+            >
+              {isDiffMode ? <EyeClosedIcon width={16} height={16} /> : <EyeOpenIcon width={16} height={16} />}
+              <span className={styles.diffToggleLabel}>
+                {isDiffMode ? 'Без подсветки' : 'Изменения'}
+              </span>
+            </Button>
+          ) : null}
           
           <Button
             size="3"

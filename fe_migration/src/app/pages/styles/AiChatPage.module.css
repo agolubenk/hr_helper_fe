@@ -1,7 +1,9 @@
 .aichatContainer {
+  position: relative;
   width: 100%;
-  height: calc(100vh - 104px);
+  height: 100%;
   display: flex;
+  padding-top: 8px;
   padding-right: 12px;
   flex-direction: column;
   overflow: hidden;
@@ -21,6 +23,7 @@
   width: 300px;
   flex-shrink: 0;
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   margin-left: 24px;
@@ -30,6 +33,7 @@
   flex: 1;
   min-width: 0;
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -81,14 +85,12 @@
   box-sizing: border-box;
 }
 
-/* Темная тема */
 :global([data-theme='dark']) .chatCard,
 :global([data-theme='dark']) .messagesContainer,
 :global([data-theme='dark']) .inputContainer {
   background: var(--gray-3);
 }
 
-/* Скроллбар */
 .messagesContainer::-webkit-scrollbar {
   width: 8px;
 }
@@ -113,21 +115,179 @@
   }
 }
 
+/* Обёртка: панель + чат без зазора, общая рамка и скругления (моб.) */
+.mobileChatStack {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--gray-a5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+:global([data-theme='dark']) .mobileChatStack {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.chatCardStackedMobile {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Мобильная панель над карточкой: название + кнопки (≤768px) */
+.historyFloatingBar {
+  display: none;
+}
+
+.historyFloatingTextBlock {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px 8px 12px;
+  justify-content: center;
+}
+
+.historyFloatingTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--gray-12);
+}
+
+.historyFloatingMeta {
+  margin: 0;
+  margin-top: 3px;
+  line-height: 1.2;
+  color: var(--gray-10);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyFloatingActions {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 8px 10px 8px 0;
+  gap: 10px;
+  background: var(--gray-2);
+  border: none;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.historyFloatingButtonCapsule {
+  flex-shrink: 0;
+  align-items: center;
+  padding: 3px 4px 3px 8px;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-a5);
+  background: color-mix(in srgb, var(--gray-3) 55%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+}
+
+:global([data-theme='light']) .historyFloatingButtonCapsule {
+  background: color-mix(in srgb, var(--gray-1) 75%, var(--gray-3));
+}
+
+:global([data-theme='dark']) .historyFloatingButtonCapsule {
+  background: color-mix(in srgb, var(--gray-4) 65%, transparent);
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.28);
+}
+
+.historyFloatingButton {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.historyPopoverContent {
+  width: min(320px, calc(100vw - 32px));
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.historyPopoverInner {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.titleEditPopoverContent {
+  width: min(280px, calc(100vw - 48px));
+  padding: 12px;
+  box-sizing: border-box;
+}
+
 @media (max-width: 768px) {
+  .historyFloatingBar {
+    display: flex;
+    width: 100%;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .historyFloatingActions {
+    border-radius: 0;
+    border-bottom: 1px solid var(--gray-6);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--gray-2);
+  }
+
+  :global([data-theme='dark']) .historyFloatingActions {
+    background: var(--gray-3);
+    border-bottom-color: var(--gray-6);
+  }
+
   .aichatContainer {
-    padding: 16px;
+    padding: 8px 16px 8px;
+    height: 100%;
   }
 
   .mainContent {
     flex-direction: column;
   }
-  
-  .sidebarColumn {
-    width: 100%;
+
+  .chatColumn {
+    flex: 1;
+    min-height: 0;
   }
 
   .chatCard {
-    height: auto;
-    min-height: 500px;
+    min-height: 0;
+    border-radius: 8px;
+  }
+
+  .messagesContainer {
+    padding: 12px;
+  }
+
+  .scrollToBottomBtn {
+    bottom: 12px;
+    right: 12px;
   }
 }

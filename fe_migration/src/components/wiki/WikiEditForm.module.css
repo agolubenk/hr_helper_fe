@@ -2,6 +2,25 @@
   padding: 24px;
 }
 
+.breadcrumbs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.breadcrumbs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.breadcrumbs::-webkit-scrollbar-thumb {
+  background: var(--gray-8);
+  border-radius: 3px;
+}
+
 /* Обёртка формы: колонка на всю ширину (верхняя строка + карточка содержания) */
 .formWrapper {
   width: 100%;
@@ -88,6 +107,14 @@
   margin-top: 8px;
   padding-top: 20px;
   border-top: 1px solid var(--gray-6);
+}
+
+.publishedField {
+  padding-top: 24px;
+}
+
+.addTemplateButtonIcon {
+  flex-shrink: 0;
 }
 
 .fullWidthBlock {
@@ -193,6 +220,40 @@
 
   .row {
     flex-direction: column;
+  }
+
+  /* В карточке опций на мобилке: сортировка и опубликовано в одну строку */
+  .optionsCard .row {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .publishedField {
+    padding-top: 0;
+    justify-content: flex-end;
+  }
+
+  /* Кнопка «Добавить шаблон» на мобилке — только + */
+  .addTemplateButtonLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .addTemplateButton {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    padding: 0;
+    border-radius: 9999px;
+    justify-content: center;
   }
 
   .actions {

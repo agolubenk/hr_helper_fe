@@ -4,6 +4,23 @@
   border-radius: 12px 12px 0 0;
 }
 
+.chatHeaderReadOnly {
+  padding-right: 16px;
+}
+
+.readOnlyTitle {
+  margin: 0;
+  color: #ffffff !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.readOnlyMeta {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
 .titleContainer {
   display: flex;
   align-items: center;

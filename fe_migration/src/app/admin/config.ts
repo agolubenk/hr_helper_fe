@@ -21,8 +21,9 @@ export const ADMIN_MODULES: AdminModule[] = [
     label: 'Учётные записи',
     description: 'Пользователи и группы доступа',
     items: [
-      { href: '/admin/users', label: 'Пользователи' },
+      { href: '/admin/users', label: 'Пользователи (API)' },
       { href: '/admin/groups', label: 'Группы' },
+      { href: '/settings/users', label: 'Безопасность и RBAC' },
     ],
   },
   {

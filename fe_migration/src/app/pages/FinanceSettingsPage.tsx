@@ -37,6 +37,7 @@
 
 import { Box, Text, Tabs, Flex, TextField, TextArea, Button, Table, Card, Badge, Callout, Switch, Select } from "@radix-ui/themes"
 import { useState } from "react"
+import { useValidatedSearchParam } from '@/shared/hooks/useUrlSearchState'
 import { InfoCircledIcon, PlusIcon, TrashIcon, Pencil2Icon, CheckIcon, Cross2Icon, MixerHorizontalIcon } from "@radix-ui/react-icons"
 import { useToast } from "@/components/Toast/ToastContext"
 import styles from './styles/FinanceSettingsPage.module.css'
@@ -145,9 +146,14 @@ const mockAPISources: CurrencyAPISource[] = [
   }
 ]
 
+const FINANCE_TABS = ['currencies', 'api', 'taxes'] as const
+
 export default function FinanceSettingsPage() {
   const toast = useToast()
-  const [activeTab, setActiveTab] = useState<'currencies' | 'api' | 'taxes'>('currencies')
+  const [activeTab, setActiveTab] = useValidatedSearchParam('tab', FINANCE_TABS, 'currencies', {
+    omitWhenDefault: true,
+    replace: true,
+  })
   
   // Страны офисов компании (моковые данные - в реальном приложении брать из настроек)
   const mockOffices = [

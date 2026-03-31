@@ -38,8 +38,8 @@
  */
 
 import { Box, Flex, Text, Button, Card, Table } from '@radix-ui/themes'
-import { useState, useEffect, Suspense, useRef } from 'react'
-import { useSearchParams } from '@/router-adapter'
+import { useState, useEffect, Suspense, useRef, useMemo } from 'react'
+import { useOptionalSearchParam, useValidatedSearchParam } from '@/shared/hooks/useUrlSearchState'
 import SalaryRangesSearchFilters from '@/components/salary-ranges/SalaryRangesSearchFilters'
 import SalaryRangesStats from '@/components/salary-ranges/SalaryRangesStats'
 import SalaryRangeCard from '@/components/salary-ranges/SalaryRangeCard'
@@ -175,6 +175,9 @@ const mockSalaryRanges = [
   },
 ]
 
+const SALARY_LAYOUTS = ['cards', 'list', 'table'] as const
+const SALARY_POOL_TABS = ['active', 'inactive', 'all'] as const
+
 /**
  * SalaryRangesPageContent - основной компонент содержимого страницы зарплатных вилок
  * 
@@ -189,52 +192,36 @@ const mockSalaryRanges = [
  * - selectedRange: выбранная вилка для детального просмотра
  */
 function SalaryRangesPageContent() {
-  // Получение параметров из URL (React Router: [searchParams, setSearchParams])
-  const [searchParams] = useSearchParams()
-  // Режим отображения: 'cards' - карточки, 'list' - список, 'table' - таблица
-  const [viewMode, setViewMode] = useState<'cards' | 'list' | 'table'>('cards')
-  // Поисковый запрос для фильтрации вилок
+  const [viewMode, setViewMode] = useValidatedSearchParam('layout', SALARY_LAYOUTS, 'cards', {
+    omitWhenDefault: true,
+    replace: true,
+  })
+  const [activeTab, setActiveTab] = useValidatedSearchParam('tab', SALARY_POOL_TABS, 'active', {
+    omitWhenDefault: true,
+    replace: true,
+  })
+  const [detailParam, setDetailParam] = useOptionalSearchParam('detail', { replace: true })
+  const [createFlag, setCreateFlag] = useOptionalSearchParam('create', { replace: true })
+  const isCreateModalOpen = createFlag === '1'
+
   const [searchQuery, setSearchQuery] = useState('')
-  // Выбранная вакансия для фильтрации ('all' - все вакансии)
   const [selectedVacancy, setSelectedVacancy] = useState('all')
-  // Выбранный грейд для фильтрации ('all' - все грейды)
   const [selectedGrade, setSelectedGrade] = useState('all')
-  // Активная вкладка: 'active' - только активные, 'inactive' - только неактивные, 'all' - все
-  const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'all'>('active')
-  // Флаг открытия модального окна создания зарплатной вилки
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  // Массив всех зарплатных вилок
   const [salaryRanges, setSalaryRanges] = useState(mockSalaryRanges)
-  // Выбранная вилка для детального просмотра в модальном окне
-  const [selectedRange, setSelectedRange] = useState<typeof mockSalaryRanges[0] | null>(null)
-  // Ref для скрытого input элемента для импорта Excel
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  /**
-   * useEffect - открытие модального окна детального просмотра по параметру ?detail=
-   * 
-   * Функциональность:
-   * - Обрабатывает редирект с /vacancies/salary-ranges/[id]
-   * - Находит вилку по ID из параметра ?detail=
-   * - Открывает модальное окно детального просмотра
-   * 
-   * Поведение:
-   * - Выполняется при изменении searchParams или salaryRanges
-   * - Если параметр ?detail= присутствует - находит вилку и открывает модальное окно
-   * - Используется для глубоких ссылок на конкретную вилку
-   * 
-   * Связи:
-   * - vacancies/salary-ranges/[id]/page.tsx: выполняет редирект на эту страницу с параметром ?detail=
-   */
+  const selectedRange = useMemo((): (typeof mockSalaryRanges)[0] | null => {
+    if (!detailParam) return null
+    const id = parseInt(detailParam, 10)
+    if (Number.isNaN(id)) return null
+    return salaryRanges.find((x) => x.id === id) ?? null
+  }, [detailParam, salaryRanges])
+
   useEffect(() => {
-    const detailId = searchParams.get('detail')
-    if (!detailId) return
-    const id = parseInt(detailId, 10)
-    if (isNaN(id)) return
-    // Находим вилку по ID и открываем модальное окно
-    const r = salaryRanges.find((x) => x.id === id)
-    if (r) setSelectedRange(r)
-  }, [searchParams, salaryRanges])
+    if (detailParam && !selectedRange) {
+      setDetailParam(null)
+    }
+  }, [detailParam, selectedRange, setDetailParam])
 
   const handleToggleActive = (id: number) => {
     setSalaryRanges(prev => prev.map(range =>
@@ -251,7 +238,7 @@ function SalaryRangesPageContent() {
 
   const handleDetailDelete = (id: number) => {
     setSalaryRanges(prev => prev.filter(r => r.id !== id))
-    setSelectedRange(null)
+    setDetailParam(null)
   }
 
   const handleExport = () => {
@@ -432,7 +419,7 @@ function SalaryRangesPageContent() {
                 hidden
                 onChange={handleImport}
               />
-              <Button size="3" className={styles.addButton} style={{ marginTop: 0, paddingTop: 0 }} onClick={() => setIsCreateModalOpen(true)}>
+              <Button size="3" className={styles.addButton} style={{ marginTop: 0, paddingTop: 0 }} onClick={() => setCreateFlag('1')}>
                 <PlusIcon width={16} height={16} />
                 <span className={styles.buttonTextDesktop}>Добавить вилку</span>
                 <span className={styles.buttonTextMobile}>Добавить</span>
@@ -513,7 +500,7 @@ function SalaryRangesPageContent() {
               <SalaryRangeCard 
                 key={range.id} 
                 salaryRange={range}
-                onClick={() => setSelectedRange(range)}
+                onClick={() => setDetailParam(String(range.id))}
                 onToggleActive={handleToggleActive}
               />
             ))}
@@ -525,7 +512,7 @@ function SalaryRangesPageContent() {
               <SalaryRangeListItem 
                 key={range.id} 
                 salaryRange={range}
-                onClick={() => setSelectedRange(range)}
+                onClick={() => setDetailParam(String(range.id))}
                 onToggleActive={handleToggleActive}
               />
             ))}
@@ -552,7 +539,7 @@ function SalaryRangesPageContent() {
                   {filteredRanges.map(range => (
                       <Table.Row
                         key={range.id}
-                        onClick={() => setSelectedRange(range)}
+                        onClick={() => setDetailParam(String(range.id))}
                         style={{ cursor: 'pointer' }}
                       >
                         <Table.Cell>
@@ -611,17 +598,21 @@ function SalaryRangesPageContent() {
         {/* Модальное окно создания */}
         <CreateSalaryRangeModal
           open={isCreateModalOpen}
-          onOpenChange={setIsCreateModalOpen}
+          onOpenChange={(open) => {
+            if (!open) setCreateFlag(null)
+          }}
           onSave={(data) => {
             console.log('Создание зарплатной вилки:', data)
-            setIsCreateModalOpen(false)
+            setCreateFlag(null)
           }}
         />
 
         {/* Модальное окно просмотра/редактирования вилки */}
         <SalaryRangeDetailModal
           open={!!selectedRange}
-          onOpenChange={(open) => { if (!open) setSelectedRange(null) }}
+          onOpenChange={(open) => {
+            if (!open) setDetailParam(null)
+          }}
           salaryRange={selectedRange}
           onToggleActive={handleToggleActive}
           onSave={handleDetailSave}

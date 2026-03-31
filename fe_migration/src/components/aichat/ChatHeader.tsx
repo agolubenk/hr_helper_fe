@@ -10,9 +10,11 @@ interface ChatHeaderProps {
   createdAt?: string
   onTitleChange: (newTitle: string) => void
   onDelete: () => void
+  /** Только заголовок и дата; правки — снаружи (напр. плавающая панель) */
+  readOnly?: boolean
 }
 
-export default function ChatHeader({ title, onTitleChange, onDelete }: ChatHeaderProps) {
+export default function ChatHeader({ title, createdAt, onTitleChange, onDelete, readOnly = false }: ChatHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const [isHovered, setIsHovered] = useState(false)
@@ -55,6 +57,23 @@ export default function ChatHeader({ title, onTitleChange, onDelete }: ChatHeade
     }
   }
 
+  if (readOnly) {
+    return (
+      <Box className={`${styles.chatHeader} ${styles.chatHeaderReadOnly}`}>
+        <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
+          <Text size="3" weight="bold" className={styles.readOnlyTitle} title={title}>
+            {title}
+          </Text>
+          {createdAt ? (
+            <Text size="1" className={styles.readOnlyMeta}>
+              {createdAt}
+            </Text>
+          ) : null}
+        </Flex>
+      </Box>
+    )
+  }
+
   return (
     <Box 
       className={styles.chatHeader}
@@ -62,8 +81,7 @@ export default function ChatHeader({ title, onTitleChange, onDelete }: ChatHeade
       onMouseLeave={() => setIsHovered(false)}
     >
       <Flex justify="between" align="center" gap="4">
-        {/* Левая часть: редактирование названия */}
-        <Flex align="center" gap="2" style={{ flex: 1 }}>
+        <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
           {isEditing ? (
             <Flex align="center" gap="2" style={{ flex: 1 }}>
               <TextField.Root
@@ -113,7 +131,6 @@ export default function ChatHeader({ title, onTitleChange, onDelete }: ChatHeade
           )}
         </Flex>
 
-        {/* Правая часть: кнопка удаления */}
         {isHovered && !isEditing && (
           <Box
             className={styles.deleteButton}

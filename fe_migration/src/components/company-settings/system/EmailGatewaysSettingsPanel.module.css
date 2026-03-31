@@ -1,0 +1,10 @@
+.gatewayCard {
+  border: 1px solid var(--gray-a6);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}

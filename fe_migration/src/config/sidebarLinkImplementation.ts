@@ -29,6 +29,10 @@ const COMPANY_SETTINGS_IMPLEMENTED = new Set<string>([
   '/company-settings/integrations',
   '/company-settings/user-groups',
   '/company-settings/users',
+  '/company-settings/system/localization',
+  '/company-settings/system/gateways',
+  '/company-settings/system/outbound',
+  '/company-settings/system/sandbox',
   '/company-settings/recruiting',
   '/company-settings/recruiting/rules',
   '/company-settings/recruiting/stages',
@@ -38,6 +42,8 @@ const COMPANY_SETTINGS_IMPLEMENTED = new Set<string>([
   '/company-settings/recruiting/templates',
   '/company-settings/recruiting/response-templates',
   '/company-settings/recruiting/message-templates',
+  '/company-settings/recruiting/company-blacklist',
+  '/company-settings/recruiting/company-whitelist-donors',
   '/company-settings/scorecard',
   '/company-settings/Scorecard',
   '/company-settings/sla',
@@ -73,6 +79,13 @@ const EXACT_IMPLEMENTED = new Set<string>([
   '/account/forgot-password',
   '/account/reset-password',
   '/account/profile',
+  '/settings/modules',
+  '/settings/users',
+  '/settings/users/new',
+  '/settings/roles',
+  '/settings/permissions',
+  '/settings/user-groups',
+  '/tasks',
 ])
 
 /**
@@ -94,6 +107,12 @@ export function isImplementedAppRoute(href: string): boolean {
   if (p === '/wiki' || p.startsWith('/wiki/')) return true
   if (p === '/wiki-new' || p.startsWith('/wiki-new/')) return true
 
+  if (p === '/internal-site' || p.startsWith('/internal-site/')) return true
+
+  if (p === '/meet' || p.startsWith('/meet/')) return true
+
+  if (p === '/coding-platform' || p.startsWith('/coding-platform/')) return true
+
   if (p === '/invites' || p.startsWith('/invites/')) return true
 
   if (p.startsWith('/vacancies/salary-ranges')) return true
@@ -108,6 +127,9 @@ export function isImplementedAppRoute(href: string): boolean {
   if (p === '/projects') return true
 
   if (p === '/ats' || p.startsWith('/ats/')) return true
+
+  /* L&D: единый модуль-заглушка в App.tsx (`/learning/*`) */
+  if (p === '/learning' || p.startsWith('/learning/')) return true
 
   if (p === '/admin' || p === '/admin/users' || p === '/admin/groups') return true
 

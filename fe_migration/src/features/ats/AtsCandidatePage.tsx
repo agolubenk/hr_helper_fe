@@ -18,6 +18,7 @@ import {
   Popover,
 } from '@radix-ui/themes'
 import { useParams, useNavigate, useSearchParams } from '@/router-adapter'
+import { useValidatedSearchParam } from '@/shared/hooks/useUrlSearchState'
 import {
   PersonIcon,
   ChatBubbleIcon,
@@ -43,6 +44,7 @@ import {
   ReloadIcon,
   ExclamationTriangleIcon,
   FileTextIcon,
+  Link2Icon,
 } from '@radix-ui/react-icons'
 import { FaBriefcase } from 'react-icons/fa'
 import { useToast } from '@/components/Toast/ToastContext'
@@ -61,14 +63,67 @@ import {
   getCandidateResumeProfile,
   getExperienceTabInfo,
   isExternalRecruitingRefreshSource,
+  initialCandidateActivityLogMap,
+  initialCandidateAuditLogMap,
   type AtsCandidate,
+  type AtsCandidateActivityEntry,
+  type AtsCandidateAuditEntry,
   type CandidateExperienceTabInfo,
   type CandidateExperienceVersionEntry,
 } from './mocks'
+import { buildStatusConfirmAuditRevert, mergeAuditRevertIntoOverrides } from './auditLogHelpers'
 import { CandidateResumeProfileView } from './components/CandidateResumeProfileView'
 import { getPlatformInfo, getSocialUrl, SOCIAL_PLATFORMS, type SocialPlatformKey } from '@/lib/socialPlatforms'
 
 const SOURCE_ICON_SIZE = 14
+
+function formatAtsActivityTimestamp(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+function getAtsActivityEntryHeadline(entry: AtsCandidateActivityEntry): string {
+  if (entry.kind === 'status_transition') return 'Смена статуса'
+  if (entry.kind === 'comment') return 'Комментарий'
+  if (entry.kind === 'resume_added') return 'Поступление заявки'
+  if (entry.kind === 'system') return entry.title ?? 'Система'
+  return 'Событие'
+}
+
+function buildStatusConfirmAuditDetail(params: {
+  atIso: string
+  candidateId: string
+  candidateName: string
+  vacancyTitle: string
+  fromStatus: string
+  nextStatus: string
+  logisticsStatusChange: boolean
+  curOfferId: string
+  curOfferDate: string
+  nextOfferId: string
+  nextOfferDate: string
+  rejectionReason: string
+  commentTrimmed: string
+}): string {
+  return [
+    `[ATS_AUDIT] CONFIRM_STATUS`,
+    `ts_iso=${params.atIso}`,
+    `candidate.id=${params.candidateId}`,
+    `candidate.display_name=${params.candidateName}`,
+    `vacancy.title=${params.vacancyTitle || '—'}`,
+    `status.before=${params.fromStatus}`,
+    `status.after=${params.nextStatus}`,
+    `status.logistics_changed=${params.logisticsStatusChange}`,
+    `offer.before_application_id=${params.curOfferId || '∅'}`,
+    `offer.before_start_date=${params.curOfferDate || '∅'}`,
+    `offer.after_application_id=${params.nextOfferId || '∅'}`,
+    `offer.after_start_date=${params.nextOfferDate || '∅'}`,
+    `rejection.reason=${params.rejectionReason || '∅'}`,
+    `comment.empty=${!params.commentTrimmed}`,
+    params.commentTrimmed ? `comment.raw:\n${params.commentTrimmed}` : 'comment.raw=∅',
+  ].join('\n')
+}
 
 /** Иконка источника снимка опыта для строки версий */
 function getExperienceSourceIcon(sourceSnapshot: string | undefined, size = SOURCE_ICON_SIZE): React.ReactNode {
@@ -90,11 +145,15 @@ import WorkflowChat from '@/components/workflow/WorkflowChat'
 import SlotsPanel from '@/components/workflow/SlotsPanel'
 import VacancyEditModal, { parseVacancySettingsTab, type VacancyViewItem } from '@/components/vacancies/VacancyEditModal'
 import { DuplicateSuspicionModal } from './DuplicateSuspicionModal'
+import { BlacklistSuspicionModal } from './BlacklistSuspicionModal'
 import { AddCandidateModal } from './components/AddCandidateModal'
 import styles from './AtsPage.module.css'
 
 type LeftTab = 'candidates' | 'chat'
 type RightTab = 'info' | 'activity' | 'ratings' | 'documents' | 'history'
+
+const ATS_LEFT_TABS = ['candidates', 'chat'] as const
+const ATS_RIGHT_TABS = ['info', 'activity', 'ratings', 'documents', 'history'] as const
 
 const UNREAD_BADGE_ICON_SIZE = 12
 
@@ -212,7 +271,10 @@ export function AtsCandidatePage() {
   const rightColumnRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isRightColumnOpen, setIsRightColumnOpen] = useState(false)
-  const [leftTab, setLeftTab] = useState<LeftTab>('candidates')
+  const [leftTab, setLeftTab] = useValidatedSearchParam('atsLeft', ATS_LEFT_TABS, 'candidates', {
+    omitWhenDefault: true,
+    replace: true,
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const [vacancySettingsSectionSearch, setVacancySettingsSectionSearch] = useState('')
   const [settingsSidebarHost, setSettingsSidebarHost] = useState<HTMLDivElement | null>(null)
@@ -227,7 +289,11 @@ export function AtsCandidatePage() {
   const [generalFeedback, setGeneralFeedback] = useState('')
   const [slotsOpen, setSlotsOpen] = useState(false)
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false)
-  const [rightTab, setRightTab] = useState<RightTab>('info')
+  const [blacklistModalOpen, setBlacklistModalOpen] = useState(false)
+  const [rightTab, setRightTab] = useValidatedSearchParam('atsRight', ATS_RIGHT_TABS, 'info', {
+    omitWhenDefault: true,
+    replace: true,
+  })
 
   /** Локальные изменения кандидата (статус и т.д.) по id — как setSelectedCandidate в old */
   const [localCandidateOverrides, setLocalCandidateOverrides] = useState<
@@ -396,6 +462,12 @@ export function AtsCandidatePage() {
   const [currentPhotoIndexMap, setCurrentPhotoIndexMap] = useState<Record<string, number>>({})
   const [isDragging, setIsDragging] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const [activityLogByCandidateId, setActivityLogByCandidateId] = useState<
+    Record<string, AtsCandidateActivityEntry[]>
+  >(() => initialCandidateActivityLogMap(MOCK_CANDIDATES))
+  const [auditLogByCandidateId, setAuditLogByCandidateId] = useState<
+    Record<string, AtsCandidateAuditEntry[]>
+  >(() => initialCandidateAuditLogMap(MOCK_CANDIDATES))
 
   const currentPhotoIndex = selected ? (currentPhotoIndexMap[selected.id] ?? 0) : 0
 
@@ -403,6 +475,18 @@ export function AtsCandidatePage() {
     if (!selected) return []
     return candidatePhotosMap[selected.id] ?? []
   }, [selected, candidatePhotosMap])
+
+  const candidateActivityEntries = useMemo(() => {
+    if (!selected) return []
+    const list = activityLogByCandidateId[selected.id] ?? []
+    return [...list].sort((a, b) => new Date(b.atIso).getTime() - new Date(a.atIso).getTime())
+  }, [selected?.id, activityLogByCandidateId])
+
+  const candidateAuditEntries = useMemo(() => {
+    if (!selected) return []
+    const list = auditLogByCandidateId[selected.id] ?? []
+    return [...list].sort((a, b) => new Date(b.atIso).getTime() - new Date(a.atIso).getTime())
+  }, [selected?.id, auditLogByCandidateId])
 
   const currentCandidateAvatarUrl = useMemo(() => {
     if (candidatePhotos.length > 0 && currentPhotoIndex < candidatePhotos.length) {
@@ -626,7 +710,20 @@ export function AtsCandidatePage() {
 
   const handleStatusCommentSubmit = useCallback(() => {
     if (!displayCandidate || !selected) return
+    const fromStatus = displayCandidate.status
     const nextStatus = pendingStatus || displayCandidate.status
+    const commentTrimmed = statusComment.trim()
+    const nextOfferId = offerApplicationId.trim()
+    const nextOfferDate = offerStartDate.trim()
+    const curOfferId = (displayCandidate.offerApplicationId ?? '').trim()
+    const curOfferDate = (displayCandidate.offerStartDate ?? '').trim()
+    const offerFieldsChanged =
+      nextStatus === 'Offer' && (nextOfferId !== curOfferId || nextOfferDate !== curOfferDate)
+    const statusChanged = fromStatus !== nextStatus
+    const logisticsStatusChange =
+      statusChanged || (nextStatus === 'Offer' && fromStatus === 'Offer' && offerFieldsChanged)
+    const shouldLog = commentTrimmed || logisticsStatusChange
+    const atIso = new Date().toISOString()
 
     if (nextStatus === 'Offer') {
       setLocalCandidateOverrides((prev) => ({
@@ -635,15 +732,76 @@ export function AtsCandidatePage() {
           ...prev[selected.id],
           status: 'Offer',
           statusColor: getStatusColor('Offer'),
-          offerApplicationId: offerApplicationId.trim() || undefined,
-          offerStartDate: offerStartDate.trim() || undefined,
+          offerApplicationId: nextOfferId || undefined,
+          offerStartDate: nextOfferDate || undefined,
         },
       }))
     } else if (nextStatus !== displayCandidate.status) {
       handleStatusChange(nextStatus)
     }
 
-    if (statusComment.trim()) setStatusComment('')
+    if (shouldLog) {
+      const entry: AtsCandidateActivityEntry = {
+        id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        kind: logisticsStatusChange ? 'status_transition' : 'comment',
+        atIso,
+        authorLabel: 'Вы (текущий пользователь)',
+        fromStatus: logisticsStatusChange ? fromStatus : undefined,
+        toStatus: logisticsStatusChange ? nextStatus : undefined,
+        commentRaw: commentTrimmed || undefined,
+      }
+      if (nextStatus === 'Rejected' && rejectionReason.trim()) {
+        entry.rejectionReason = rejectionReason.trim()
+      }
+      if (nextStatus === 'Offer' && (nextOfferId || nextOfferDate)) {
+        entry.subtitle = [`Заявка: ${nextOfferId || '—'}`, `Дата выхода: ${nextOfferDate || '—'}`].join(' · ')
+      }
+      setActivityLogByCandidateId((prev) => ({
+        ...prev,
+        [selected.id]: [...(prev[selected.id] ?? []), entry],
+      }))
+
+      const auditRevert = logisticsStatusChange
+        ? buildStatusConfirmAuditRevert({
+            candidateId: selected.id,
+            beforeStatus: fromStatus,
+            beforeStatusColor: displayCandidate.statusColor,
+            beforeOfferId: displayCandidate.offerApplicationId,
+            beforeOfferDate: displayCandidate.offerStartDate,
+          })
+        : null
+      const auditEntry: AtsCandidateAuditEntry = {
+        id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        atIso,
+        authorLabel: 'Вы (текущий пользователь)',
+        summary: logisticsStatusChange
+          ? `UI: подтверждение статуса ${fromStatus} → ${nextStatus}`
+          : 'UI: комментарий без смены статуса (панель статуса)',
+        detail: buildStatusConfirmAuditDetail({
+          atIso,
+          candidateId: selected.id,
+          candidateName: displayCandidate.name,
+          vacancyTitle: displayCandidate.vacancy ?? '',
+          fromStatus,
+          nextStatus,
+          logisticsStatusChange,
+          curOfferId: curOfferId,
+          curOfferDate: curOfferDate,
+          nextOfferId,
+          nextOfferDate,
+          rejectionReason: rejectionReason.trim(),
+          commentTrimmed,
+        }),
+        undone: false,
+        revert: auditRevert,
+      }
+      setAuditLogByCandidateId((prev) => ({
+        ...prev,
+        [selected.id]: [...(prev[selected.id] ?? []), auditEntry],
+      }))
+    }
+
+    if (commentTrimmed) setStatusComment('')
   }, [
     displayCandidate,
     selected,
@@ -652,7 +810,65 @@ export function AtsCandidatePage() {
     offerStartDate,
     handleStatusChange,
     statusComment,
+    rejectionReason,
   ])
+
+  const handleAuditUndo = useCallback(
+    (entryId: string) => {
+      if (!selected) return
+      const list = auditLogByCandidateId[selected.id] ?? []
+      const entry = list.find((e) => e.id === entryId)
+      const revert = entry?.revert
+      if (!entry || entry.undone || !revert) return
+
+      setLocalCandidateOverrides((prev) => mergeAuditRevertIntoOverrides(prev, revert))
+
+      const undoLog: AtsCandidateAuditEntry = {
+        id: `audit-undo-${Date.now()}`,
+        atIso: new Date().toISOString(),
+        authorLabel: 'Вы (текущий пользователь)',
+        summary: `Отмена: ${entry.summary}`,
+        detail: [
+          `[ATS_AUDIT] REVERT`,
+          `target_entry_id=${entry.id}`,
+          `restored.status=${revert.merge.status ?? '—'}`,
+          `restored.status_color=${revert.merge.statusColor ?? '—'}`,
+          `restored.offer_application_id=${revert.merge.offerApplicationId ?? '∅'}`,
+          `restored.offer_start_date=${revert.merge.offerStartDate ?? '∅'}`,
+          `unset_keys=${(revert.unsetKeys ?? []).join(',') || '∅'}`,
+        ].join('\n'),
+        undone: false,
+        revert: null,
+      }
+
+      setAuditLogByCandidateId((prev) => ({
+        ...prev,
+        [selected.id]: [
+          ...(prev[selected.id] ?? []).map((e) => (e.id === entryId ? { ...e, undone: true } : e)),
+          undoLog,
+        ],
+      }))
+
+      showSuccessToast('Отмена', 'Состояние заявки восстановлено по снимку до подтверждения (мок).')
+    },
+    [selected, auditLogByCandidateId, showSuccessToast],
+  )
+
+  const copyCandidatePageUrl = useCallback(() => {
+    if (!selected) return
+    const path = `/ats/vacancy/${vacancyId}/candidate/${selected.id}`
+    const url = `${window.location.origin}${path}${window.location.search}`
+    void navigator.clipboard.writeText(url).then(() => {
+      showSuccessToast('Скопировано', 'Ссылка на карточку кандидата в буфере обмена.')
+    })
+  }, [selected, vacancyId, showSuccessToast])
+
+  const copyCandidateId = useCallback(() => {
+    if (!selected) return
+    void navigator.clipboard.writeText(selected.id).then(() => {
+      showSuccessToast('Скопировано', `ID кандидата: ${selected.id}`)
+    })
+  }, [selected, showSuccessToast])
 
   const getEmails = () =>
     displayCandidate?.emails ?? (displayCandidate?.email ? [displayCandidate.email] : [])
@@ -1188,6 +1404,22 @@ export function AtsCandidatePage() {
                   }}
                   style={{ position: 'relative' }}
                 >
+                  {(c.hasBlacklistSuspicion === true || c.isBlacklisted === true) && (
+                    <Box
+                      className={styles.blacklistListMark}
+                      title={
+                        c.isBlacklisted === true
+                          ? 'В чёрном списке'
+                          : 'Подозрение на чёрный список'
+                      }
+                      role="img"
+                      aria-label={
+                        c.isBlacklisted === true
+                          ? 'В чёрном списке'
+                          : 'Подозрение на чёрный список'
+                      }
+                    />
+                  )}
                   {c.hasUnviewedChanges === true && (
                     <Box
                       className={styles.unviewedDot}
@@ -1271,25 +1503,46 @@ export function AtsCandidatePage() {
         onClick={handleRightColumnDuplicateBackdropClick}
         style={{
           cursor:
-            selected?.hasDuplicateSuspicion && !isVacancySettingsPath ? 'pointer' : undefined,
+            (selected?.hasDuplicateSuspicion || selected?.hasBlacklistSuspicion) && !isVacancySettingsPath
+              ? 'pointer'
+              : undefined,
         }}
       >
-        {selected?.hasDuplicateSuspicion && !isVacancySettingsPath && (
-          <Button
-            variant="soft"
-            color="orange"
-            size="2"
-            mb="3"
-            style={{ width: '100%' }}
-            onClick={(e) => {
-              e.stopPropagation()
-              setDuplicateModalOpen(true)
-            }}
-          >
-            <Text size="4" weight="bold" style={{ fontSize: 16 }}>
-              ⚠️ Подозрение на дубликат
-            </Text>
-          </Button>
+        {(selected?.hasDuplicateSuspicion || selected?.hasBlacklistSuspicion) && !isVacancySettingsPath && (
+          <Flex direction="column" gap="2" className={styles.suspicionAlertsStack} mb="3">
+            {selected?.hasDuplicateSuspicion ? (
+              <Button
+                variant="soft"
+                color="orange"
+                size="2"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setDuplicateModalOpen(true)
+                }}
+              >
+                <Text size="4" weight="bold" style={{ fontSize: 16 }}>
+                  ⚠️ Подозрение на дубликат
+                </Text>
+              </Button>
+            ) : null}
+            {selected?.hasBlacklistSuspicion ? (
+              <Button
+                type="button"
+                variant="soft"
+                size="2"
+                className={styles.blacklistSuspicionBtn}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setBlacklistModalOpen(true)
+                }}
+              >
+                <Text size="4" weight="bold" style={{ fontSize: 16 }}>
+                  ⛔ Подозрение на чёрный список
+                </Text>
+              </Button>
+            ) : null}
+          </Flex>
         )}
         {isVacancySettingsPath && atsVacancyViewItem ? (
           <Card className={styles.candidateCard}>
@@ -1337,7 +1590,8 @@ export function AtsCandidatePage() {
             onClick={handleCandidateCardDuplicateClick}
             style={{
               transition: 'all 0.3s ease',
-              cursor: selected.hasDuplicateSuspicion ? 'pointer' : undefined,
+              cursor:
+                selected.hasDuplicateSuspicion || selected.hasBlacklistSuspicion ? 'pointer' : undefined,
             }}
           >
             <Box className={styles.candidateCardScroll}>
@@ -1375,58 +1629,98 @@ export function AtsCandidatePage() {
                       />
                     </Box>
                     <Flex direction="column" gap="2" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                      <Flex align="center" gap="2" wrap="nowrap" style={{ width: '100%', minWidth: 0 }}>
-                        {isEditingName ? (
-                          <>
-                            <TextField.Root
-                              size="2"
-                              value={nameValue}
-                              onChange={(e) => setNameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleNameSave()
-                                if (e.key === 'Escape') {
+                      <Flex
+                        align="center"
+                        justify="between"
+                        gap="2"
+                        wrap="nowrap"
+                        style={{ width: '100%', minWidth: 0 }}
+                      >
+                        <Flex align="center" gap="2" wrap="nowrap" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                          {isEditingName ? (
+                            <>
+                              <TextField.Root
+                                size="2"
+                                value={nameValue}
+                                onChange={(e) => setNameValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleNameSave()
+                                  if (e.key === 'Escape') {
+                                    setIsEditingName(false)
+                                    setNameValue('')
+                                  }
+                                }}
+                                style={{ flex: '0 1 auto', minWidth: 180, maxWidth: 260 }}
+                                autoFocus
+                              />
+                              <Button size="1" variant="ghost" style={{ flexShrink: 0 }} onClick={handleNameSave} title="Сохранить">
+                                <CheckCircledIcon width={12} height={12} />
+                              </Button>
+                              <Button
+                                size="1"
+                                variant="ghost"
+                                style={{ flexShrink: 0 }}
+                                onClick={() => {
                                   setIsEditingName(false)
                                   setNameValue('')
-                                }
-                              }}
-                              style={{ flex: '0 1 auto', minWidth: 180, maxWidth: 260 }}
-                              autoFocus
-                            />
-                            <Button size="1" variant="ghost" style={{ flexShrink: 0 }} onClick={handleNameSave} title="Сохранить">
-                              <CheckCircledIcon width={12} height={12} />
-                            </Button>
-                            <Button
-                              size="1"
-                              variant="ghost"
-                              style={{ flexShrink: 0 }}
-                              onClick={() => {
-                                setIsEditingName(false)
-                                setNameValue('')
-                              }}
-                              title="Отмена"
-                            >
-                              <Cross2Icon width={12} height={12} />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Text size="5" weight="bold" style={{ flexShrink: 0 }}>
-                              {displayCandidate.name}
+                                }}
+                                title="Отмена"
+                              >
+                                <Cross2Icon width={12} height={12} />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Text size="5" weight="bold" style={{ flexShrink: 0 }}>
+                                {displayCandidate.name}
+                              </Text>
+                              <Button
+                                size="1"
+                                variant="ghost"
+                                style={{ flexShrink: 0 }}
+                                title="Редактировать имя"
+                                onClick={() => {
+                                  setIsEditingName(true)
+                                  setNameValue(displayCandidate.name)
+                                }}
+                              >
+                                <Pencil1Icon width={12} height={12} />
+                              </Button>
+                            </>
+                          )}
+                        </Flex>
+                        <Flex align="center" gap="1" style={{ flexShrink: 0 }}>
+                          <Button
+                            type="button"
+                            size="1"
+                            variant="ghost"
+                            color="gray"
+                            title="Копировать ссылку на карточку"
+                            aria-label="Копировать ссылку на карточку кандидата"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              copyCandidatePageUrl()
+                            }}
+                          >
+                            <Link2Icon width={14} height={14} />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="1"
+                            variant="ghost"
+                            color="gray"
+                            title={`Копировать ID: ${displayCandidate.id}`}
+                            aria-label="Копировать ID кандидата"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              copyCandidateId()
+                            }}
+                          >
+                            <Text size="1" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
+                              ID
                             </Text>
-                            <Button
-                              size="1"
-                              variant="ghost"
-                              style={{ flexShrink: 0 }}
-                              title="Редактировать имя"
-                              onClick={() => {
-                                setIsEditingName(true)
-                                setNameValue(displayCandidate.name)
-                              }}
-                            >
-                              <Pencil1Icon width={12} height={12} />
-                            </Button>
-                          </>
-                        )}
+                          </Button>
+                        </Flex>
                       </Flex>
                       <Box className={styles.candidateHeaderBadgeScroll}>
                         <Flex gap="2" align="center" wrap="nowrap" className={styles.candidateHeaderBadgeRow}>
@@ -1474,11 +1768,12 @@ export function AtsCandidatePage() {
                       </Box>
                     </Flex>
                   </Flex>
-                  <Flex align="stretch" gap="3" wrap="wrap" style={{ width: '100%', minWidth: 0 }}>
-                    <Box style={{ flex: '1 1 220px', minWidth: 0, maxWidth: '100%', position: 'relative' }}>
+                  <Box className={styles.candidateStatusPanel}>
+                    <Box className={styles.candidateStatusPanelComment}>
                       <TextArea
                         size="2"
-                        rows={2}
+                        rows={4}
+                        className={styles.candidateStatusCommentTextarea}
                         value={statusComment}
                         onChange={(e) => setStatusComment(e.target.value)}
                         onKeyDown={(e) => {
@@ -1488,12 +1783,7 @@ export function AtsCandidatePage() {
                           }
                         }}
                         placeholder="Введите комментарий..."
-                        style={{
-                          width: '100%',
-                          minHeight: 68,
-                          resize: 'vertical',
-                          paddingRight: 32,
-                        }}
+                        style={{ paddingRight: 32 }}
                         id="status-comment-textarea"
                       />
                       <Popover.Root>
@@ -1692,19 +1982,10 @@ export function AtsCandidatePage() {
                         </Popover.Content>
                       </Popover.Root>
                     </Box>
-                    <Flex
-                      direction="column"
-                      gap="2"
-                      style={{
-                        flex: '0 1 220px',
-                        minWidth: 0,
-                        maxWidth: '100%',
-                        alignSelf: 'stretch',
-                      }}
-                    >
+                    <Flex className={styles.candidateStatusPanelControls} direction="column" gap="2">
                       {displayCandidate.status === 'Accepted' ? (
                         <>
-                          <Flex gap="2" wrap="wrap" align="center">
+                          <Flex className={styles.candidateStatusAcceptedRow} align="center" gap="2">
                             <TextField.Root
                               size="2"
                               placeholder="Дата"
@@ -1767,7 +2048,6 @@ export function AtsCandidatePage() {
                                   color: 'white',
                                   borderColor: 'transparent',
                                   minWidth: 0,
-                                  flex: 1,
                                 }}
                               />
                               <Select.Content position="popper" sideOffset={4}>
@@ -1850,7 +2130,7 @@ export function AtsCandidatePage() {
                         </>
                       )}
                     </Flex>
-                  </Flex>
+                  </Box>
                 </Flex>
 
             <Separator size="4" mt="2" mb="2" />
@@ -3793,7 +4073,9 @@ export function AtsCandidatePage() {
                                       </Text>
                                       <Text size="1" color="gray" style={{ lineHeight: 1.45, width: '100%' }}>
                                         Вкладка «Файл» — только вложение resume.pdf. Просмотр PDF, Word, PowerPoint и
-                                        изображений подключится к хранилищу. Сейчас — макет области превью.
+                                        изображений подключится к хранилищу. Отдельно планируется превью «как на
+                                        источнике» (джоб-сайты, соцсети, портфолио) — список источников в продуктовом
+                                        бэклоге. Сейчас — макет области превью.
                                       </Text>
                                     </Box>
                                   </Box>
@@ -3909,8 +4191,9 @@ export function AtsCandidatePage() {
                                         {displayCandidate.resumeFileName ?? 'resume.pdf'}
                                       </Text>
                                       <Text size="1" color="gray" style={{ lineHeight: 1.45, width: '100%' }}>
-                                        Просмотр PDF, Word, PowerPoint и изображений подключится к хранилищу. Сейчас —
-                                        макет области превью.
+                                        Просмотр PDF, Word, PowerPoint и изображений подключится к хранилищу. Превью в
+                                        стиле внешнего источника (профиль как на HH, LinkedIn и т.д.) — по очереди
+                                        источников из бэклога. Сейчас — макет области превью.
                                       </Text>
                                     </Box>
                                   </Box>
@@ -3931,19 +4214,86 @@ export function AtsCandidatePage() {
                 </Tabs.Content>
 
                 <Tabs.Content value="activity">
-                  <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>
+                  <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>
                     Активность
                   </Text>
-                  <Flex direction="column" gap="2">
-                    <Box style={{ padding: 12, border: '1px solid var(--gray-a6)', borderRadius: 6, backgroundColor: 'var(--gray-2)' }}>
-                      <Text size="2" weight="medium">Резюме добавлено</Text>
-                      <Text size="1" color="gray">Источник: {selected?.email ?? '—'} · недавно</Text>
-                    </Box>
-                    <Box style={{ padding: 12, border: '1px solid var(--gray-a6)', borderRadius: 6, backgroundColor: 'var(--gray-2)' }}>
-                      <Text size="2" weight="medium">Статус: {selected?.status ?? '—'}</Text>
-                      <Text size="1" color="gray">Обновление статуса</Text>
-                    </Box>
-                  </Flex>
+                  <Text size="2" color="gray" mb="4" style={{ display: 'block', lineHeight: 1.5 }}>
+                    Переходы по воронке и комментарии к заявке. Текст комментария показывается так, как его ввели
+                    (переносы строк, звёздочки и теги из панели статуса не преобразуются — сырой ввод).
+                  </Text>
+                  <div className={styles.candidateActivityFeed}>
+                    {candidateActivityEntries.length === 0 ? (
+                      <Text size="2" color="gray">
+                        Пока нет записей. Подтвердите статус с комментарием или дождитесь событий из мока.
+                      </Text>
+                    ) : (
+                      candidateActivityEntries.map((entry) => (
+                        <Box key={entry.id} className={styles.candidateActivityEntry}>
+                          <div className={styles.candidateActivityEntryMeta}>
+                            <Text size="2" weight="bold">
+                              {getAtsActivityEntryHeadline(entry)}
+                            </Text>
+                            <Text size="1" color="gray">
+                              {formatAtsActivityTimestamp(entry.atIso)} · {entry.authorLabel}
+                            </Text>
+                          </div>
+                          {entry.kind === 'resume_added' && entry.title ? (
+                            <Text size="2" weight="medium" style={{ display: 'block', marginTop: 4 }}>
+                              {entry.title}
+                            </Text>
+                          ) : null}
+                          {entry.kind === 'system' && entry.title ? (
+                            <Text size="2" weight="medium" style={{ display: 'block', marginTop: 4 }}>
+                              {entry.title}
+                            </Text>
+                          ) : null}
+                          {(entry.kind === 'resume_added' || entry.kind === 'system') && entry.subtitle ? (
+                            <Text size="2" color="gray" style={{ display: 'block', marginTop: 4 }}>
+                              {entry.subtitle}
+                            </Text>
+                          ) : null}
+                          {entry.kind === 'status_transition' && entry.fromStatus && entry.toStatus ? (
+                            <Flex align="center" gap="2" wrap="wrap" className={styles.candidateActivityStatusArrow} mt="2">
+                              <Badge
+                                size="1"
+                                style={{
+                                  backgroundColor: getStatusColor(entry.fromStatus),
+                                  color: 'white',
+                                }}
+                              >
+                                {entry.fromStatus}
+                              </Badge>
+                              <Text size="2" weight="bold">
+                                →
+                              </Text>
+                              <Badge
+                                size="1"
+                                style={{
+                                  backgroundColor: getStatusColor(entry.toStatus),
+                                  color: 'white',
+                                }}
+                              >
+                                {entry.toStatus}
+                              </Badge>
+                            </Flex>
+                          ) : null}
+                          {entry.rejectionReason ? (
+                            <Text size="2" color="ruby" style={{ display: 'block', marginTop: 8 }}>
+                              Причина отказа: {entry.rejectionReason}
+                            </Text>
+                          ) : null}
+                          {entry.kind === 'status_transition' && entry.subtitle ? (
+                            <Text size="2" color="gray" style={{ display: 'block', marginTop: 6 }}>
+                              {entry.subtitle}
+                            </Text>
+                          ) : null}
+                          {entry.commentRaw ? (
+                            <div className={styles.candidateActivityCommentRaw}>{entry.commentRaw}</div>
+                          ) : null}
+                        </Box>
+                      ))
+                    )}
+                  </div>
                 </Tabs.Content>
                 <Tabs.Content value="ratings">
                   {(() => {
@@ -4062,16 +4412,52 @@ export function AtsCandidatePage() {
                   </Flex>
                 </Tabs.Content>
                 <Tabs.Content value="history">
-                  <Text size="3" weight="bold" mb="3" style={{ display: 'block' }}>
-                    История взаимодействий
+                  <Text size="3" weight="bold" mb="2" style={{ display: 'block' }}>
+                    Журнал действий (аудит)
                   </Text>
-                  <Flex direction="column" gap="2">
-                    <Box style={{ padding: 12, border: '1px solid var(--gray-a6)', borderRadius: 6, backgroundColor: 'var(--gray-2)' }}>
-                      <Text size="2" weight="medium">Изменение статуса</Text>
-                      <Text size="1" color="gray">New → {selected?.status ?? '—'} · недавно</Text>
-                    </Box>
-                    <Text size="2" color="gray">История сообщений и комментариев из чата отображается во вкладке Chat.</Text>
-                  </Flex>
+                  <Text size="2" color="gray" mb="4" style={{ display: 'block', lineHeight: 1.55 }}>
+                    Подробный лог операций по заявке: кто, когда, какие поля менялись, сырой комментарий. Для шагов
+                    «Подтвердить» с изменением статуса или полей Offer доступна отмена — восстанавливается снимок до
+                    нажатия (локальный мок). Исторические записи из сидов без отката помечены отсутствием кнопки.
+                  </Text>
+                  <div className={styles.candidateHistoryFeed}>
+                    {candidateAuditEntries.length === 0 ? (
+                      <Text size="2" color="gray">
+                        Записей аудита нет.
+                      </Text>
+                    ) : (
+                      candidateAuditEntries.map((entry) => (
+                        <Box key={entry.id} className={styles.candidateHistoryEntry}>
+                          <Flex justify="between" align="start" gap="3" wrap="wrap">
+                            <Box style={{ flex: '1 1 200px', minWidth: 0 }}>
+                              <Text size="2" weight="bold" style={{ display: 'block' }}>
+                                {entry.summary}
+                              </Text>
+                              <Text size="1" color="gray" style={{ display: 'block', marginTop: 4 }}>
+                                {formatAtsActivityTimestamp(entry.atIso)} · {entry.authorLabel}
+                              </Text>
+                            </Box>
+                            <Flex align="center" gap="2" style={{ flexShrink: 0 }}>
+                              {entry.undone ? (
+                                <Badge size="1" color="gray" variant="soft">
+                                  Отменено
+                                </Badge>
+                              ) : null}
+                              {entry.revert && !entry.undone ? (
+                                <Button size="1" variant="soft" color="orange" onClick={() => handleAuditUndo(entry.id)}>
+                                  Отменить действие
+                                </Button>
+                              ) : null}
+                            </Flex>
+                          </Flex>
+                          <div className={styles.candidateHistoryDetail}>{entry.detail}</div>
+                        </Box>
+                      ))
+                    )}
+                  </div>
+                  <Text size="2" color="gray" mt="4" style={{ display: 'block' }}>
+                    Переписка во вкладке Chat; пользовательская лента без технических полей — во вкладке Activity.
+                  </Text>
                 </Tabs.Content>
               </Box>
             </Tabs.Root>
@@ -4578,6 +4964,15 @@ export function AtsCandidatePage() {
           candidateAvatarSrc={currentCandidateAvatarUrl}
         />
       )}
+
+      {displayCandidate && selected?.hasBlacklistSuspicion ? (
+        <BlacklistSuspicionModal
+          open={blacklistModalOpen}
+          onOpenChange={setBlacklistModalOpen}
+          candidateName={displayCandidate.name}
+          matches={displayCandidate.blacklistSuspicionMatches ?? []}
+        />
+      ) : null}
 
       <AddCandidateModal
         open={addCandidateOpen}
