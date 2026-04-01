@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef, Fragment } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Box,
   Flex,
@@ -1108,16 +1109,19 @@ export function AtsCandidatePage() {
         )}
       </Box>
 
-      {isMobile && isRightColumnOpen && (
-        <Box
-          className={styles.modalOverlay}
-          onClick={handleCloseRightColumn}
-          role="presentation"
-          aria-hidden
-        />
-      )}
+      {(() => {
+        const candidateMobilePanel = (
+          <>
+            {isMobile && isRightColumnOpen && (
+              <Box
+                className={styles.modalOverlay}
+                onClick={handleCloseRightColumn}
+                role="presentation"
+                aria-hidden
+              />
+            )}
 
-      <Box
+            <Box
         className={`${styles.rightColumn} ${isRightColumnOpen ? styles.open : ''}`}
         ref={rightColumnRef}
       >
@@ -1923,6 +1927,9 @@ export function AtsCandidatePage() {
                       )}
 
                       {/* Кнопки соцсетей/мессенджеров в строку (как в old) + добавление */}                      
+                      {(() => {
+                        let socialRowSlot = 0
+                        return (
                       <Flex wrap="wrap" gap="2" style={{ alignItems: 'flex-start', overflow: 'visible' }}>
                         {Object.entries(getSocialEntries()).flatMap(([platform, _v]) => {
                           const contacts = getSocialContacts(platform)
@@ -3033,6 +3040,13 @@ export function AtsCandidatePage() {
           </Card>
         )}
       </Box>
+          </>
+        )
+        if (isMobile && typeof document !== 'undefined') {
+          return createPortal(candidateMobilePanel, document.body)
+        }
+        return candidateMobilePanel
+      })()}
 
       <Dialog.Root open={slotsOpen} onOpenChange={setSlotsOpen}>
         <Dialog.Content style={{ maxWidth: 800, maxHeight: '80vh', overflowY: 'auto' }}>

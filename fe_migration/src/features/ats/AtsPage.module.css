@@ -976,6 +976,63 @@
   box-sizing: border-box;
 }
 
+/* Копирование ссылки / ID: у Radix .rt-reset margin:0 — зазоры только через обёртку и !important */
+.candidateHeaderCopyGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  column-gap: 0;
+}
+
+.candidateHeaderCopyLinkBtn:global(.rt-Button),
+.candidateHeaderCopyIdBtn:global(.rt-Button) {
+  padding: 3px !important;
+  box-sizing: border-box;
+}
+
+.candidateHeaderCopyLinkBtn:global(.rt-Button) {
+  margin-right: 2px !important;
+}
+
+.candidateHeaderCopyIdBtn:global(.rt-Button) {
+  margin-left: 2px !important;
+  margin-right: 4px !important;
+}
+
+/* Ряд мессенджеров/соцсетей в контактах кандидата (нативный div + data-ats-* — не сливается с rt-Flex) */
+.socialContactsRow {
+  min-width: 0;
+}
+
+/* Первая иконка — лёгкий фон без второго кольца (кольцо на .socialRowLead снято) */
+.socialRowFirstCell {
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: var(--accent-a2);
+}
+
+.socialRowRestCluster {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* «|» — минимальные боковые отступы */
+.socialRowDivider {
+  flex-shrink: 0;
+  align-self: center;
+  margin-inline: 1px !important;
+  min-width: 0.5ch;
+  line-height: 32px;
+  user-select: none;
+}
+
+.socialRowLeadEdit {
+  outline: 2px solid var(--accent-9);
+  outline-offset: 2px;
+}
+
 .rightColumn {
   flex: 2;
   min-width: 340px;
@@ -1381,7 +1438,8 @@
   padding: 12px 0;
 }
 
-@media (max-width: 799px) {
+/* Ширина синхронизирована с ATS_MOBILE_MAX_WIDTH_PX в AtsCandidatePage.tsx */
+@media (max-width: 900px) {
   .container {
     flex-direction: column;
     position: relative;
@@ -1401,7 +1459,8 @@
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1999;
+    /* Выше хедера/футера/сайдбара; ниже тостов (10000) */
+    z-index: 8500;
     backdrop-filter: blur(2px);
   }
 
@@ -1411,7 +1470,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 2000;
+    z-index: 8501;
     width: 100%;
     min-width: unset;
     max-width: 100%;

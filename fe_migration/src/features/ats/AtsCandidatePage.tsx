@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Box,
   Flex,
@@ -251,6 +252,8 @@ function getUnreadInfo(candidate: AtsCandidate): { icon: React.ReactNode; count:
   }
 }
 
+/** Должно совпадать с @media в AtsPage.module.css (мобильная карточка, портал, оверлей). */
+const ATS_MOBILE_MAX_WIDTH_PX = 900
 
 export function AtsCandidatePage() {
   const { showInfo, showSuccess: showSuccessToast } = useToast()
@@ -269,7 +272,11 @@ export function AtsCandidatePage() {
   const atsSettingsTab = useMemo(() => parseVacancySettingsTab(searchParams.get('tab')), [searchParams])
 
   const rightColumnRef = useRef<HTMLDivElement>(null)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia(`(max-width: ${ATS_MOBILE_MAX_WIDTH_PX}px)`).matches
+      : false
+  )
   const [isRightColumnOpen, setIsRightColumnOpen] = useState(false)
   const [leftTab, setLeftTab] = useValidatedSearchParam('atsLeft', ATS_LEFT_TABS, 'candidates', {
     omitWhenDefault: true,
@@ -326,6 +333,20 @@ export function AtsCandidatePage() {
     },
     [navigate, vacancyId, showSuccessToast]
   )
+
+  const handleConfirmBlacklist = useCallback(() => {
+    if (!selected) return
+    setLocalCandidateOverrides((prev) => ({
+      ...prev,
+      [selected.id]: {
+        ...(prev[selected.id] ?? {}),
+        isBlacklisted: true,
+        hasBlacklistSuspicion: false,
+      },
+    }))
+    setBlacklistModalOpen(false)
+    showSuccessToast('Чёрный список', 'Кандидат отмечен в чёрном списке (мок).')
+  }, [selected, showSuccessToast])
 
   const atsVacancyViewItem: VacancyViewItem | null = useMemo(() => {
     if (!selected) return null
@@ -1233,7 +1254,7 @@ export function AtsCandidatePage() {
 
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 799px)')
+    const mq = window.matchMedia(`(max-width: ${ATS_MOBILE_MAX_WIDTH_PX}px)`)
     const onChange = () => setIsMobile(mq.matches)
     setIsMobile(mq.matches)
     mq.addEventListener('change', onChange)
@@ -1488,16 +1509,19 @@ export function AtsCandidatePage() {
         )}
       </Box>
 
-      {isMobile && isRightColumnOpen && (
-        <Box
-          className={styles.modalOverlay}
-          onClick={handleCloseRightColumn}
-          role="presentation"
-          aria-hidden
-        />
-      )}
+      {(() => {
+        const candidateMobilePanel = (
+          <>
+            {isMobile && isRightColumnOpen && (
+              <Box
+                className={styles.modalOverlay}
+                onClick={handleCloseRightColumn}
+                role="presentation"
+                aria-hidden
+              />
+            )}
 
-      <Box
+            <Box
         className={`${styles.rightColumn} ${isRightColumnOpen ? styles.open : ''}`}
         ref={rightColumnRef}
         onClick={handleRightColumnDuplicateBackdropClick}
@@ -1689,12 +1713,13 @@ export function AtsCandidatePage() {
                             </>
                           )}
                         </Flex>
-                        <Flex align="center" gap="1" style={{ flexShrink: 0 }}>
+                        <Box className={styles.candidateHeaderCopyGroup}>
                           <Button
                             type="button"
                             size="1"
                             variant="ghost"
                             color="gray"
+                            className={styles.candidateHeaderCopyLinkBtn}
                             title="Копировать ссылку на карточку"
                             aria-label="Копировать ссылку на карточку кандидата"
                             onClick={(e) => {
@@ -1709,6 +1734,7 @@ export function AtsCandidatePage() {
                             size="1"
                             variant="ghost"
                             color="gray"
+                            className={styles.candidateHeaderCopyIdBtn}
                             title={`Копировать ID: ${displayCandidate.id}`}
                             aria-label="Копировать ID кандидата"
                             onClick={(e) => {
@@ -1720,7 +1746,7 @@ export function AtsCandidatePage() {
                               ID
                             </Text>
                           </Button>
-                        </Flex>
+                        </Box>
                       </Flex>
                       <Box className={styles.candidateHeaderBadgeScroll}>
                         <Flex gap="2" align="center" wrap="nowrap" className={styles.candidateHeaderBadgeRow}>
@@ -2413,11 +2439,19 @@ export function AtsCandidatePage() {
                       )}
 
                       {/* Кнопки соцсетей/мессенджеров в строку (как в old) + добавление */}                      
-                      <Flex wrap="wrap" gap="2" style={{ alignItems: 'flex-start', overflow: 'visible' }}>
-                        {Object.entries(getSocialEntries()).flatMap(([platform, _v]) => {
-                          const contacts = getSocialContacts(platform)
+                      {(() => {
+                        type SocialRow = { platform: string; contact: string; index: number }
+                        const rows: SocialRow[] = []
+                        Object.entries(getSocialEntries()).forEach(([platform, _v]) => {
+                          getSocialContacts(platform).forEach((contact, index) => {
+                            rows.push({ platform, contact, index })
+                          })
+                        })
+
+                        const renderSocialItem = (row: SocialRow, isLead: boolean): React.ReactNode => {
+                          const { platform, contact, index } = row
                           const normalized = platform.toLowerCase().replace(/\s+/g, '')
-                          const map: Record<string, SocialPlatformKey> = {
+                          const platformMap: Record<string, SocialPlatformKey> = {
                             whatsapp: 'whatsapp',
                             viber: 'viber',
                             telegram: 'telegram',
@@ -2453,18 +2487,17 @@ export function AtsCandidatePage() {
                             reddit: 'reddit',
                             discord: 'discord',
                           }
-                          const key = map[normalized]
-                          const info = getPlatformInfo(key ?? platform)
-                          return contacts.map((contact, index) => {
-                            const isEditingThis =
-                              editingSocialPlatform === platform && editingSocialIndex != null && editingSocialIndex === index
-                            const url = key ? getSocialUrl(key, contact) : (contact.startsWith('http') ? contact : '')
+                          const socialKey = platformMap[normalized]
+                          const info = getPlatformInfo(socialKey ?? platform)
+                          const isEditingThis =
+                            editingSocialPlatform === platform && editingSocialIndex != null && editingSocialIndex === index
+                          const url = socialKey ? getSocialUrl(socialKey, contact) : (contact.startsWith('http') ? contact : '')
 
-                            if (isEditingThis) {
+                          if (isEditingThis) {
                               return (
                                 <Box
-                                  key={`${platform}-${index}`}
-                                  className={styles.socialEditContainer}
+                                  key={`${platform}-${index}-edit`}
+                                  className={`${styles.socialEditContainer} ${isLead ? styles.socialRowLeadEdit : ''}`}
                                   style={{
                                     backgroundColor: info.color,
                                     borderRadius: '8px',
@@ -2596,7 +2629,11 @@ export function AtsCandidatePage() {
                             }
 
                             return (
-                              <Box key={`${platform}-${index}`} className={styles.socialButtonWrapper} style={{ position: 'relative', overflow: 'visible' }}>
+                              <Box
+                                key={`${platform}-${index}`}
+                                className={`${styles.socialButtonWrapper} ${isLead ? styles.socialRowLead : ''}`}
+                                style={{ position: 'relative', overflow: 'visible' }}
+                              >
                                 {url ? (
                                   <a
                                     href={url}
@@ -2720,10 +2757,72 @@ export function AtsCandidatePage() {
                                 })()}
                               </Box>
                             )
-                          })
-                        })}
+                        }
 
-                        <DropdownMenu.Root open={addSocialOpen} onOpenChange={setAddSocialOpen}>
+                        return (
+                      <div
+                        className={styles.socialContactsRow}
+                        data-ats-candidate-social-row=""
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          gap: 6,
+                          overflow: 'visible',
+                          minWidth: 0,
+                        }}
+                      >
+                        {rows[0] ? (
+                          <div
+                            className={styles.socialRowFirstCell}
+                            data-ats-social-first=""
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              flexShrink: 0,
+                              marginRight: 0,
+                              padding: 2,
+                              borderRadius: 8,
+                              backgroundColor: 'var(--accent-a2)',
+                            }}
+                          >
+                            {renderSocialItem(rows[0], true)}
+                          </div>
+                        ) : null}
+                        {rows.length > 1 ? (
+                          <span
+                            data-ats-social-divider=""
+                            className={styles.socialRowDivider}
+                            aria-hidden
+                            role="separator"
+                            style={{
+                              flexShrink: 0,
+                              fontSize: 20,
+                              fontWeight: 700,
+                              lineHeight: '32px',
+                              color: 'var(--accent-11)',
+                              margin: '0 1px',
+                              userSelect: 'none',
+                            }}
+                          >
+                            |
+                          </span>
+                        ) : null}
+                        <div
+                          className={styles.socialRowRestCluster}
+                          data-ats-social-rest=""
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          {rows.length > 1
+                            ? rows.slice(1).map((r) => renderSocialItem(r, false))
+                            : null}
+                          <DropdownMenu.Root open={addSocialOpen} onOpenChange={setAddSocialOpen}>
                           <DropdownMenu.Trigger>
                             <Button
                               size="1"
@@ -2739,7 +2838,7 @@ export function AtsCandidatePage() {
                                 flexShrink: 0,
                                 border: '2px dashed var(--gray-6)',
                               }}
-                              title="Добавить соцсеть/мессенджер"
+                              title="Добавить соцсеть или мессенджер"
                             >
                               <PlusIcon width={14} height={14} />
                             </Button>
@@ -2820,7 +2919,10 @@ export function AtsCandidatePage() {
                             })()}
                           </DropdownMenu.Content>
                         </DropdownMenu.Root>
-                      </Flex>
+                        </div>
+                      </div>
+                        )
+                      })()}
                       {getEmails().length === 0 && getPhones().length === 0 && (
                         <Text size="2" color="gray">Не указано</Text>
                       )}
@@ -4476,6 +4578,14 @@ export function AtsCandidatePage() {
           </Card>
         )}
       </Box>
+          </>
+        )
+        if (isMobile && typeof document !== 'undefined') {
+          const portalRoot = document.getElementById('root') ?? document.body
+          return createPortal(candidateMobilePanel, portalRoot)
+        }
+        return candidateMobilePanel
+      })()}
 
       <Dialog.Root open={slotsOpen} onOpenChange={setSlotsOpen}>
         <Dialog.Content style={{ maxWidth: 800, maxHeight: '80vh', overflowY: 'auto' }}>
@@ -4971,6 +5081,7 @@ export function AtsCandidatePage() {
           onOpenChange={setBlacklistModalOpen}
           candidateName={displayCandidate.name}
           matches={displayCandidate.blacklistSuspicionMatches ?? []}
+          onConfirmBlacklist={handleConfirmBlacklist}
         />
       ) : null}
 

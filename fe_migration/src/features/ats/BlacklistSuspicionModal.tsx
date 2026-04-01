@@ -7,6 +7,8 @@ export interface BlacklistSuspicionModalProps {
   onOpenChange: (open: boolean) => void
   candidateName: string
   matches: BlacklistSuspicionMatch[]
+  /** Подтверждение внесения в чёрный список (мок / будущий API) */
+  onConfirmBlacklist?: () => void
 }
 
 export function BlacklistSuspicionModal({
@@ -14,6 +16,7 @@ export function BlacklistSuspicionModal({
   onOpenChange,
   candidateName,
   matches,
+  onConfirmBlacklist,
 }: BlacklistSuspicionModalProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -62,9 +65,22 @@ export function BlacklistSuspicionModal({
           )}
         </Box>
 
-        <Flex className={styles.footer} justify="end" gap="3">
+        <Flex className={styles.footer} justify="end" gap="3" wrap="wrap">
+          {onConfirmBlacklist ? (
+            <Button
+              type="button"
+              variant="solid"
+              color="red"
+              style={{ minWidth: 160 }}
+              onClick={() => {
+                onConfirmBlacklist()
+              }}
+            >
+              Подтвердить в ЧС
+            </Button>
+          ) : null}
           <Dialog.Close>
-            <Button variant="solid" highContrast style={{ minWidth: 120 }}>
+            <Button variant="soft" highContrast style={{ minWidth: 120 }}>
               Закрыть
             </Button>
           </Dialog.Close>

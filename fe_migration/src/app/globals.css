@@ -147,3 +147,42 @@ body > [data-radix-portal] [data-radix-dialog-content],
 [data-radix-portal] {
   z-index: 2000 !important;
 }
+
+/* --------------------------------------------------------------------------
+   ATS / карточка кандидата — ряд соцсетей (data-атрибуты из AtsCandidatePage).
+   Глобально: сработает даже если CSS Modules не подхватились или кэш старый.
+   -------------------------------------------------------------------------- */
+[data-ats-candidate-social-row] {
+  column-gap: 6px !important;
+  row-gap: 6px !important;
+  align-items: center !important;
+}
+
+[data-ats-social-first] {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  margin-right: 0 !important;
+  padding: 2px !important;
+  border-radius: 8px !important;
+  background-color: var(--accent-a2) !important;
+}
+
+[data-ats-social-divider] {
+  flex-shrink: 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  line-height: 32px !important;
+  color: var(--accent-11) !important;
+  margin: 0 1px !important;
+  user-select: none !important;
+}
+
+[data-ats-social-rest] {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}

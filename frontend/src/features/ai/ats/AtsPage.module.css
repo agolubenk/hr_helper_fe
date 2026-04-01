@@ -525,7 +525,8 @@
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1999;
+    /* Выше хедера/футера; ниже тостов */
+    z-index: 8500;
     backdrop-filter: blur(2px);
   }
 
@@ -535,7 +536,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 2000;
+    z-index: 8501;
     width: 100%;
     min-width: unset;
     max-width: 100%;

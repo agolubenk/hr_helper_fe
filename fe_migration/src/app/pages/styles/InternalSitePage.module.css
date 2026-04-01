@@ -1,7 +1,50 @@
 .container {
-  max-width: 900px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
+}
+
+.pageHeader {
+  padding-top: 6px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchWrap {
+  position: relative;
+}
+
+.searchIco {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-a9);
+}
+
+.searchInput {
+  background: var(--gray-a2);
+  border: 1px solid var(--gray-a6);
+  border-radius: 9999px;
+  padding: 8px 12px 8px 32px;
+  font-size: var(--text-xs);
+  width: 220px;
+  outline: none;
+  color: var(--gray-12);
+}
+
+.searchInput::placeholder {
+  color: var(--gray-a9);
+}
+
+.searchInput:focus {
+  border-color: var(--accent-a8);
+  background: var(--color-panel);
 }
 
 .cardLink {
@@ -37,6 +80,160 @@
   transition: border-color 0.2s, background 0.2s;
 }
 
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(185px, 100%), 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.kpi {
+  background: var(--color-panel);
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-4);
+  padding: 16px 16px 14px;
+  box-shadow: 0 1px 2px var(--gray-a3);
+}
+
+.kpiLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gray-a10);
+  margin-bottom: 8px;
+}
+
+.kpiValue {
+  font-size: 32px;
+  font-weight: var(--font-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--gray-12);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+
+.kpiHint {
+  font-size: var(--text-xs);
+  color: var(--gray-a10);
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-4);
+  background: var(--gray-a3);
+  border: 1px solid var(--gray-a6);
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: calc(var(--radius-4) - 3px);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--gray-a10);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tab:hover {
+  color: var(--gray-12);
+}
+
+.tabOn {
+  background: var(--color-panel);
+  color: var(--gray-12);
+  box-shadow: 0 1px 0 var(--gray-a4);
+}
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.postCardNexus {
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.postLink:hover .postCardNexus {
+  border-color: var(--accent-a7);
+  box-shadow: 0 6px 22px var(--gray-a5);
+  transform: translateY(-1px);
+}
+
+.postHero {
+  width: 100%;
+  height: 110px;
+  background:
+    radial-gradient(120px 80px at 20% 30%, var(--accent-a4) 0%, transparent 60%),
+    radial-gradient(160px 90px at 80% 20%, var(--teal-a4) 0%, transparent 60%),
+    linear-gradient(135deg, var(--gray-a3) 0%, var(--gray-a2) 100%);
+  border-bottom: 1px solid var(--gray-a6);
+}
+
+.postBody {
+  padding: 14px 16px 12px;
+}
+
+.postMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--text-xs);
+  color: var(--gray-a10);
+  margin-bottom: 10px;
+}
+
+.postTitle {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--gray-12);
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.postExcerpt {
+  font-size: var(--text-sm);
+  color: var(--gray-a11);
+  line-height: 1.55;
+}
+
+.postFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--gray-a6);
+  background: var(--gray-a2);
+}
+
+.postActRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.postAct {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--gray-a10);
+}
+
 .backLink {
   text-decoration: none;
   color: inherit;
@@ -61,6 +258,18 @@
 
 .infoCard {
   background: var(--gray-2);
+}
+
+@media (max-width: 900px) {
+  .searchInput {
+    width: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 14px;
+  }
 }
 
 .required {

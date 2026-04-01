@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Flex, Text, Card, Box, Spinner, Button, Select } from '@radix-ui/themes'
+import { useEffect, useMemo, useState } from 'react'
+import { Flex, Text, Card, Box, Spinner, Button, Select, Badge } from '@radix-ui/themes'
 import { Link } from '@/router-adapter'
 import {
   FileTextIcon,
@@ -10,6 +10,7 @@ import {
   ChatBubbleIcon,
   Pencil1Icon,
   PlusIcon,
+  MagnifyingGlassIcon,
 } from '@radix-ui/react-icons'
 import { Carousel, type CarouselSlide } from '@/components/internal-site/Carousel'
 import { fetchBlogPosts } from '@/app/api/internal-site'
@@ -41,10 +42,14 @@ function getInitialRole(): InternalSiteRole {
   return role === 'user' ? 'user' : 'admin'
 }
 
+type FeedTabId = 'all' | 'pinned' | 'published' | 'drafts'
+
 export function InternalSitePage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [role, setRole] = useState<InternalSiteRole>(getInitialRole)
+  const [tab, setTab] = useState<FeedTabId>('all')
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     fetchBlogPosts()
@@ -79,18 +84,58 @@ export function InternalSitePage() {
 
   const isAdmin = role === 'admin'
 
+  const filteredPosts = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    switch (tab) {
+      case 'pinned':
+        return posts.filter((p) => p.is_pinned).filter((p) => (q ? matchesQuery(p, q) : true))
+      case 'published':
+        return posts.filter((p) => p.is_published).filter((p) => (q ? matchesQuery(p, q) : true))
+      case 'drafts':
+        return posts.filter((p) => !p.is_published).filter((p) => (q ? matchesQuery(p, q) : true))
+      case 'all':
+      default:
+        return posts.filter((p) => (q ? matchesQuery(p, q) : true))
+    }
+  }, [posts, tab, query])
+
+  const kpis = useMemo(() => {
+    const total = posts.length
+    const pinned = posts.filter((p) => p.is_pinned).length
+    const published = posts.filter((p) => p.is_published).length
+    const drafts = posts.filter((p) => !p.is_published).length
+    return { total, pinned, published, drafts }
+  }, [posts])
+
   return (
     <Flex direction="column" gap="6" className={styles.container}>
-      <Flex justify="between" align="start" wrap="wrap" gap="3">
+      <Flex justify="between" align="start" wrap="wrap" gap="3" className={styles.pageHeader}>
         <Box>
           <Text size="6" weight="bold" mb="1" style={{ display: 'block' }}>
             Внутренний сайт
           </Text>
           <Text size="2" color="gray">
-            Блог и портал для сотрудников — новости, объявления, быстрый доступ к разделам
+            {new Date().toLocaleDateString('ru-RU', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}{' '}
+            · HR Helper
           </Text>
         </Box>
-        <Flex align="center" gap="3">
+        <div className={styles.headerRight}>
+          <div className={styles.searchWrap}>
+            <MagnifyingGlassIcon className={styles.searchIco} />
+            <input
+              className={styles.searchInput}
+              type="search"
+              placeholder="Поиск по ленте..."
+              aria-label="Поиск по ленте"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
           <Select.Root value={role} onValueChange={handleRoleChange}>
             <Select.Trigger style={{ width: 160 }} />
             <Select.Content>
@@ -106,10 +151,8 @@ export function InternalSitePage() {
               </Button>
             </Link>
           )}
-        </Flex>
+        </div>
       </Flex>
-
-      <Carousel slides={carouselSlides} />
 
       <Flex gap="4" wrap="wrap">
         {QUICK_LINKS.map((item) => (
@@ -131,41 +174,112 @@ export function InternalSitePage() {
         ))}
       </Flex>
 
+      <div className={styles.kpiGrid} role="list" aria-label="Сводка">
+        <div className={styles.kpi} role="listitem">
+          <div className={styles.kpiLabel}>Всего постов</div>
+          <div className={styles.kpiValue}>{kpis.total}</div>
+          <div className={styles.kpiHint}>Все записи во внутреннем сайте</div>
+        </div>
+        <div className={styles.kpi} role="listitem">
+          <div className={styles.kpiLabel}>Закреплено</div>
+          <div className={styles.kpiValue}>{kpis.pinned}</div>
+          <div className={styles.kpiHint}>Показываются в карусели</div>
+        </div>
+        <div className={styles.kpi} role="listitem">
+          <div className={styles.kpiLabel}>Опубликовано</div>
+          <div className={styles.kpiValue}>{kpis.published}</div>
+          <div className={styles.kpiHint}>Доступно всем пользователям</div>
+        </div>
+        <div className={styles.kpi} role="listitem">
+          <div className={styles.kpiLabel}>Черновики</div>
+          <div className={styles.kpiValue}>{kpis.drafts}</div>
+          <div className={styles.kpiHint}>Видно авторам и админам</div>
+        </div>
+      </div>
+
+      <Carousel slides={carouselSlides} />
+
       <Box>
-        <Text size="4" weight="bold" mb="3" style={{ display: 'block' }}>
-          Последние посты
-        </Text>
+        <Flex justify="between" align="center" wrap="wrap" gap="3" mb="3">
+          <Text size="4" weight="bold" style={{ display: 'block' }}>
+            Лента
+          </Text>
+          <div className={styles.tabs} role="tablist" aria-label="Фильтр ленты">
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === 'all' ? styles.tabOn : ''}`}
+              onClick={() => setTab('all')}
+              role="tab"
+              aria-selected={tab === 'all'}
+            >
+              Все <Badge size="1" variant="soft">{kpis.total}</Badge>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === 'pinned' ? styles.tabOn : ''}`}
+              onClick={() => setTab('pinned')}
+              role="tab"
+              aria-selected={tab === 'pinned'}
+            >
+              Закреплённые <Badge size="1" variant="soft">{kpis.pinned}</Badge>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === 'published' ? styles.tabOn : ''}`}
+              onClick={() => setTab('published')}
+              role="tab"
+              aria-selected={tab === 'published'}
+            >
+              Опубликованные <Badge size="1" variant="soft">{kpis.published}</Badge>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === 'drafts' ? styles.tabOn : ''}`}
+              onClick={() => setTab('drafts')}
+              role="tab"
+              aria-selected={tab === 'drafts'}
+            >
+              Черновики <Badge size="1" variant="soft">{kpis.drafts}</Badge>
+            </button>
+          </div>
+        </Flex>
+
         {loading ? (
           <Flex justify="center" py="4">
             <Spinner size="3" />
           </Flex>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <Text size="2" color="gray">
-            Пока нет постов
+            Нет постов по выбранному фильтру
           </Text>
         ) : (
-          <Flex direction="column" gap="2">
-            {posts.slice(0, 5).map((post) => (
+          <div className={styles.feed}>
+            {filteredPosts.slice(0, 12).map((post) => (
               <Link key={post.id} href={`/internal-site/post/${post.slug}`} className={styles.postLink}>
-                <Card className={styles.postCard}>
-                  <Flex justify="between" align="start" gap="3">
-                    <Flex direction="column" gap="1">
-                      <Text size="2" weight="medium">
-                        {post.title}
-                      </Text>
-                      <Text size="1" color="gray">
-                        {post.excerpt}
-                      </Text>
-                      <Text size="1" color="gray">
+                <Card className={styles.postCardNexus}>
+                  <div className={styles.postHero} aria-hidden />
+                  <div className={styles.postBody}>
+                    <div className={styles.postMeta}>
+                      <span>
                         {formatDate(post.created_at)} · {post.author.first_name} {post.author.last_name}
-                      </Text>
-                    </Flex>
-                    <Pencil1Icon width={16} height={16} style={{ opacity: 0.5 }} />
-                  </Flex>
+                      </span>
+                      {post.is_pinned ? <Badge size="1" color="teal">Закреплено</Badge> : null}
+                      {!post.is_published ? <Badge size="1" color="amber">Черновик</Badge> : null}
+                    </div>
+                    <div className={styles.postTitle}>{post.title}</div>
+                    <div className={styles.postExcerpt}>{post.excerpt}</div>
+                  </div>
+                  <div className={styles.postFoot}>
+                    <div className={styles.postActRow}>
+                      <span className={styles.postAct}>
+                        <Pencil1Icon width={14} height={14} aria-hidden /> Открыть
+                      </span>
+                    </div>
+                  </div>
                 </Card>
               </Link>
             ))}
-          </Flex>
+          </div>
         )}
       </Box>
 
@@ -175,8 +289,7 @@ export function InternalSitePage() {
             О разделе
           </Text>
           <Text size="2" color="gray">
-            Внутренний сайт — блог для сотрудников. Здесь публикуются новости и объявления, можно
-            комментировать посты. Редактирование доступно авторам и администраторам.
+            Внутренний сайт — единая лента для сотрудников. Закрепляйте важные объявления, ведите записи по процессам и публикуйте новости компании.
           </Text>
         </Flex>
       </Card>
@@ -184,3 +297,7 @@ export function InternalSitePage() {
   )
 }
 
+function matchesQuery(post: BlogPost, queryLower: string) {
+  const hay = `${post.title}\n${post.excerpt}\n${post.author.first_name} ${post.author.last_name}`.toLowerCase()
+  return hay.includes(queryLower)
+}
