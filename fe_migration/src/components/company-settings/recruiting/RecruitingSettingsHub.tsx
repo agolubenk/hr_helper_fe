@@ -1,7 +1,7 @@
 'use client'
 
 import type { ElementType } from 'react'
-import { Box, Card, Flex, Text } from '@radix-ui/themes'
+import { Box, Card, Flex, Text, Heading } from '@radix-ui/themes'
 import {
   ArrowRightIcon,
   BarChartIcon,
@@ -204,9 +204,9 @@ export function RecruitingSettingsHub() {
 
       {HUB_SECTIONS.map((section) => (
         <Box key={section.title} className={styles.section}>
-          <Text size="4" weight="bold" as="h2" className={styles.sectionTitle} mb="3">
+          <Heading as="h2" size="4" className={styles.sectionTitle} mb="3">
             {section.title}
-          </Text>
+          </Heading>
           <Flex wrap="wrap" gap="3" className={styles.sectionCards}>
             {section.links.map((link) => (
               <HubCard key={link.href} {...link} />

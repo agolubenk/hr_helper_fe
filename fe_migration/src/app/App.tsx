@@ -122,6 +122,7 @@ import {
 import { ModulePlaceholderPage } from '@/app/pages/ModulePlaceholderPage'
 import { RecruitingSettingsHub } from '@/components/company-settings/recruiting/RecruitingSettingsHub'
 import { CompanyListsSettings } from '@/components/company-settings/recruiting/CompanyListsSettings'
+import { CompanyCalendarSettingsPage } from '@/components/company-settings/calendar/CompanyCalendarSettingsPage'
 
 const layoutProps = {
   pageTitle: 'HR Helper',
@@ -171,6 +172,7 @@ export function App() {
             <Route path="/calendar" element={<AppLayout {...layoutProps} pageTitle="Календарь"><CalendarPage /></AppLayout>} />
             <Route path="/calendar/settings" element={<AppLayout {...layoutProps} pageTitle="Настройки календаря"><CalendarSettingsPage /></AppLayout>} />
             <Route path="/tasks" element={<AppLayout {...layoutProps} pageTitle="Задачи"><TasksPage /></AppLayout>} />
+            <Route path="/work-items" element={<Navigate to="/tasks" replace />} />
             <Route path="/meet/new-links" element={<AppLayout {...layoutProps} pageTitle="Миты — новые ссылки"><MeetNewLinksPage /></AppLayout>} />
             <Route path="/meet/room" element={<AppLayout {...layoutProps} pageTitle="Мит"><MeetRoomPage /></AppLayout>} />
             <Route path="/meet/history" element={<AppLayout {...layoutProps} pageTitle="Миты — история"><MeetHistoryPage /></AppLayout>} />
@@ -235,6 +237,14 @@ export function App() {
             <Route path="/company-settings/employee-lifecycle" element={<AppLayout {...layoutProps} pageTitle="Жизненный цикл сотрудников"><CompanySettingsEmployeeLifecyclePage /></AppLayout>} />
             <Route path="/company-settings/finance" element={<AppLayout {...layoutProps} pageTitle="Финансы"><FinanceSettingsPage /></AppLayout>} />
             <Route path="/company-settings/integrations" element={<AppLayout {...layoutProps} pageTitle="Интеграции"><CompanySettingsIntegrationsPage /></AppLayout>} />
+            <Route
+              path="/company-settings/calendar"
+              element={
+                <AppLayout {...layoutProps} pageTitle="Календарь компании">
+                  <CompanyCalendarSettingsPage />
+                </AppLayout>
+              }
+            />
             <Route path="/company-settings/user-groups" element={<AppLayout {...layoutProps} pageTitle="Группы пользователей"><CompanySettingsUserGroupsPage /></AppLayout>} />
             <Route path="/company-settings/users" element={<AppLayout {...layoutProps} pageTitle="Пользователи"><CompanySettingsUsersPage /></AppLayout>} />
             <Route

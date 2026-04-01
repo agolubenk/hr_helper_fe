@@ -126,6 +126,7 @@ export default function AppLayout({
   const isAdminPage = pathname?.startsWith('/admin')
   const isAiChatPage = pathname?.startsWith('/aichat')
   const isMeetRoomPage = pathname?.startsWith('/meet/room')
+  const isUniversalTasksShell = pathname === '/work-items' || pathname === '/tasks'
   const isCodingPlaygroundPage = pathname === '/coding-platform/playground'
 
   useEffect(() => {
@@ -444,7 +445,7 @@ export default function AppLayout({
           transition: 'all 0.2s ease-in-out',
           overflowX: 'hidden',
           overflowY:
-            isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage ? 'hidden' : 'auto',
+            isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage || isUniversalTasksShell ? 'hidden' : 'auto',
         }}
       >
         {/* Основной контент страницы */}
@@ -454,16 +455,16 @@ export default function AppLayout({
           style={{ 
             padding: isAdminPage
               ? `0 0 ${FOOTER_HEIGHT + 24}px 0`
-              : (isRecrChatPage || isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage)
+              : (isRecrChatPage || isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage || isUniversalTasksShell)
                 ? '0'
                 : `24px 0 ${FOOTER_HEIGHT + 24}px 0`,
             borderTop: '1px solid var(--gray-a6)',
             /* Для обычных страниц высота = контент, иначе scroll на contentWrapper не получает scrollHeight */
-            ...(isRecrChatPage || isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage
+            ...(isRecrChatPage || isAiChatPage || isMeetRoomPage || isCodingPlaygroundPage || isUniversalTasksShell
               ? {
                   flex: 1,
                   minHeight: 0,
-                  ...((isMeetRoomPage || isCodingPlaygroundPage)
+                  ...((isMeetRoomPage || isCodingPlaygroundPage || isUniversalTasksShell)
                     ? { display: 'flex', flexDirection: 'column' as const }
                     : {}),
                 }
@@ -473,11 +474,21 @@ export default function AppLayout({
             height: isRecrChatPage
               ? `calc(100vh - ${HEADER_OFFSET + ATS_STATUS_BAR_HEIGHT}px - ${FOOTER_HEIGHT}px)`
               : undefined,
-            marginLeft: '34px',
-            marginRight: sidebarDocked ? `${SIDEBAR_WIDTH_PX}px` : '24px',
-            width: sidebarDocked
-              ? `calc(100% - ${SIDEBAR_WIDTH_PX}px - 34px)`
-              : 'calc(100% - 34px - 24px)',
+            marginLeft: isUniversalTasksShell ? 0 : '34px',
+            marginRight: isUniversalTasksShell
+              ? sidebarDocked
+                ? `${SIDEBAR_WIDTH_PX}px`
+                : 0
+              : sidebarDocked
+                ? `${SIDEBAR_WIDTH_PX}px`
+                : '24px',
+            width: isUniversalTasksShell
+              ? sidebarDocked
+                ? `calc(100% - ${SIDEBAR_WIDTH_PX}px)`
+                : '100%'
+              : sidebarDocked
+                ? `calc(100% - ${SIDEBAR_WIDTH_PX}px - 34px)`
+                : 'calc(100% - 34px - 24px)',
             transition: 'margin-right 0.2s ease-in-out, width 0.2s ease-in-out',
             /* Закреплено: резерв под панель; иначе оверлей без сдвига */
           }}

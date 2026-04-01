@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nodus — Universal Work Items</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   DESIGN TOKENS
+   Art direction: operational HR/work system → dense, precise, functional
+   Palette: dark-first, slate surfaces, teal accent
+   Typography: Inter body + JetBrains Mono for IDs/metadata
+   Density: dense (dashboard/tool)
+   ===================================================================== */
+:root, [data-theme="light"] {
+  --color-bg:              #f6f5f1;
+  --color-surface:         #f9f8f5;
+  --color-surface-2:       #fefefc;
+  --color-surface-offset:  #f0ede8;
+  --color-surface-offset-2:#e8e5df;
+  --color-surface-dynamic: #e0ddd7;
+  --color-divider:         #d8d5ce;
+  --color-border:          #ccc9c1;
+  --color-text:            #1e1c17;
+  --color-text-muted:      #706e68;
+  --color-text-faint:      #b0aeaa;
+  --color-text-inverse:    #f9f8f4;
+  --color-primary:         #01696f;
+  --color-primary-hover:   #0c4e54;
+  --color-primary-active:  #0f3638;
+  --color-primary-highlight: #cedad7;
+  --color-warning:         #964219;
+  --color-warning-highlight: #f0e0d5;
+  --color-error:           #a12c7b;
+  --color-error-highlight: #f0d8e9;
+  --color-success:         #437a22;
+  --color-success-highlight: #d8e8cf;
+  --color-blue:            #006494;
+  --color-blue-highlight:  #cce0ed;
+  --color-purple:          #7a39bb;
+  --color-purple-highlight:#e4d8f5;
+  --color-orange:          #da7101;
+  --color-orange-highlight:#f5dfc0;
+  --color-gold:            #b08000;
+  --color-gold-highlight:  #f0e4b8;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px oklch(0.18 0.01 80 / 0.07);
+  --shadow-md: 0 4px 12px oklch(0.18 0.01 80 / 0.09);
+  --shadow-lg: 0 12px 32px oklch(0.18 0.01 80 / 0.13);
+  --transition: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --text-xs: clamp(0.75rem, 0.7rem + 0.15vw, 0.8125rem);
+  --text-sm: clamp(0.8125rem, 0.78rem + 0.18vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.84rem + 0.2vw, 0.9375rem);
+  --text-lg: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+  --space-12: 3rem; --space-16: 4rem;
+  --sidebar-w: 220px;
+  --detail-w: 420px;
+}
+
+[data-theme="dark"] {
+  --color-bg:              #131210;
+  --color-surface:         #181714;
+  --color-surface-2:       #1d1c19;
+  --color-surface-offset:  #1a1917;
+  --color-surface-offset-2:#202019;
+  --color-surface-dynamic: #2a2927;
+  --color-divider:         #252420;
+  --color-border:          #343230;
+  --color-text:             #d4d2ce;
+  --color-text-muted:      #7a7874;
+  --color-text-faint:      #515049;
+  --color-text-inverse:    #1e1c17;
+  --color-primary:         #4b9aa4;
+  --color-primary-hover:   #277a86;
+  --color-primary-active:  #1a606a;
+  --color-primary-highlight:#27383b;
+  --color-warning:         #c26030;
+  --color-warning-highlight:#3d2b1e;
+  --color-error:           #d45fa0;
+  --color-error-highlight: #3a1e30;
+  --color-success:         #6aac3e;
+  --color-success-highlight:#213219;
+  --color-blue:            #4d8ec9;
+  --color-blue-highlight:  #1a2e40;
+  --color-purple:          #a86fdf;
+  --color-purple-highlight:#2d1e45;
+  --color-orange:          #f5a030;
+  --color-orange-highlight:#3e2a0e;
+  --color-gold:            #d4a800;
+  --color-gold-highlight:  #352a0a;
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.25);
+  --shadow-md: 0 4px 14px oklch(0 0 0 / 0.35);
+  --shadow-lg: 0 12px 36px oklch(0 0 0 / 0.45);
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme]) { --color-bg: #f6f5f1; /* ... light vars */ } }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background: var(--color-bg); height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+input, textarea, select { font: inherit; color: inherit; background: none; border: none; outline: none; }
+ul, ol { list-style: none; }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: var(--radius-sm); }
+a, button, [role="button"], input, select { transition: color var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition); }
+
+/* =====================================================================
+   LAYOUT
+   ===================================================================== */
+.app { display: flex; height: 100dvh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-logo {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+}
+.logo-mark {
+  width: 24px; height: 24px;
+  flex-shrink: 0;
+}
+.logo-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+.sidebar-scroll { overflow-y: auto; flex: 1; padding: var(--space-3) var(--space-2); }
+.sidebar-section { margin-bottom: var(--space-4); }
+.sidebar-section-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+  padding: 0 var(--space-2) var(--space-1);
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.sidebar-item:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.sidebar-item.active { background: var(--color-primary-highlight); color: var(--color-primary); font-weight: 500; }
+.sidebar-item .si-icon { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
+.sidebar-item.active .si-icon { opacity: 1; }
+.sidebar-item .si-count {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--color-text-faint);
+  background: var(--color-surface-offset);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+}
+.sidebar-item.active .si-count { background: var(--color-primary-highlight); color: var(--color-primary); }
+.sidebar-divider { height: 1px; background: var(--color-divider); margin: var(--space-2) var(--space-2); }
+.sidebar-bottom {
+  padding: var(--space-3) var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avatar-sm {
+  width: 26px; height: 26px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-highlight);
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: var(--text-xs); font-weight: 500; truncate; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: var(--text-xs); color: var(--color-text-faint); }
+.theme-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.theme-btn:hover { background: var(--color-surface-offset); color: var(--color-text); }
+
+/* MAIN AREA */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* TOP BAR */
+.topbar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+.topbar-domain-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.topbar-sep { color: var(--color-text-faint); font-size: var(--text-sm); }
+.topbar-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  height: 28px;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 340px;
+  cursor: text;
+}
+.topbar-search:hover { border-color: var(--color-border); }
+.topbar-search input { flex: 1; background: none; font-size: var(--text-sm); color: var(--color-text); }
+.topbar-search input::placeholder { color: var(--color-text-faint); }
+.topbar-actions { display: flex; gap: var(--space-1); margin-left: auto; }
+.btn-icon {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+}
+.btn-icon:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.btn-primary {
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: 0 var(--space-3);
+  height: 28px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.btn-primary:hover { background: var(--color-primary-hover); }
+
+/* VIEW BAR */
+.viewbar {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  flex-shrink: 0;
+}
+.view-tab {
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: 0 var(--space-3);
+  height: 36px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.view-tab:hover { color: var(--color-text); }
+.view-tab.active { color: var(--color-text); border-bottom-color: var(--color-primary); }
+.view-tab svg { width: 13px; height: 13px; }
+.viewbar-filters { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
+.filter-chip {
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: 2px 8px;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.filter-chip:hover { border-color: var(--color-border); color: var(--color-text); }
+.filter-chip.active { background: var(--color-primary-highlight); border-color: var(--color-primary-highlight); color: var(--color-primary); }
+
+/* CONTENT AREA */
+.content-area { flex: 1; display: flex; overflow: hidden; }
+
+/* LIST VIEW */
+.list-view { flex: 1; overflow-y: auto; min-width: 0; }
+.list-header {
+  display: grid;
+  grid-template-columns: 24px 1fr 110px 100px 80px 90px;
+  gap: 0;
+  padding: 0 var(--space-5);
+  height: 32px;
+  align-items: center;
+  border-bottom: 1px solid var(--color-divider);
+  position: sticky;
+  top: 0;
+  background: var(--color-bg);
+  z-index: 2;
+}
+.list-header-cell {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+  display: flex; align-items: center; gap: 3px;
+  cursor: pointer;
+}
+.list-header-cell:hover { color: var(--color-text-muted); }
+
+/* GROUP */
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--color-divider);
+}
+.group-header:hover { color: var(--color-text); }
+.group-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  background: var(--color-surface-offset);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+}
+.group-toggle { color: var(--color-text-faint); margin-right: 2px; transition: transform var(--transition); }
+.group-toggle.collapsed { transform: rotate(-90deg); }
+
+/* LIST ITEM */
+.list-item {
+  display: grid;
+  grid-template-columns: 24px 1fr 110px 100px 80px 90px;
+  gap: 0;
+  padding: 0 var(--space-5);
+  height: 36px;
+  align-items: center;
+  border-bottom: 1px solid oklch(from var(--color-divider) l c h / 0.4);
+  cursor: pointer;
+  position: relative;
+}
+.list-item:hover { background: var(--color-surface); }
+.list-item.selected { background: var(--color-primary-highlight); }
+.list-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background var(--transition);
+}
+.list-item.selected::before { background: var(--color-primary); }
+
+.li-check {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-primary);
+}
+.li-check.done { background: var(--color-primary); border-color: var(--color-primary); }
+.li-check.done svg { display: block; }
+.li-check svg { display: none; width: 9px; height: 9px; }
+
+.li-title-area { display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding-right: var(--space-3); }
+.li-domain-icon { width: 16px; height: 16px; flex-shrink: 0; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.li-title { font-size: var(--text-sm); color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-title.done { color: var(--color-text-muted); text-decoration: line-through; }
+.li-id { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-faint); flex-shrink: 0; }
+.li-tags { display: flex; gap: 3px; align-items: center; flex-shrink: 0; }
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.li-assignee {
+  display: flex; align-items: center; gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.avatar-xs {
+  width: 18px; height: 18px;
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.li-priority { display: flex; align-items: center; gap: 3px; font-size: var(--text-xs); color: var(--color-text-muted); flex-shrink: 0; }
+.priority-dot { width: 7px; height: 7px; border-radius: var(--radius-full); flex-shrink: 0; }
+
+.li-date { font-size: var(--text-xs); color: var(--color-text-muted); font-family: var(--font-mono); flex-shrink: 0; white-space: nowrap; }
+
+/* STATUS BADGE */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* =====================================================================
+   DETAIL PANEL
+   ===================================================================== */
+.detail-panel {
+  width: var(--detail-w);
+  min-width: var(--detail-w);
+  border-left: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width var(--transition), min-width var(--transition), opacity var(--transition);
+}
+.detail-panel.hidden { width: 0; min-width: 0; opacity: 0; pointer-events: none; overflow: hidden; }
+.detail-header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
+  flex-shrink: 0;
+}
+.detail-domain-icon {
+  width: 22px; height: 22px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.detail-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.detail-header-actions { margin-left: auto; display: flex; gap: var(--space-1); }
+.detail-scroll { flex: 1; overflow-y: auto; }
+.detail-content { padding: var(--space-5) var(--space-5) var(--space-8); }
+
+/* Title */
+.detail-title-input {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  width: 100%;
+  line-height: 1.3;
+  padding: 0;
+  resize: none;
+  background: none;
+  border: none;
+  margin-bottom: var(--space-4);
+}
+.detail-title-input:focus { outline: none; }
+
+/* Meta grid */
+.meta-grid { display: flex; flex-direction: column; gap: 0; margin-bottom: var(--space-5); }
+.meta-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  min-height: 30px;
+  border-bottom: 1px solid oklch(from var(--color-divider) l c h / 0.5);
+  gap: var(--space-3);
+}
+.meta-row:last-child { border-bottom: none; }
+.meta-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.meta-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  flex-wrap: wrap;
+  padding: var(--space-1) 0;
+}
+.meta-value.clickable { cursor: pointer; border-radius: var(--radius-sm); padding: 3px 5px; margin: -3px -5px; }
+.meta-value.clickable:hover { background: var(--color-surface-offset); }
+.meta-value.empty { color: var(--color-text-faint); }
+
+/* Detail sections */
+.detail-section { margin-bottom: var(--space-5); }
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+.detail-section-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.section-collapse-btn { color: var(--color-text-faint); transition: transform var(--transition); }
+.section-collapse-btn.collapsed { transform: rotate(-90deg); }
+.detail-section-body {}
+
+/* Description */
+.desc-area {
+  width: 100%;
+  resize: none;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 80px;
+  transition: border-color var(--transition);
+}
+.desc-area:focus { outline: none; border-color: var(--color-primary); background: var(--color-surface-2); }
+.desc-area::placeholder { color: var(--color-text-faint); }
+
+/* Domain fields */
+.domain-fields { display: flex; flex-direction: column; gap: var(--space-3); }
+.domain-field { display: flex; flex-direction: column; gap: var(--space-1); }
+.field-label { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; }
+.field-input {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  width: 100%;
+  transition: border-color var(--transition);
+}
+.field-input:focus { border-color: var(--color-primary); background: var(--color-surface-2); }
+.field-input::placeholder { color: var(--color-text-faint); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+/* Skill tags */
+.skill-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.skill-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.skill-tag:hover { border-color: var(--color-border); color: var(--color-text); }
+.skill-tag .remove { color: var(--color-text-faint); font-size: 10px; }
+.skill-add-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  cursor: pointer;
+}
+.skill-add-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Relations */
+.relation-list { display: flex; flex-direction: column; gap: 2px; }
+.relation-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+}
+.relation-item:hover { background: var(--color-surface-dynamic); color: var(--color-text); }
+.relation-icon { width: 16px; height: 16px; border-radius: var(--radius-sm); font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.relation-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.relation-badge { font-size: var(--text-xs); color: var(--color-text-faint); font-family: var(--font-mono); flex-shrink: 0; }
+
+/* Activity */
+.activity-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.activity-item { display: flex; gap: var(--space-2); }
+.activity-avatar { flex-shrink: 0; margin-top: 1px; }
+.activity-body { flex: 1; min-width: 0; }
+.activity-meta { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: 3px; }
+.activity-meta strong { color: var(--color-text); font-weight: 500; }
+.activity-text { font-size: var(--text-sm); color: var(--color-text); background: var(--color-surface-offset); padding: var(--space-2) var(--space-3); border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md); border: 1px solid var(--color-divider); }
+.activity-input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  cursor: text;
+}
+
+/* Board view */
+.board-view {
+  flex: 1;
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  overflow-x: auto;
+  align-items: flex-start;
+}
+.board-col {
+  width: 260px;
+  min-width: 260px;
+  background: var(--color-surface-offset);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
+  overflow: hidden;
+}
+.board-col-header {
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+}
+.board-col-title { font-size: var(--text-xs); font-weight: 600; color: var(--color-text); }
+.board-col-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  background: var(--color-surface-dynamic);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  margin-left: auto;
+}
+.board-cards { padding: var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
+.board-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+.board-card:hover { box-shadow: var(--shadow-md); border-color: var(--color-border); }
+.board-card.selected { border-color: var(--color-primary); background: color-mix(in oklch, var(--color-primary) 4%, var(--color-surface)); }
+.board-card-id { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-faint); margin-bottom: 3px; }
+.board-card-title { font-size: var(--text-sm); font-weight: 500; color: var(--color-text); margin-bottom: var(--space-2); line-height: 1.35; }
+.board-card-footer { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.board-add { padding: var(--space-2) var(--space-3); display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; border-top: 1px solid var(--color-divider); }
+.board-add:hover { color: var(--color-primary); background: color-mix(in oklch, var(--color-primary) 4%, transparent); }
+
+/* Calendar view */
+.calendar-view { flex: 1; overflow-y: auto; padding: var(--space-4) var(--space-5); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--color-divider); border-radius: var(--radius-md); overflow: hidden; }
+.cal-header-cell { background: var(--color-surface); padding: var(--space-2) var(--space-3); font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); text-align: center; }
+.cal-cell {
+  background: var(--color-surface);
+  min-height: 80px;
+  padding: var(--space-2);
+  cursor: pointer;
+  position: relative;
+}
+.cal-cell:hover { background: var(--color-surface-offset); }
+.cal-cell.today { background: color-mix(in oklch, var(--color-primary) 5%, var(--color-surface)); }
+.cal-day-num { font-size: var(--text-xs); font-weight: 500; color: var(--color-text-muted); margin-bottom: 3px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-full); }
+.cal-cell.today .cal-day-num { background: var(--color-primary); color: white; }
+.cal-event {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* Domain colors */
+.domain-candidate { background: var(--color-blue-highlight); color: var(--color-blue); }
+.domain-project { background: var(--color-purple-highlight); color: var(--color-purple); }
+.domain-event { background: var(--color-success-highlight); color: var(--color-success); }
+.domain-wiki { background: var(--color-gold-highlight); color: var(--color-gold); }
+.domain-specialist { background: var(--color-orange-highlight); color: var(--color-orange); }
+.domain-vacancy { background: var(--color-primary-highlight); color: var(--color-primary); }
+.domain-task { background: var(--color-surface-offset); color: var(--color-text-muted); }
+
+/* Status colors */
+.status-todo { background: var(--color-surface-offset); color: var(--color-text-muted); }
+.status-inprogress { background: var(--color-blue-highlight); color: var(--color-blue); }
+.status-review { background: var(--color-gold-highlight); color: var(--color-gold); }
+.status-done { background: var(--color-success-highlight); color: var(--color-success); }
+.status-blocked { background: var(--color-error-highlight); color: var(--color-error); }
+.status-offer { background: var(--color-primary-highlight); color: var(--color-primary); }
+.status-interview { background: var(--color-purple-highlight); color: var(--color-purple); }
+.status-new { background: var(--color-orange-highlight); color: var(--color-orange); }
+
+/* Priority colors */
+.priority-critical { color: var(--color-error); }
+.priority-high { color: var(--color-warning); }
+.priority-medium { color: var(--color-gold); }
+.priority-low { color: var(--color-text-faint); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-surface-dynamic); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar { width: 48px; min-width: 48px; }
+  .sidebar-logo .logo-name, .sidebar-item span, .sidebar-section-label, .user-info { display: none; }
+  .sidebar-item { justify-content: center; }
+  .sidebar-item .si-count { display: none; }
+  .sidebar-bottom { justify-content: center; }
+  .detail-panel { width: 100%; min-width: 100%; position: absolute; right: 0; top: 0; bottom: 0; z-index: 100; box-shadow: var(--shadow-lg); }
+  .detail-panel.hidden { width: 0; }
+  .list-header { grid-template-columns: 24px 1fr 80px; }
+  .list-item { grid-template-columns: 24px 1fr 80px; }
+  .list-header-cell:nth-child(n+4), .list-item > *:nth-child(n+4) { display: none; }
+  .detail-panel { --detail-w: 100%; }
+}
+@media (max-width: 600px) {
+  .topbar { padding: 0 var(--space-3); gap: var(--space-2); }
+  .topbar-search { max-width: 160px; }
+  .viewbar { padding: 0 var(--space-3); overflow-x: auto; }
+  .board-view { padding: var(--space-3); }
+}
+
+/* Create modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: oklch(0.1 0 0 / 0.5);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--transition);
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  width: 540px; max-width: calc(100vw - 32px);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(8px);
+  transition: transform var(--transition);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+.modal-title { font-size: var(--text-lg); font-weight: 600; color: var(--color-text); }
+.modal-close { color: var(--color-text-muted); padding: var(--space-1); border-radius: var(--radius-md); }
+.modal-close:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.domain-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin-bottom: var(--space-5); }
+.domain-opt {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-divider);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+.domain-opt:hover { border-color: var(--color-border); color: var(--color-text); }
+.domain-opt.selected { border-color: var(--color-primary); background: var(--color-primary-highlight); color: var(--color-primary); }
+.domain-opt .do-icon { font-size: 18px; margin-bottom: 1px; }
+.modal-input {
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+  transition: border-color var(--transition);
+}
+.modal-input:focus { border-color: var(--color-primary); background: var(--color-surface-2); outline: none; }
+.modal-input::placeholder { color: var(--color-text-faint); }
+.modal-footer { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.btn-ghost {
+  padding: 0 var(--space-4); height: 32px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  background: none;
+}
+.btn-ghost:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.btn-primary-lg {
+  padding: 0 var(--space-4); height: 32px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+.btn-primary-lg:hover { background: var(--color-primary-hover); }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ======================== SIDEBAR ======================== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg class="logo-mark" viewBox="0 0 24 24" fill="none" aria-label="Nodus logo">
+        <rect x="2" y="2" width="9" height="9" rx="2" fill="var(--color-primary)" opacity="0.9"/>
+        <rect x="13" y="2" width="9" height="9" rx="2" fill="var(--color-primary)" opacity="0.4"/>
+        <rect x="2" y="13" width="9" height="9" rx="2" fill="var(--color-primary)" opacity="0.4"/>
+        <rect x="13" y="13" width="9" height="9" rx="2" fill="var(--color-primary)" opacity="0.7"/>
+      </svg>
+      <span class="logo-name">Nodus</span>
+    </div>
+
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'inbox')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V3z" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 9.5h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Inbox</span>
+          <span class="si-count">3</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'mywork')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Мои задачи</span>
+          <span class="si-count">7</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Домены</div>
+        <div class="sidebar-item active" onclick="setSidebarActive(this, 'all')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+          <span>Все задачи</span>
+          <span class="si-count">42</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'candidates')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11.5 7.5l1.5 1.5-3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Кандидаты</span>
+          <span class="si-count">14</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'projects')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3" width="13" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V2M8 3V2M11 3V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M4 8h3M4 10.5h5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Проекты</span>
+          <span class="si-count">5</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'events')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v3M11 1v3M1.5 7h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Календарь</span>
+          <span class="si-count">8</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'wiki')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><path d="M3 2h7l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/><path d="M10 2v4h4M5 8h6M5 10.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Wiki</span>
+          <span class="si-count">11</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'specialists')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 12c0-2.485 2.015-4.5 4.5-4.5 1.139 0 2.184.42 2.977 1.113" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11" cy="10" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 10h3M11 8.5v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Специалисты</span>
+          <span class="si-count">4</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Сохранённые виды</div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'interviews')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l1.8 3.6 4 .58-2.9 2.82.68 3.98L8 10.27l-3.58 1.88.68-3.98L2.2 5.68l4-.58z" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span>Интервью на неделе</span>
+        </div>
+        <div class="sidebar-item" onclick="setSidebarActive(this, 'screen')">
+          <svg class="si-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8h7M3 5h10M3 11h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>Stage: Screen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="avatar-sm">АК</div>
+      <div class="user-info">
+        <div class="user-name">Алексей К.</div>
+        <div class="user-role">Tech Recruiter</div>
+      </div>
+      <button class="theme-btn" data-theme-toggle aria-label="Toggle theme" onclick="toggleTheme()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ======================== MAIN ======================== -->
+  <main class="main">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <span class="topbar-title">Все задачи</span>
+      <span class="topbar-sep">·</span>
+      <span class="topbar-domain-badge domain-task" id="topbar-badge">42 объекта</span>
+      <div class="topbar-search">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <input type="text" placeholder="Поиск... (/ для фокуса)" id="search-input" oninput="filterItems(this.value)">
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-icon" aria-label="Настройки" title="Настройки">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+        <button class="btn-primary" onclick="openModal()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Создать
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEW BAR -->
+    <div class="viewbar">
+      <button class="view-tab active" onclick="switchView('list', this)">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Список
+      </button>
+      <button class="view-tab" onclick="switchView('board', this)">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="4" height="12" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="2" width="4" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="2" width="4" height="10" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+        Доска
+      </button>
+      <button class="view-tab" onclick="switchView('calendar', this)">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v3M11 1v3M1.5 7h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Календарь
+      </button>
+      <div class="viewbar-filters">
+        <button class="filter-chip active" onclick="this.classList.toggle('active')">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Все домены
+        </button>
+        <button class="filter-chip" onclick="this.classList.toggle('active')">
+          Мои объекты
+        </button>
+        <button class="filter-chip" onclick="this.classList.toggle('active')">
+          Активные
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+
+      <!-- LIST VIEW -->
+      <div class="list-view" id="view-list">
+        <div class="list-header">
+          <div></div>
+          <div class="list-header-cell">Название <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M5 2v6M2 6l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="list-header-cell">Домен / Статус</div>
+          <div class="list-header-cell">Исполнитель</div>
+          <div class="list-header-cell">Приоритет</div>
+          <div class="list-header-cell">Дата</div>
+        </div>
+        <div id="list-body"></div>
+      </div>
+
+      <!-- BOARD VIEW -->
+      <div class="board-view" id="view-board" style="display:none"></div>
+
+      <!-- CALENDAR VIEW -->
+      <div class="calendar-view" id="view-calendar" style="display:none"></div>
+
+    </div><!-- end content-area -->
+  </main>
+
+  <!-- ======================== DETAIL PANEL ======================== -->
+  <aside class="detail-panel hidden" id="detail-panel">
+    <div class="detail-header">
+      <div class="detail-domain-icon" id="dp-domain-icon"></div>
+      <span class="detail-id" id="dp-id"></span>
+      <div class="detail-header-actions">
+        <button class="btn-icon" title="Открыть на полный экран" aria-label="Full page">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9 2h5v5M13 3l-4 4M7 14H2V9M3 13l4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-icon" title="Ещё действия" aria-label="More">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="4" r="1" fill="currentColor"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="12" r="1" fill="currentColor"/></svg>
+        </button>
+        <button class="btn-icon" onclick="closeDetail()" aria-label="Закрыть">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="detail-scroll">
+      <div class="detail-content" id="dp-content"></div>
+    </div>
+  </aside>
+
+</div><!-- end app -->
+
+<!-- ======================== CREATE MODAL ======================== -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Новый объект</span>
+      <button class="modal-close btn-icon" onclick="closeModal()" aria-label="Закрыть">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="domain-selector" id="domain-selector">
+      <div class="domain-opt selected" onclick="selectDomain(this,'task')" data-domain="task">
+        <span class="do-icon">☑️</span>Задача
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'candidate')" data-domain="candidate">
+        <span class="do-icon">👤</span>Кандидат
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'project')" data-domain="project">
+        <span class="do-icon">📋</span>Проект
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'event')" data-domain="event">
+        <span class="do-icon">📅</span>Событие
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'wiki')" data-domain="wiki">
+        <span class="do-icon">📄</span>Wiki
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'specialist')" data-domain="specialist">
+        <span class="do-icon">⭐</span>Специалист
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'vacancy')" data-domain="vacancy">
+        <span class="do-icon">💼</span>Вакансия
+      </div>
+      <div class="domain-opt" onclick="selectDomain(this,'company')" data-domain="company">
+        <span class="do-icon">🏢</span>Компания
+      </div>
+    </div>
+    <input class="modal-input" id="modal-title-input" placeholder="Название..." type="text" autofocus>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn-primary-lg" onclick="createItem()">Создать объект</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA MODEL — Universal Work Item + Domain Schema
+// ============================================================
+const DOMAIN_CONFIG = {
+  task:       { label: 'Задача',      icon: '☑️', cls: 'domain-task',      color: '#7a7974' },
+  candidate:  { label: 'Кандидат',   icon: '👤', cls: 'domain-candidate', color: '#006494' },
+  project:    { label: 'Проект',     icon: '📋', cls: 'domain-project',   color: '#7a39bb' },
+  event:      { label: 'Событие',    icon: '📅', cls: 'domain-event',     color: '#437a22' },
+  wiki:       { label: 'Wiki',       icon: '📄', cls: 'domain-wiki',      color: '#b08000' },
+  specialist: { label: 'Специалист', icon: '⭐', cls: 'domain-specialist',color: '#da7101' },
+  vacancy:    { label: 'Вакансия',   icon: '💼', cls: 'domain-vacancy',   color: '#01696f' },
+  company:    { label: 'Компания',   icon: '🏢', cls: 'domain-task',      color: '#7a7974' },
+};
+
+const DOMAIN_SCHEMAS = {
+  candidate: {
+    sections: [
+      { key: 'profile', label: 'Профиль кандидата', fields: [
+        { key: 'position', label: 'Позиция', type: 'text', placeholder: 'Frontend Developer' },
+        { key: 'currentCompany', label: 'Компания', type: 'text', placeholder: 'Текущее место работы' },
+        { key: 'salary', label: 'Ожидание (USD)', type: 'text', placeholder: '3000–4500' },
+        { key: 'location', label: 'Локация', type: 'text', placeholder: 'Минск / Remote' },
+      ]},
+      { key: 'skills', label: 'Стек', type: 'tags', tags: ['React', 'TypeScript', 'Node.js'] },
+      { key: 'source', label: 'Источник', fields: [
+        { key: 'sourceType', label: 'Откуда', type: 'select', options: ['LinkedIn', 'HH.ru', 'Referral', 'Huntflow', 'Direct'] },
+        { key: 'sourceUrl', label: 'Ссылка', type: 'text', placeholder: 'linkedin.com/in/...' },
+      ]},
+    ]
+  },
+  project: {
+    sections: [
+      { key: 'overview', label: 'Обзор проекта', fields: [
+        { key: 'goal', label: 'Цель', type: 'text', placeholder: 'Что нужно достичь' },
+        { key: 'dueDate', label: 'Дедлайн', type: 'date' },
+        { key: 'health', label: 'Статус здоровья', type: 'select', options: ['On Track', 'At Risk', 'Off Track', 'Completed'] },
+      ]},
+      { key: 'team', label: 'Команда', type: 'tags', tags: ['Алексей К.', 'Мария В.'] },
+    ]
+  },
+  event: {
+    sections: [
+      { key: 'timing', label: 'Время события', fields: [
+        { key: 'startDate', label: 'Начало', type: 'datetime-local' },
+        { key: 'endDate', label: 'Конец', type: 'datetime-local' },
+        { key: 'location', label: 'Место', type: 'text', placeholder: 'Google Meet / Офис' },
+      ]},
+      { key: 'attendees', label: 'Участники', type: 'tags', tags: ['Алексей К.', 'Иван С.'] },
+    ]
+  },
+  wiki: {
+    sections: [
+      { key: 'meta', label: 'Метаданные', fields: [
+        { key: 'contentType', label: 'Тип', type: 'select', options: ['Процесс', 'Руководство', 'FAQ', 'Шаблон', 'Политика'] },
+        { key: 'reviewDate', label: 'Ревью до', type: 'date' },
+        { key: 'owner', label: 'Владелец', type: 'text', placeholder: 'Ответственный' },
+      ]},
+    ]
+  },
+  specialist: {
+    sections: [
+      { key: 'info', label: 'О специалисте', fields: [
+        { key: 'specialization', label: 'Специализация', type: 'text', placeholder: 'Senior Frontend Dev' },
+        { key: 'rate', label: 'Ставка (USD/мес)', type: 'text', placeholder: '4000–5500' },
+        { key: 'availability', label: 'Доступность', type: 'select', options: ['Доступен', 'Занят', 'Скоро свободен', 'Уточнить'] },
+      ]},
+      { key: 'skills', label: 'Стек', type: 'tags', tags: ['Vue.js', 'Python', 'AWS'] },
+    ]
+  },
+  vacancy: {
+    sections: [
+      { key: 'vacancy-details', label: 'Параметры вакансии', fields: [
+        { key: 'department', label: 'Отдел', type: 'text', placeholder: 'Engineering' },
+        { key: 'grade', label: 'Грейд', type: 'select', options: ['Junior', 'Middle', 'Senior', 'Lead', 'Principal'] },
+        { key: 'budget', label: 'Бюджет (USD)', type: 'text', placeholder: '3000–5000' },
+        { key: 'deadline', label: 'Закрыть до', type: 'date' },
+      ]},
+    ]
+  },
+};
+
+const STATUS_CONFIG = {
+  'Новый':       'status-new',
+  'В работе':    'status-inprogress',
+  'На ревью':    'status-review',
+  'Скрин':       'status-inprogress',
+  'Интервью':    'status-interview',
+  'Оффер':       'status-offer',
+  'Готово':      'status-done',
+  'Заблокирован':'status-blocked',
+  'Планирование':'status-todo',
+};
+
+const PRIORITY_CONFIG = {
+  'Критичный': { cls: 'priority-critical', dotColor: 'var(--color-error)' },
+  'Высокий':   { cls: 'priority-high',     dotColor: 'var(--color-warning)' },
+  'Средний':   { cls: 'priority-medium',   dotColor: 'var(--color-gold)' },
+  'Низкий':    { cls: 'priority-low',      dotColor: 'var(--color-text-faint)' },
+};
+
+let idCounter = 43;
+let items = [
+  { id: 'CAND-001', domain: 'candidate', title: 'Иван Сидоров — Frontend Dev', status: 'Интервью',  assignee: 'АК', priority: 'Высокий',  date: '01 апр', tags: ['React', 'TS'],  description: 'Опыт 4 года, стек React + TypeScript. Прошёл первый скрин, назначено техинтервью.', relatedItems: ['VAC-003', 'SPEC-001'] },
+  { id: 'CAND-002', domain: 'candidate', title: 'Мария Коваль — Backend Python', status: 'Скрин',    assignee: 'МВ', priority: 'Средний',  date: '02 апр', tags: ['Python', 'Django'], description: '5 лет опыта Python/Django, работает в стартапе. Ищет удалёнку.', relatedItems: ['VAC-002'] },
+  { id: 'CAND-003', domain: 'candidate', title: 'Дмитрий Лебедев — DevOps', status: 'Оффер',     assignee: 'АК', priority: 'Критичный', date: '31 мар', tags: ['k8s', 'AWS'],   description: 'Финальный кандидат. Ожидает оффер до 3 апреля.', relatedItems: ['VAC-004'] },
+  { id: 'PROJ-001', domain: 'project',   title: 'Автоматизация HR-воронки', status: 'В работе', assignee: 'АК', priority: 'Высокий',  date: '15 апр', tags: ['n8n', 'Chrome'], description: 'Интеграция LinkedIn → Huntflow через браузерное расширение и n8n webhooks.', relatedItems: ['CAND-001', 'CAND-002'] },
+  { id: 'PROJ-002', domain: 'project',   title: 'Редизайн портала вакансий', status: 'Планирование', assignee: 'МВ', priority: 'Средний', date: '30 апр', tags: ['React', 'UI'], description: 'Обновление frontend портала. Новый дизайн, мобильная адаптация.', relatedItems: ['VAC-001'] },
+  { id: 'EVENT-001', domain: 'event', title: 'Техинтервью: Иван Сидоров', status: 'Новый', assignee: 'АК', priority: 'Высокий', date: '02 апр', tags: ['Interview'], description: 'Техническое интервью с Frontend кандидатом. Google Meet, 60 минут.', relatedItems: ['CAND-001'] },
+  { id: 'EVENT-002', domain: 'event', title: 'Митинг по Q2 рекрутинг-плану', status: 'Новый', assignee: 'АК', priority: 'Средний', date: '03 апр', tags: ['Planning'], description: 'Обсуждение планов найма на Q2, пересмотр приоритетов.', relatedItems: ['PROJ-001'] },
+  { id: 'EVENT-003', domain: 'event', title: 'Демо: HR Extension v2.1', status: 'Готово', assignee: 'АК', priority: 'Средний', date: '29 мар', tags: ['Demo'], description: 'Демонстрация новой версии расширения команде.', relatedItems: ['PROJ-001'] },
+  { id: 'WIKI-001', domain: 'wiki', title: 'Процесс онбординга кандидатов', status: 'Готово', assignee: 'МВ', priority: 'Средний', date: '15 мар', tags: ['Process'], description: 'Полный гайд: от первого контакта до выхода на работу.', relatedItems: ['CAND-001', 'CAND-002'] },
+  { id: 'WIKI-002', domain: 'wiki', title: 'Шаблон технического интервью', status: 'На ревью', assignee: 'АК', priority: 'Средний', date: '20 мар', tags: ['Template'], description: 'Стандартизированный шаблон для проведения технических собеседований.', relatedItems: [] },
+  { id: 'SPEC-001', domain: 'specialist', title: 'Алексей Михайлов — FullStack', status: 'Новый', assignee: 'АК', priority: 'Средний', date: '05 апр', tags: ['React', 'Go'], description: 'Проверенный специалист, работал в прошлых проектах. Возможный кандидат для VAC-001.', relatedItems: ['VAC-001'] },
+  { id: 'VAC-001', domain: 'vacancy', title: 'Senior Frontend Developer', status: 'В работе', assignee: 'АК', priority: 'Критичный', date: '15 апр', tags: ['Frontend'], description: 'Нужен сильный frontend с опытом React. 4+ лет, TSX, хорошее знание архитектурных паттернов.', relatedItems: ['CAND-001', 'SPEC-001'] },
+  { id: 'VAC-002', domain: 'vacancy', title: 'Backend Python Engineer', status: 'В работе', assignee: 'МВ', priority: 'Высокий', date: '30 апр', tags: ['Backend'], description: 'Python/Django бэкенд разработчик. Опыт от 3 лет, знание REST API.', relatedItems: ['CAND-002'] },
+  { id: 'VAC-003', domain: 'vacancy', title: 'React Native Developer', status: 'Планирование', assignee: 'АК', priority: 'Средний', date: '01 мая', tags: ['Mobile'], description: 'Мобильный разработчик для нового продукта. React Native, опыт с Expo.', relatedItems: [] },
+  { id: 'VAC-004', domain: 'vacancy', title: 'DevOps / SRE Engineer', status: 'Оффер', assignee: 'АК', priority: 'Критичный', date: '31 мар', tags: ['DevOps'], description: 'DevOps с опытом Kubernetes, AWS/GCP, CI/CD пайплайны.', relatedItems: ['CAND-003'] },
+];
+
+let selectedItemId = null;
+let currentView = 'list';
+let currentDomain = 'create_task';
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function getAvatarColor(initials) {
+  const colors = [
+    ['#cedcd8','#01696f'], ['#cce0ed','#006494'], ['#dacfde','#7a39bb'],
+    ['#d8e8cf','#437a22'], ['#f5dfc0','#da7101'],
+  ];
+  const idx = (initials.charCodeAt(0) || 0) % colors.length;
+  return colors[idx];
+}
+
+function renderAvatar(initials, size = 'xs') {
+  const [bg, fg] = getAvatarColor(initials);
+  const cls = size === 'sm' ? 'avatar-sm' : 'avatar-xs';
+  return `<div class="${cls}" style="background:${bg};color:${fg}">${initials}</div>`;
+}
+
+function renderStatusBadge(status) {
+  const cls = STATUS_CONFIG[status] || 'status-todo';
+  return `<span class="status-badge ${cls}">${status}</span>`;
+}
+
+function renderDomainBadge(domain) {
+  const cfg = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.task;
+  return `<span class="tag ${cfg.cls}">${cfg.icon} ${cfg.label}</span>`;
+}
+
+function renderPriorityDot(priority) {
+  const cfg = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG['Низкий'];
+  return `<div class="priority-dot" style="background:${cfg.dotColor}"></div>`;
+}
+
+function renderList(data) {
+  const groups = {};
+  data.forEach(item => {
+    const dom = item.domain;
+    if (!groups[dom]) groups[dom] = [];
+    groups[dom].push(item);
+  });
+
+  const domainOrder = ['candidate','vacancy','project','event','wiki','specialist','task','company'];
+  let html = '';
+
+  domainOrder.forEach(dom => {
+    if (!groups[dom] || groups[dom].length === 0) return;
+    const cfg = DOMAIN_CONFIG[dom] || DOMAIN_CONFIG.task;
+    html += `
+      <div class="group-header" onclick="toggleGroup(this)">
+        <svg class="group-toggle" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${cfg.icon} ${cfg.label}
+        <span class="group-count">${groups[dom].length}</span>
+      </div>
+      <div class="group-body">
+    `;
+    groups[dom].forEach(item => {
+      const selected = item.id === selectedItemId ? 'selected' : '';
+      const priCfg = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG['Низкий'];
+      const tags = (item.tags || []).slice(0, 2).map(t => `<span class="tag ${cfg.cls}" style="font-size:10px">${t}</span>`).join('');
+      html += `
+        <div class="list-item ${selected}" data-id="${item.id}" onclick="selectItem('${item.id}')">
+          <div class="li-check ${item.done ? 'done' : ''}" onclick="toggleDone(event, '${item.id}')">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5L8.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="li-title-area">
+            <span class="li-domain-icon ${cfg.cls}" style="font-size:11px">${cfg.icon}</span>
+            <span class="li-title ${item.done ? 'done' : ''}">${item.title}</span>
+            <span class="li-id">${item.id}</span>
+          </div>
+          <div class="li-tags">${tags || renderStatusBadge(item.status)}</div>
+          <div class="li-assignee">${renderAvatar(item.assignee)} <span>${item.assignee}</span></div>
+          <div class="li-priority">${renderPriorityDot(item.priority)} <span class="${priCfg.cls}" style="font-size:var(--text-xs)">${item.priority}</span></div>
+          <div class="li-date">${item.date}</div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  });
+
+  document.getElementById('list-body').innerHTML = html || `<div style="padding:var(--space-8);text-align:center;color:var(--color-text-faint);font-size:var(--text-sm)">Нет объектов</div>`;
+}
+
+function renderBoard(data) {
+  const stages = ['Планирование', 'В работе', 'Скрин', 'Интервью', 'На ревью', 'Оффер', 'Готово'];
+  const groups = {};
+  stages.forEach(s => groups[s] = []);
+  data.forEach(item => {
+    if (groups[item.status] !== undefined) groups[item.status].push(item);
+    else if (!groups['Другое']) { groups['Другое'] = [item]; } else groups['Другое'].push(item);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([stage, stageItems]) => {
+    if (stageItems.length === 0 && stage !== 'В работе') return;
+    const stageClass = STATUS_CONFIG[stage] || 'status-todo';
+    html += `
+      <div class="board-col">
+        <div class="board-col-header">
+          <span class="status-badge ${stageClass}" style="font-size:10px;padding:2px 6px">${stage}</span>
+          <span class="board-col-count">${stageItems.length}</span>
+        </div>
+        <div class="board-cards">
+    `;
+    stageItems.forEach(item => {
+      const cfg = DOMAIN_CONFIG[item.domain] || DOMAIN_CONFIG.task;
+      const selected = item.id === selectedItemId ? 'selected' : '';
+      const priCfg = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG['Низкий'];
+      html += `
+        <div class="board-card ${selected}" data-id="${item.id}" onclick="selectItem('${item.id}')">
+          <div class="board-card-id">${cfg.icon} ${item.id}</div>
+          <div class="board-card-title">${item.title}</div>
+          <div class="board-card-footer">
+            ${renderAvatar(item.assignee)}
+            <div style="margin-left:auto;display:flex;align-items:center;gap:3px">${renderPriorityDot(item.priority)}</div>
+            <span style="font-size:var(--text-xs);color:var(--color-text-faint);font-family:var(--font-mono)">${item.date}</span>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div><div class="board-add">+ Добавить</div></div>`;
+  });
+  document.getElementById('view-board').innerHTML = html;
+}
+
+function renderCalendar(data) {
+  const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const eventItems = data.filter(i => i.domain === 'event');
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">
+      <h2 style="font-size:var(--text-lg);font-weight:600">Апрель 2026</h2>
+      <div style="display:flex;gap:var(--space-2)">
+        <button class="btn-icon" style="border:1px solid var(--color-divider);border-radius:var(--radius-md)">←</button>
+        <button class="btn-icon" style="border:1px solid var(--color-divider);border-radius:var(--radius-md)">→</button>
+      </div>
+    </div>
+    <div class="calendar-grid">
+  `;
+  days.forEach(d => html += `<div class="cal-header-cell">${d}</div>`);
+  const calEvents = {
+    '1': [eventItems[0]], '2': [eventItems[1]], '3': [eventItems[2]]
+  };
+  for (let i = 0; i < 35; i++) {
+    const dayNum = i - 1;
+    const isToday = dayNum === 0;
+    const evts = calEvents[dayNum] || [];
+    html += `<div class="cal-cell ${isToday ? 'today' : ''}">`;
+    if (dayNum > 0 && dayNum <= 30) {
+      html += `<div class="cal-day-num">${dayNum}</div>`;
+      evts.forEach(evt => {
+        if (!evt) return;
+        const cfg = DOMAIN_CONFIG[evt.domain];
+        html += `<div class="cal-event ${cfg.cls}" onclick="selectItem('${evt.id}')" title="${evt.title}">${cfg.icon} ${evt.title}</div>`;
+      });
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  document.getElementById('view-calendar').innerHTML = html;
+}
+
+// ============================================================
+// DETAIL PANEL
+// ============================================================
+function renderDetail(item) {
+  const cfg = DOMAIN_CONFIG[item.domain] || DOMAIN_CONFIG.task;
+  const schema = DOMAIN_SCHEMAS[item.domain];
+
+  // Header
+  document.getElementById('dp-domain-icon').className = `detail-domain-icon ${cfg.cls}`;
+  document.getElementById('dp-domain-icon').textContent = cfg.icon;
+  document.getElementById('dp-id').textContent = item.id;
+
+  let html = '';
+
+  // Title
+  html += `<textarea class="detail-title-input" rows="2" aria-label="Название">${item.title}</textarea>`;
+
+  // Core meta grid
+  html += `<div class="meta-grid">`;
+  html += `<div class="meta-row"><span class="meta-label">Домен</span><div class="meta-value">${renderDomainBadge(item.domain)}</div></div>`;
+  html += `<div class="meta-row"><span class="meta-label">Статус</span><div class="meta-value clickable">${renderStatusBadge(item.status)}</div></div>`;
+  html += `<div class="meta-row"><span class="meta-label">Приоритет</span><div class="meta-value clickable">${renderPriorityDot(item.priority)}<span style="font-size:var(--text-sm)">${item.priority}</span></div></div>`;
+  html += `<div class="meta-row"><span class="meta-label">Исполнитель</span><div class="meta-value clickable">${renderAvatar(item.assignee, 'xs')}<span>${item.assignee}</span></div></div>`;
+  html += `<div class="meta-row"><span class="meta-label">Дата</span><div class="meta-value clickable" style="font-family:var(--font-mono);font-size:var(--text-sm)">${item.date}</div></div>`;
+  if (item.tags && item.tags.length) {
+    html += `<div class="meta-row"><span class="meta-label">Теги</span><div class="meta-value">${item.tags.map(t => `<span class="tag ${cfg.cls}">${t}</span>`).join('')}</div></div>`;
+  }
+  html += `</div>`;
+
+  // Description
+  html += `
+    <div class="detail-section">
+      <div class="detail-section-header" onclick="toggleSection(this)">
+        <span class="detail-section-title">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 7h10M2 10h8M2 13h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Описание
+        </span>
+        <svg class="section-collapse-btn" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="detail-section-body">
+        <textarea class="desc-area" rows="4" placeholder="Добавить описание...">${item.description || ''}</textarea>
+      </div>
+    </div>
+  `;
+
+  // Domain-specific sections
+  if (schema) {
+    schema.sections.forEach(section => {
+      html += `
+        <div class="detail-section">
+          <div class="detail-section-header" onclick="toggleSection(this)">
+            <span class="detail-section-title">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              ${section.label}
+            </span>
+            <svg class="section-collapse-btn" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="detail-section-body domain-fields">
+      `;
+
+      if (section.type === 'tags') {
+        html += `<div class="skill-tags">`;
+        (section.tags || []).forEach(t => html += `<span class="skill-tag">${t}<span class="remove">×</span></span>`);
+        html += `<button class="skill-add-btn">+ Добавить</button></div>`;
+      } else if (section.fields) {
+        const isRow = section.fields.length === 2;
+        if (isRow) html += `<div class="field-row">`;
+        section.fields.forEach(field => {
+          html += `<div class="domain-field"><label class="field-label">${field.label}</label>`;
+          if (field.type === 'select') {
+            html += `<select class="field-input"><option value="" disabled selected>Выбрать...</option>`;
+            (field.options || []).forEach(opt => html += `<option>${opt}</option>`);
+            html += `</select>`;
+          } else {
+            html += `<input type="${field.type || 'text'}" class="field-input" placeholder="${field.placeholder || ''}">`;
+          }
+          html += `</div>`;
+        });
+        if (isRow) html += `</div>`;
+      }
+
+      html += `</div></div>`;
+    });
+  }
+
+  // Relations
+  if (item.relatedItems && item.relatedItems.length) {
+    html += `
+      <div class="detail-section">
+        <div class="detail-section-header" onclick="toggleSection(this)">
+          <span class="detail-section-title">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/></svg>
+            Связанные объекты
+          </span>
+          <svg class="section-collapse-btn" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="detail-section-body">
+          <div class="relation-list">
+    `;
+    item.relatedItems.forEach(relId => {
+      const relItem = items.find(i => i.id === relId);
+      if (!relItem) return;
+      const relCfg = DOMAIN_CONFIG[relItem.domain] || DOMAIN_CONFIG.task;
+      html += `
+        <div class="relation-item" onclick="selectItem('${relId}')">
+          <div class="relation-icon ${relCfg.cls}">${relCfg.icon}</div>
+          <span class="relation-title">${relItem.title}</span>
+          <span class="relation-badge">${relId}</span>
+        </div>
+      `;
+    });
+    html += `
+          </div>
+          <button class="skill-add-btn" style="margin-top:var(--space-2)">+ Связать объект</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Activity
+  html += `
+    <div class="detail-section">
+      <div class="detail-section-header" onclick="toggleSection(this)">
+        <span class="detail-section-title">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1v8l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/></svg>
+          Активность
+        </span>
+        <svg class="section-collapse-btn" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="detail-section-body">
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-avatar">${renderAvatar('АК')}</div>
+            <div class="activity-body">
+              <div class="activity-meta"><strong>Алексей К.</strong> изменил статус · 29 мар 18:42</div>
+              <div class="activity-text">Скрин → ${item.status}</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-avatar">${renderAvatar('СИ')}</div>
+            <div class="activity-body">
+              <div class="activity-meta"><strong>Система</strong> · автоматически · 28 мар</div>
+              <div class="activity-text">Объект создан из LinkedIn источника</div>
+            </div>
+          </div>
+        </div>
+        <div class="activity-input">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13 3L3 7.5l4.5 1.5L9 13l1.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          Добавить комментарий...
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('dp-content').innerHTML = html;
+}
+
+// ============================================================
+// INTERACTIONS
+// ============================================================
+function selectItem(id) {
+  selectedItemId = id;
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+
+  document.querySelectorAll('.list-item, .board-card').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+
+  const panel = document.getElementById('detail-panel');
+  panel.classList.remove('hidden');
+  renderDetail(item);
+}
+
+function closeDetail() {
+  selectedItemId = null;
+  document.getElementById('detail-panel').classList.add('hidden');
+  document.querySelectorAll('.list-item, .board-card').forEach(el => el.classList.remove('selected'));
+}
+
+function toggleDone(e, id) {
+  e.stopPropagation();
+  const item = items.find(i => i.id === id);
+  if (item) {
+    item.done = !item.done;
+    renderCurrentView();
+  }
+}
+
+function toggleGroup(el) {
+  const toggle = el.querySelector('.group-toggle');
+  const body = el.nextElementSibling;
+  if (!body) return;
+  const collapsed = toggle.classList.toggle('collapsed');
+  body.style.display = collapsed ? 'none' : '';
+}
+
+function toggleSection(el) {
+  const btn = el.querySelector('.section-collapse-btn');
+  const body = el.nextElementSibling;
+  if (!body || !btn) return;
+  btn.classList.toggle('collapsed');
+  body.style.display = btn.classList.contains('collapsed') ? 'none' : '';
+}
+
+function switchView(view, tab) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+
+  const views = ['list', 'board', 'calendar'];
+  views.forEach(v => {
+    const el = document.getElementById(`view-${v}`);
+    if (el) el.style.display = v === view ? (v === 'list' ? '' : 'flex') : 'none';
+  });
+  if (view === 'calendar') document.getElementById('view-calendar').style.display = 'block';
+
+  renderCurrentView();
+}
+
+function renderCurrentView(data) {
+  const d = data || items;
+  if (currentView === 'list') renderList(d);
+  else if (currentView === 'board') renderBoard(d);
+  else if (currentView === 'calendar') renderCalendar(d);
+}
+
+function filterItems(query) {
+  const q = query.toLowerCase();
+  const filtered = q ? items.filter(i =>
+    i.title.toLowerCase().includes(q) ||
+    i.id.toLowerCase().includes(q) ||
+    (i.tags || []).some(t => t.toLowerCase().includes(q))
+  ) : items;
+  renderCurrentView(filtered);
+}
+
+function setSidebarActive(el, domain) {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+
+  let filtered = items;
+  const domainMap = {
+    candidates: 'candidate', projects: 'project', events: 'event',
+    wiki: 'wiki', specialists: 'specialist', interviews: 'event', screen: 'candidate'
+  };
+  if (domainMap[domain]) {
+    filtered = items.filter(i => i.domain === domainMap[domain]);
+    if (domain === 'screen') filtered = items.filter(i => i.domain === 'candidate' && i.status === 'Скрин');
+    if (domain === 'interviews') filtered = items.filter(i => i.domain === 'event');
+    const cfg = DOMAIN_CONFIG[domainMap[domain]];
+    document.querySelector('.topbar-title').textContent = cfg ? cfg.label + 'ы' : 'Все задачи';
+    document.getElementById('topbar-badge').textContent = `${filtered.length} объект${filtered.length !== 1 ? 'ов' : ''}`;
+    document.getElementById('topbar-badge').className = `topbar-domain-badge ${cfg ? cfg.cls : 'domain-task'}`;
+  } else {
+    document.querySelector('.topbar-title').textContent = 'Все задачи';
+    document.getElementById('topbar-badge').textContent = `${items.length} объектов`;
+    document.getElementById('topbar-badge').className = 'topbar-domain-badge domain-task';
+  }
+
+  renderCurrentView(filtered);
+}
+
+// Modal
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('modal-title-input').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-title-input').value = '';
+}
+
+function selectDomain(el, domain) {
+  document.querySelectorAll('.domain-opt').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  currentDomain = domain;
+}
+
+function createItem() {
+  const title = document.getElementById('modal-title-input').value.trim();
+  if (!title) { document.getElementById('modal-title-input').focus(); return; }
+
+  const domainPrefixes = {
+    task: 'TASK', candidate: 'CAND', project: 'PROJ', event: 'EVENT',
+    wiki: 'WIKI', specialist: 'SPEC', vacancy: 'VAC', company: 'COMP'
+  };
+  const prefix = domainPrefixes[currentDomain] || 'TASK';
+  const newId = `${prefix}-${String(idCounter++).padStart(3,'0')}`;
+
+  const newItem = {
+    id: newId,
+    domain: currentDomain,
+    title,
+    status: 'Новый',
+    assignee: 'АК',
+    priority: 'Средний',
+    date: '31 мар',
+    tags: [],
+    description: '',
+    relatedItems: [],
+  };
+
+  items.unshift(newItem);
+  closeModal();
+  renderCurrentView();
+  setTimeout(() => selectItem(newId), 50);
+}
+
+// Theme toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const btn = document.querySelector('[data-theme-toggle]');
+  btn.innerHTML = isDark
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && !e.target.matches('input,textarea')) {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('modal').classList.contains('open')) closeModal();
+    else closeDetail();
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openModal(); }
+});
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+renderList(items);
+</script>
+</body>
+</html>

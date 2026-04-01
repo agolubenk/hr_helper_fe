@@ -27,6 +27,7 @@ const COMPANY_SETTINGS_IMPLEMENTED = new Set<string>([
   '/company-settings/employee-lifecycle',
   '/company-settings/finance',
   '/company-settings/integrations',
+  '/company-settings/calendar',
   '/company-settings/user-groups',
   '/company-settings/users',
   '/company-settings/system/localization',
@@ -86,6 +87,7 @@ const EXACT_IMPLEMENTED = new Set<string>([
   '/settings/permissions',
   '/settings/user-groups',
   '/tasks',
+  '/work-items',
 ])
 
 /**

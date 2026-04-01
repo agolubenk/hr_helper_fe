@@ -87,7 +87,12 @@ export const SETTINGS_MENU_ITEMS: SettingsMenuItemConfig[] = [
         icon: ic(GearIcon),
         children: [
           { id: 'company-general', label: 'Общие настройки компании', icon: ic(GearIcon), href: '/company-settings' },
-          { id: 'company-calendar', label: 'Рабочий календарь', icon: ic(CalendarIcon), href: '/company-settings/calendar' },
+          {
+            id: 'company-calendar',
+            label: 'Рабочий календарь',
+            icon: ic(CalendarIcon),
+            href: '/company-settings/calendar?tab=general',
+          },
         ],
       },
       {

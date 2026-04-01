@@ -1,36 +1,30 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Flex, Text } from '@radix-ui/themes'
+import { useNavigate } from 'react-router-dom'
 import {
   CheckboxIcon,
   BellIcon,
-  VideoIcon,
+  CalendarIcon,
   FileTextIcon,
   BoxIcon,
   DotsHorizontalIcon,
   Cross2Icon,
 } from '@radix-ui/react-icons'
 import styles from './Footer.module.css'
-import { usePathname, useRouter } from '@/router-adapter'
 
 type TrayItemType = 'task' | 'notification' | 'module' | 'article' | 'meeting'
 
-export interface TrayItem {
+interface TrayItem {
   id: string
   type: TrayItemType
   text: string
-  /** Для type=meeting: путь с hash (например /meet/room#task=…), иначе откроется /meet/room */
-  meetHref?: string
-  /** Активная комната «в эфире» — точка в трее при сворачивании с meet */
-  live?: boolean
 }
 
-export type FooterTrayAddDetail = {
+type FooterTrayAddDetail = {
   id?: string
   type: TrayItemType
   text: string
-  meetHref?: string
-  live?: boolean
 }
 
 export const FOOTER_TRAY_ADD_EVENT = 'footerTrayAddItem'
@@ -38,7 +32,7 @@ export const FOOTER_TRAY_ADD_EVENT = 'footerTrayAddItem'
 const ICON_MAP = {
   task: CheckboxIcon,
   notification: BellIcon,
-  meeting: VideoIcon,
+  meeting: CalendarIcon,
   article: FileTextIcon,
   module: BoxIcon,
 } as const
@@ -75,16 +69,7 @@ const STORAGE_KEY_ENABLED = 'footerTasksEnabled'
 const STORAGE_KEY_COLLAPSED = 'footerTasksCollapsed'
 
 export function Footer() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const isMeetRoomOpen = pathname?.startsWith('/meet/room')
-
-  const meetingShowsLiveDot = (item: TrayItem): boolean =>
-    item.type === 'meeting' && item.live === true
-
-  const showTrayCloseControl = (item: TrayItem): boolean =>
-    item.type !== 'meeting' || (!item.live && !isMeetRoomOpen)
-
+  const navigate = useNavigate()
   const year = new Date().getFullYear()
   const [items, setItems] = useState<TrayItem[]>(EXAMPLE_ITEMS)
   const [visibleCount, setVisibleCount] = useState(EXAMPLE_ITEMS.length)
@@ -115,23 +100,9 @@ export function Footer() {
         id: e.detail.id ?? `tray-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         type: e.detail.type,
         text: nextText,
-        meetHref: e.detail.meetHref,
-        live: e.detail.live,
       }
       setItems((prev) => {
-        if (next.type === 'meeting' && next.meetHref) {
-          const byHref = prev.findIndex((x) => x.type === 'meeting' && x.meetHref === next.meetHref)
-          if (byHref >= 0) {
-            const copy = [...prev]
-            copy[byHref] = {
-              ...copy[byHref],
-              text: next.text,
-              meetHref: next.meetHref,
-              live: next.live ?? copy[byHref].live,
-            }
-            return copy
-          }
-        }
+        // Не добавляем дубликаты по тексту+типу (быстрый UX для «свернуть»)
         if (prev.some((x) => x.type === next.type && x.text === next.text)) return prev
         return [next, ...prev]
       })
@@ -175,15 +146,21 @@ export function Footer() {
     setItems((prev) => prev.filter((item) => item.id !== id))
   }, [])
 
-  const openItem = useCallback((item: TrayItem) => {
-    if (item.type === 'meeting') {
-      router.push(item.meetHref ?? '/meet/room')
-      return
-    }
-    if (item.type === 'task') {
-      router.push('/tasks')
-    }
-  }, [router])
+  const openItem = useCallback(
+    (item: TrayItem) => {
+      if (item.type === 'meeting') {
+        navigate('/meet/room')
+        return
+      }
+      if (item.type === 'task') {
+        navigate('/tasks')
+        return
+      }
+      // Остальные типы пока ведут в задачи как «инбокс»
+      navigate('/tasks')
+    },
+    [navigate],
+  )
 
   // Выравнивание правого края dropdown с правым краем кнопки +N
   useLayoutEffect(() => {
@@ -206,11 +183,9 @@ export function Footer() {
   }, [dropdownOpen])
 
   const effectiveVisibleCount = alwaysCollapsed ? 0 : visibleCount
-  // На странице конкретной комнаты мит не показываем в футере (но сохраняем в state).
-  const displayItems = isMeetRoomOpen ? items.filter((x) => x.type !== 'meeting') : items
-  const visibleItems = displayItems.slice(0, effectiveVisibleCount)
-  const hiddenItems = displayItems.slice(effectiveVisibleCount)
-  const hasItems = tasksEnabled && displayItems.length > 0
+  const visibleItems = items.slice(0, effectiveVisibleCount)
+  const hiddenItems = items.slice(effectiveVisibleCount)
+  const hasItems = tasksEnabled && items.length > 0
 
   return (
     <footer className={styles.footer}>
@@ -238,28 +213,23 @@ export function Footer() {
                   >
                     <Icon width={14} height={14} className={styles.trayBadgeIcon} />
                     <span className={styles.trayBadgeText}>{item.text}</span>
-                    {meetingShowsLiveDot(item) ? (
-                      <span className={styles.trayLiveDot} aria-label="Мит активен" />
-                    ) : null}
-                    {showTrayCloseControl(item) ? (
-                      <span
-                        className={styles.trayBadgeClose}
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation()
+                    <span
+                      className={styles.trayBadgeClose}
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeItem(item.id)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
                           removeItem(item.id)
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            removeItem(item.id)
-                          }
-                        }}
-                      >
-                        ×
-                      </span>
-                    ) : null}
+                        }
+                      }}
+                    >
+                      ×
+                    </span>
                   </button>
                 )
               })}
@@ -295,33 +265,27 @@ export function Footer() {
                               tabIndex={0}
                               className={`${styles.trayDropdownItem} ${styles[`type_${item.type}`]}`}
                               title={item.text}
-                              onClick={() => {
-                                openItem(item)
-                                setDropdownOpen(false)
-                              }}
+                              onClick={() => openItem(item)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault()
                                   openItem(item)
-                                  setDropdownOpen(false)
                                 }
                               }}
                             >
                               <Icon width={14} height={14} className={styles.trayDropdownIcon} />
                               <span className={styles.trayDropdownText}>{item.text}</span>
-                              {showTrayCloseControl(item) ? (
-                                <button
-                                  type="button"
-                                  className={styles.trayDropdownRemove}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    removeItem(item.id)
-                                  }}
-                                  title="Удалить"
-                                >
-                                  <Cross2Icon width={12} height={12} />
-                                </button>
-                              ) : null}
+                              <button
+                                type="button"
+                                className={styles.trayDropdownRemove}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removeItem(item.id)
+                                }}
+                                title="Удалить"
+                              >
+                                <Cross2Icon width={12} height={12} />
+                              </button>
                             </div>
                           )
                         })}
