@@ -11,7 +11,7 @@
 
 #### 0.1. Создание базовой структуры FSD
 ```bash
-frontend/src/
+frontend/src/ (удалено)
   ├── app/           # Инициализация приложения
   ├── processes/     # Сложные бизнес-процессы
   ├── pages/         # Страницы приложения
@@ -450,8 +450,8 @@ app/
 **Приоритет: Высокий**
 
 **Чеклист:**
-- [x] Обновить README.md с архитектурой (frontend/README.md)
-- [x] Документировать каждый слой FSD (frontend/README.md)
+- [x] Обновить README.md с архитектурой (frontend/README.md) (удалено)
+- [x] Документировать каждый слой FSD (frontend/README.md) (удалено)
 - [x] Создать гайд для разработчиков (docs/DEVELOPER_GUIDE.md)
 - [x] Storybook для UI компонентов (.storybook/, stories для Vacancy, Company)
 - [x] API документация (shared/api/README.md)

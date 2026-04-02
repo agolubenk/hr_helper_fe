@@ -1,7 +1,0 @@
-{
-  "name": "HR Platform",
-  "short_name": "HR Platform",
-  "description": "HR Platform Application",
-  "start_url": "/",
-  "display": "standalone"
-}

@@ -148,9 +148,9 @@
 
 ---
 
-## 9. ATS и паритет с основным `frontend`
+## 9. ATS и паритет (источник `frontend` удалён)
 
-- [ ] Сверить экраны **fe_migration** (`Ats*Page`, `atsMocks.ts`) с **`frontend/src/features/ai/ats`** — полный паритет **не заявлен**; отличия заносить в **`fe_migration/docs/MIGRATION_DIVERGENCES.md` §9** или сюда в подпункты по мере решения.
+- [ ] Исторически сравнивали **fe_migration** (`Ats*Page`, `atsMocks.ts`) с `frontend/src/features/ai/ats`, но `frontend/` удалён. Дальше: фиксировать отличия и договорённости в **`fe_migration/docs/MIGRATION_DIVERGENCES.md` §9** или здесь, привязываясь к требованиям/эталону UI.
 
 ---
 
@@ -188,7 +188,7 @@
 | **Фаза 13** API + единый слой моков | См. **`fe_migration/docs/MOCK_SERVICES.md`**; профиль и quick buttons — приоритет; бенчмарки/ATS — после контракта. |
 | **3.4** `quickButtons` между вкладками | Закрыто: `storage` на `QUICK_BUTTONS_KEY` в `QuickButtonsPage`. |
 | **5.1** модалки вакансий | Паритет с old не аудировался; при необходимости — отдельный чеклист по полям/вкладкам. |
-| **ATS (март 2026)** | Зафиксировано в **`Детальный план…` §фаза 9**, **`fe_migration/docs/DETAILED_PLAN_STATUS.md`** (журнал правок), **`fe_migration/docs/ATS_MIGRATION_SCOPE.md`**: версии опыта, моки, переключатель Candidates. Паритет с `frontend/src/features/ai/ats` — по-прежнему §9 здесь. |
+| **ATS (март 2026)** | Зафиксировано в **`Детальный план…` §фаза 9**, **`fe_migration/docs/DETAILED_PLAN_STATUS.md`** (журнал правок), **`fe_migration/docs/ATS_MIGRATION_SCOPE.md`**: версии опыта, моки, переключатель Candidates. Источник `frontend` удалён — см. §9 здесь. |
 
 ---
 

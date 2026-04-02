@@ -1,2 +1,0 @@
-// TODO: Universal table
-export {}

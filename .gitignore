@@ -49,7 +49,7 @@ frontend old/detailed_coverage_report.json
 storybook-static/
 
 # Bundle analysis
-frontend/dist/stats.html
+# (frontend/ удалён из репозитория)
 
 # Test artifacts
-frontend/coverage/
+# (frontend/ удалён из репозитория)

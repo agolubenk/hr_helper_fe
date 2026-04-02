@@ -1,2 +1,0 @@
-// TODO: Requires authentication
-export {}

@@ -25,10 +25,10 @@
 | **`fe_migration/docs/MIGRATION_CHECK_URLS.md`** | Все основные URL для smoke (фаза **14**) |
 | **`fe_migration/docs/MIGRATION_DIVERGENCES.md`** | Намеренные отличия от 3001; **§9** — журнал при приёмке; **§11** wiki; **§12** company-settings |
 | **`fe_migration/docs/sidebar.md`** | Дерево сайдбара и `href` |
-| **`fe_migration/docs/SIDEBAR_MENU_SYNC.md`** | Сверка конфигов меню с `frontend` :3000 (задача 6.7) |
+| **`fe_migration/docs/SIDEBAR_MENU_SYNC.md`** | Сверка конфигов меню (источник `frontend` удалён; ранее был :3000) |
 | **`fe_migration/docs/VACANCIES_MODALS_AUDIT.md`** | Модалки вакансий (фаза 5.1) |
 | **`fe_migration/docs/INTEGRATIONS_PROFILE_PARITY.md`** | Интеграции профиля (фаза 3.3) |
-| **`fe_migration/docs/ATS_MIGRATION_SCOPE.md`** | Объём ATS, эталон `frontend`, не `frontend old` |
+| **`fe_migration/docs/ATS_MIGRATION_SCOPE.md`** | Объём ATS (источник `frontend` удалён; ранее эталоном был он, не `frontend old`) |
 | **`fe_migration/docs/UI_MIGRATION_PLAN.md`** | Профиль / футер / FloatingActions vs :3000 |
 | **`fe_migration/docs/PAGES_AND_COMPONENTS_DOCS.md`** | Формат документирования (**фаза 15**) |
 | **`fe_migration/docs/MOCK_SERVICES.md`** | Единый слой моков (**фаза 13**) |
@@ -352,7 +352,7 @@ TSX уменьшился вдвое, CSS втрое вырос. Компонен
 
 ## Фаза 9 — ATS
 
-🟢 **UI ПЕРЕНЕСЁН** — модуль `fe_migration/src/features/ats/` (эталон: `frontend/src/features/ai/ats/`), см. `fe_migration/docs/ATS_MIGRATION_SCOPE.md`.
+🟢 **UI ПЕРЕНЕСЁН** — модуль `fe_migration/src/features/ats/` (исторически сверяли с `frontend/src/features/ai/ats/`, но `frontend/` удалён), см. `fe_migration/docs/ATS_MIGRATION_SCOPE.md`.
 
 Моки в `features/ats/mocks.ts`; страницы оценок — заглушки до API. Интеграция с бэкендом — отдельно (фаза 13 / контракт).
 
@@ -474,7 +474,7 @@ TSX уменьшился вдвое, CSS втрое вырос. Компонен
 | **API вместо моков** | Контракт бэкенда | Профиль, quick buttons, соцсети, интеграции; единый слой моков — см. **§13** и **`fe_migration/docs/MOCK_SERVICES.md`**; `quickButtonsStorage` как fallback | **13** | 🔴 Не начато |
 | **Вакансии, модалки** | Diff old ↔ `VacancyEditModal` / `AddVacancyModal` | Построчно при расхождениях; опора на **`VACANCIES_MODALS_AUDIT.md`** | **5.1** | 🟡 По запросу |
 | **Wiki / wiki-new** | Решение в **`DIVERGENCES` §11** | Не «перенос 1:1», а стабилизация маршрутов и приоритетные доработки по ТЗ | **7** | Вне полного паритета |
-| **ATS** | Эталон `frontend` `ai/ats`, не `frontend old` | Текущий UI в `features/ats/`; дальше — **API по контракту** (фаза **13**) | **9** + **13** | UI готов; API — позже |
+| **ATS** | Исторически эталоном был `frontend` `ai/ats` (удалён), не `frontend old` | Текущий UI в `features/ats/`; дальше — **API по контракту** (фаза **13**) | **9** + **13** | UI готов; API — позже |
 
 ### Два параллельных направления (как в плане работ)
 

@@ -1,41 +1,36 @@
 # Фронтенды в репозитории: стек и структура
 
-В репозитории **два рабочих приложения** и **три скрипта запуска** в корне.
+На текущем этапе в репозитории **поддерживается только миграционный фронт** `fe_migration/`.
 
 ---
 
-## Порты и скрипты запуска (только рабочие)
+## Порт и скрипт запуска (актуально)
 
 | Порт | Приложение | Папка | Как запустить |
 |------|------------|-------|---------------|
-| **3000** | Миграция legacy на Vite (сравнение с 3001) | `fe_migration/` | `./start-dev-migration.sh` |
-| **3001** | Новая платформа (Vite, TanStack Router) | `frontend/` | `./start-dev-new.sh` |
-| **3001** | Legacy Next.js | `frontend old/` | удалено из репозитория |
+| **3000** | Миграция legacy на Vite | `fe_migration/` | `./start-dev-migration.sh` |
 
-### Три файла в корне репозитория
+### Скрипты в корне репозитория
 
 | Скрипт | Назначение |
 |--------|------------|
-| **`start-dev.sh`** | Одновременно: **3001** (Next, `frontend old`) + **3000** (Vite, `frontend`). |
 | **`start-dev-migration.sh`** | Только **3000** (`fe_migration`) — работа с миграцией. |
-| **`start-dev-new.sh`** | Только **3001** — разработка новой платформы. |
 
-**Только** fe_migration на 3000: `cd fe_migration && npm run dev -- --port 3000`.  
-**Только** новая платформа на 3001: `cd frontend && npm run dev -- --port 3001`.
+**Только** fe_migration на 3000: `cd fe_migration && npm run dev -- --port 3000`.
 
 ---
 
 ## Сводная таблица стеков
 
-| | **frontend old** | **frontend** | **fe_migration** |
-|---|------------------|--------------|------------------|
-| **Папка** | `frontend old/` | `frontend/` | `fe_migration/` |
-| **Сборщик** | Next.js 14 | Vite 5 | Vite 5 |
-| **Роутинг** | App Router | TanStack Router | React Router DOM 7 |
-| **Порт dev** | 3001 (архив) | 3001 | 3000 |
-| **Алиас TS** | `@/*` → корень проекта | `@/*` → `src/` | `@/*` → `src/` |
-| **UI** | Radix, bootstrap-icons, react-icons | Radix, lucide, react-icons | как у legacy |
-| **Назначение** | эталон legacy | целевая платформа | перенос legacy 1:1 без FSD |
+| | **frontend old** | **fe_migration** |
+|---|------------------|------------------|
+| **Папка** | `frontend old/` | `fe_migration/` |
+| **Сборщик** | Next.js 14 | Vite 5 |
+| **Роутинг** | App Router | React Router DOM 7 |
+| **Порт dev** | 3001 (архив) | 3000 |
+| **Алиас TS** | `@/*` → корень проекта | `@/*` → `src/` |
+| **UI** | Radix, bootstrap-icons, react-icons | как у legacy |
+| **Назначение** | эталон legacy | перенос legacy 1:1 без FSD |
 
 ---
 
@@ -63,15 +58,6 @@ frontend old/
 
 ---
 
-## `frontend` — новая платформа (Vite + TanStack Router)
-
-- **@tanstack/react-router**, **react-query**, **zustand**, **@tiptap/***, **Vitest**, **Storybook**  
-- Дерево: `src/app/router`, `src/features/`, `src/entities/`, `src/shared/`  
-- Роуты: **`src/app/router/index.tsx`**  
-- Dev: порт **3001** через `start-dev-new.sh` или `start-dev.sh`
-
----
-
 ## `fe_migration/` — миграция стека без смены архитектуры на FSD
 
 - Базовый эталон переноса: **frontend old (3001)** → сравнение с `fe_migration` на **3000** через **`./start-dev-migration.sh`**.  
@@ -87,7 +73,7 @@ frontend old/
 
 ## Зачем этот документ
 
-1. Различие трёх приложений и **трёх скриптов** запуска.  
+1. Зафиксировать, что **актуален только** `fe_migration` и его запуск.  
 2. При переносе экрана в **fe_migration** — следовать **`MIGRATION_PLAN.md`** (корень репо) и мастер-плану **`Детальный план остаточной миграции hr_helper_fe.md`**.  
 3. При поиске legacy-кода — `frontend old/app/`, `frontend old/components/`.
 

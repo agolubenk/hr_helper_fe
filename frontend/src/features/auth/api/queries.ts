@@ -1,2 +1,0 @@
-// useAuth, useCurrentUser
-export {}
